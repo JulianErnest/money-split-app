@@ -61,12 +61,12 @@ Plans:
   3. Another user can tap the invite link and join the group via Expo deep linking
   4. User can view all groups they belong to on the home screen, each with an auto-generated avatar
   5. User can tap into a group and see its list of members
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Group creation and groups list screen
-- [ ] 03-02: Invite link generation, deep linking, and join flow
-- [ ] 03-03: Group detail screen with member list and group avatars
+- [ ] 03-01-PLAN.md — Supabase RPC functions (create_group, join_group_by_invite), groups list screen, create group flow
+- [ ] 03-02-PLAN.md — Invite link sharing via share sheet, deep link handling (+native-intent), join flow screen, group detail shell
+- [ ] 03-03-PLAN.md — Group detail member list, groups list member counts and avatar polish
 
 ### Phase 4: Expenses
 **Goal**: Users can add shared expenses to a group with equal or custom splits, and browse the expense history
