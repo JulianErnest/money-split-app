@@ -100,39 +100,39 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| GRPS-01 | — | Pending |
-| GRPS-02 | — | Pending |
-| GRPS-03 | — | Pending |
-| GRPS-04 | — | Pending |
-| GRPS-05 | — | Pending |
-| GRPS-06 | — | Pending |
-| EXPN-01 | — | Pending |
-| EXPN-02 | — | Pending |
-| EXPN-03 | — | Pending |
-| EXPN-04 | — | Pending |
-| BLNC-01 | — | Pending |
-| BLNC-02 | — | Pending |
-| BLNC-03 | — | Pending |
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| UX-03 | — | Pending |
-| UX-04 | — | Pending |
-| UX-05 | — | Pending |
-| UX-06 | — | Pending |
-| UX-07 | — | Pending |
-| UX-08 | — | Pending |
-| INFR-01 | — | Pending |
-| INFR-02 | — | Pending |
-| INFR-03 | — | Pending |
+| AUTH-01 | Phase 2 | Pending |
+| AUTH-02 | Phase 2 | Pending |
+| AUTH-03 | Phase 2 | Pending |
+| GRPS-01 | Phase 3 | Pending |
+| GRPS-02 | Phase 3 | Pending |
+| GRPS-03 | Phase 3 | Pending |
+| GRPS-04 | Phase 3 | Pending |
+| GRPS-05 | Phase 3 | Pending |
+| GRPS-06 | Phase 3 | Pending |
+| EXPN-01 | Phase 4 | Pending |
+| EXPN-02 | Phase 4 | Pending |
+| EXPN-03 | Phase 4 | Pending |
+| EXPN-04 | Phase 4 | Pending |
+| BLNC-01 | Phase 5 | Pending |
+| BLNC-02 | Phase 5 | Pending |
+| BLNC-03 | Phase 5 | Pending |
+| UX-01 | Phase 6 | Pending |
+| UX-02 | Phase 6 | Pending |
+| UX-03 | Phase 6 | Pending |
+| UX-04 | Phase 6 | Pending |
+| UX-05 | Phase 1 | Pending |
+| UX-06 | Phase 6 | Pending |
+| UX-07 | Phase 6 | Pending |
+| UX-08 | Phase 6 | Pending |
+| INFR-01 | Phase 1 | Pending |
+| INFR-02 | Phase 6 | Pending |
+| INFR-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 ⚠️
+- Mapped to phases: 27
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 after initial definition*
+*Last updated: 2026-02-18 after roadmap creation*
