@@ -53,6 +53,8 @@ function RootNavigator() {
     >
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="join/[code]" />
+      <Stack.Screen name="group/[id]" />
     </Stack>
   );
 }
