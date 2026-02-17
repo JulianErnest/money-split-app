@@ -38,7 +38,7 @@ function RootNavigator() {
       // Signed in with profile — redirect to app
       router.replace("/(tabs)");
     }
-  }, [session, isLoading, segments]);
+  }, [session, isLoading, isNewUser, segments]);
 
   if (isLoading) {
     return null;

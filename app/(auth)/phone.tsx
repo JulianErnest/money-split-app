@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   TextInput,
@@ -6,6 +6,9 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
+  Animated,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/ui/Text";
@@ -13,11 +16,38 @@ import { Button } from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 import { colors, fontFamily, fontSize, spacing, radius } from "@/theme";
 
+const CAROUSEL_IMAGES = [
+  require("@/assets/images/auth/friends-1.jpg"),
+  require("@/assets/images/auth/friends-2.jpg"),
+  require("@/assets/images/auth/friends-3.jpg"),
+];
+const INTERVAL = 5000;
+
 export default function PhoneScreen() {
   const router = useRouter();
   const [rawDigits, setRawDigits] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }).start(() => {
+        setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, INTERVAL);
+    return () => clearInterval(timer);
+  }, []);
 
   const isValid = rawDigits.length === 10;
 
@@ -67,66 +97,87 @@ export default function PhoneScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
-      >
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text variant="h1" color="accent" style={styles.appName}>
-              Hatian
-            </Text>
-            <Text variant="body" color="textSecondary">
-              Split expenses with your barkada
-            </Text>
-          </View>
+    <View style={styles.root}>
+      {/* Background carousel */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+        <ImageBackground
+          source={CAROUSEL_IMAGES[currentIndex]}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      </Animated.View>
 
-          <View style={styles.inputSection}>
-            <Text variant="label" color="textTertiary" style={styles.label}>
-              Phone number
-            </Text>
+      {/* Dark overlay */}
+      <View style={styles.overlay} />
 
-            <View style={styles.phoneRow}>
-              <Text style={styles.prefix}>+63</Text>
-              <TextInput
-                style={styles.phoneInput}
-                value={formatDisplay(rawDigits)}
-                onChangeText={handleChangeText}
-                keyboardType="number-pad"
-                maxLength={12} // 10 digits + 2 spaces
-                placeholder="9XX XXX XXXX"
-                placeholderTextColor={colors.inputPlaceholder}
-                selectionColor={colors.accent}
-                cursorColor={colors.accent}
-                autoFocus
-              />
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
+        >
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <Text variant="h1" color="accent" style={styles.appName}>
+                Hatian
+              </Text>
+              <Text variant="body" color="textSecondary">
+                Split expenses with your barkada
+              </Text>
             </View>
 
-            {error ? (
-              <Text variant="caption" color="error" style={styles.error}>
-                {error}
+            <View style={styles.inputSection}>
+              <Text variant="label" color="textTertiary" style={styles.label}>
+                Phone number
               </Text>
-            ) : null}
-          </View>
 
-          <Button
-            label="Send OTP"
-            onPress={handleSubmit}
-            disabled={!isValid}
-            loading={loading}
-            style={styles.button}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+              <View style={styles.phoneRow}>
+                <Text style={styles.prefix}>+63</Text>
+                <TextInput
+                  style={styles.phoneInput}
+                  value={formatDisplay(rawDigits)}
+                  onChangeText={handleChangeText}
+                  keyboardType="number-pad"
+                  maxLength={12}
+                  placeholder="9XX XXX XXXX"
+                  placeholderTextColor={colors.inputPlaceholder}
+                  selectionColor={colors.accent}
+                  cursorColor={colors.accent}
+                  autoFocus
+                />
+              </View>
+
+              {error ? (
+                <Text variant="caption" color="error" style={styles.error}>
+                  {error}
+                </Text>
+              ) : null}
+            </View>
+
+            <Button
+              label="Send OTP"
+              onPress={handleSubmit}
+              disabled={!isValid}
+              loading={loading}
+              style={styles.button}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  root: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(13, 13, 13, 0.75)",
+  },
+  safeArea: {
+    flex: 1,
   },
   keyboardView: {
     flex: 1,

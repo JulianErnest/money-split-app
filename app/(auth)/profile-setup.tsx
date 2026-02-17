@@ -1,20 +1,21 @@
+import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Text } from "@/components/ui/Text";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
+import { colors, radius, spacing } from "@/theme";
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  ScrollView,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  Text as RNText,
+  ScrollView,
+  StyleSheet,
+  View,
 } from "react-native";
-import { Text } from "@/components/ui/Text";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
-import { colors, spacing, radius } from "@/theme";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/lib/auth-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const DISPLAY_EMOJIS = EMOJI_LIST.slice(0, 10);
 
@@ -67,6 +68,7 @@ export default function ProfileSetupScreen() {
 
       // Refresh auth context so isNewUser becomes false
       // Root layout will auto-redirect to (tabs)
+      setSaving(false);
       await refreshProfile();
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -95,7 +97,14 @@ export default function ProfileSetupScreen() {
           </View>
 
           <View style={styles.avatarSection}>
-            <Avatar emoji={selectedEmoji} size="lg" />
+            <Avatar emoji={selectedEmoji} size="xl" />
+            <Text
+              variant="caption"
+              color="textSecondary"
+              style={styles.avatarHint}
+            >
+              Pick your avatar
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -113,7 +122,7 @@ export default function ProfileSetupScreen() {
                       isSelected && styles.emojiSelected,
                     ]}
                   >
-                    <Text style={styles.emojiText}>{emoji}</Text>
+                    <RNText style={styles.emojiText}>{emoji}</RNText>
                   </Pressable>
                 );
               })}
@@ -150,6 +159,13 @@ export default function ProfileSetupScreen() {
             loading={saving}
             style={styles.button}
           />
+
+          <Button
+            label="Sign out"
+            variant="ghost"
+            onPress={() => supabase.auth.signOut()}
+            style={styles.signOut}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -166,51 +182,64 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    padding: spacing[6],
+    padding: spacing[8],
     justifyContent: "center",
   },
   header: {
-    marginBottom: spacing[8],
+    marginBottom: spacing[10],
+    alignItems: "center",
   },
   subtitle: {
     marginTop: spacing[2],
   },
   avatarSection: {
     alignItems: "center",
-    marginBottom: spacing[8],
+    marginBottom: spacing[10],
+  },
+  avatarHint: {
+    marginTop: spacing[3],
+    marginBottom: spacing[1],
   },
   emojiScroll: {
     marginTop: spacing[4],
-    maxHeight: 56,
+    flexGrow: 0,
+    alignSelf: "stretch",
   },
   emojiRow: {
-    gap: spacing[2],
-    paddingHorizontal: spacing[1],
+    gap: spacing[3],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2],
   },
   emojiOption: {
-    width: 44,
-    height: 44,
+    width: 64,
+    height: 64,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: "transparent",
   },
   emojiSelected: {
     borderColor: colors.accent,
   },
   emojiText: {
-    fontSize: 22,
+    fontSize: 32,
+    lineHeight: 38,
   },
   inputSection: {
-    marginBottom: spacing[4],
+    marginBottom: spacing[5],
   },
   errorText: {
     marginBottom: spacing[4],
   },
   button: {
     width: "100%",
-    marginTop: spacing[4],
+    marginTop: spacing[6],
+  },
+  signOut: {
+    borderWidth: 1,
+    marginTop: spacing[6],
+    borderColor: colors.error,
   },
 });
