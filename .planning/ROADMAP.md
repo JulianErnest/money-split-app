@@ -30,11 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Supabase database tables (users, groups, group_members, expenses, expense_splits) exist with RLS policies that restrict access to owned data
   3. Design tokens (colors, typography, spacing) are defined and applied consistently from a single source of truth
   4. Expo Router navigation shell is in place with bottom tabs or stack navigator ready for screens
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Expo project scaffolding, Supabase setup, and database schema with RLS
-- [ ] 01-02: Design system tokens, theme provider, and reusable base components
+- [ ] 01-01-PLAN.md — Expo project scaffolding, Supabase CLI + migration with full schema and RLS, typed client, Expo Router tabs
+- [ ] 01-02-PLAN.md — Design system tokens (colors, typography, spacing), reusable UI components (Text, Button, Card, Input, Avatar), custom tab bar with center FAB
 
 ### Phase 2: Authentication
 **Goal**: Users can sign in with their phone number and have a profile, establishing identity for all group and expense operations
