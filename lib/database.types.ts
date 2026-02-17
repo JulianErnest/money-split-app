@@ -210,7 +210,18 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      create_group: {
+        Args: { group_name: string };
+        Returns: string;
+      };
+      join_group_by_invite: {
+        Args: { invite: string };
+        Returns: string;
+      };
+      get_user_group_ids: {
+        Args: Record<string, never>;
+        Returns: string[];
+      };
     };
     Enums: {
       [_ in never]: never;
