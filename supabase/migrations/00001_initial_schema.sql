@@ -1,7 +1,6 @@
 -- supabase/migrations/00001_initial_schema.sql
 
--- Enable UUID generation
-create extension if not exists "uuid-ossp";
+-- gen_random_uuid() is built into PostgreSQL 13+, no extension needed
 
 -- Users table (synced from auth.users)
 create table public.users (
@@ -29,7 +28,7 @@ create policy "Users can insert their own profile"
 
 -- Groups table
 create table public.groups (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   name text not null,
   invite_code text unique not null default substr(replace(gen_random_uuid()::text, '-', ''), 1, 8),
   created_by uuid references public.users(id) not null,
@@ -40,7 +39,7 @@ alter table public.groups enable row level security;
 
 -- Group members junction table
 create table public.group_members (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   group_id uuid references public.groups(id) on delete cascade not null,
   user_id uuid references public.users(id) on delete cascade not null,
   joined_at timestamptz default now() not null,
@@ -81,7 +80,7 @@ create policy "Authenticated users can join groups"
 
 -- Expenses table
 create table public.expenses (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   group_id uuid references public.groups(id) on delete cascade not null,
   description text not null,
   amount numeric(10,2) not null check (amount > 0 and amount <= 999999),
@@ -115,7 +114,7 @@ create policy "Members can add expenses to their groups"
 
 -- Expense splits table
 create table public.expense_splits (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   expense_id uuid references public.expenses(id) on delete cascade not null,
   user_id uuid references public.users(id) not null,
   amount numeric(10,2) not null check (amount >= 0),
