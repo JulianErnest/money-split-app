@@ -39,14 +39,14 @@
 - [ ] **UX-02**: Lists display skeleton loaders instead of spinners
 - [ ] **UX-03**: Key actions trigger haptic feedback
 - [ ] **UX-04**: Lists support pull-to-refresh with smooth animation
-- [ ] **UX-05**: Dark-first UI with soft green accent, modern design (Telegram/Raycast/Vercel inspired)
+- [x] **UX-05**: Dark-first UI with soft green accent, modern design (Telegram/Raycast/Vercel inspired)
 - [ ] **UX-06**: Bottom sheet patterns for actions (add expense, invite)
 - [ ] **UX-07**: Friendly empty states with helpful microcopy
 - [ ] **UX-08**: Peso sign (₱) used throughout, casual/Taglish tone where natural
 
 ### Infrastructure
 
-- [ ] **INFR-01**: Supabase database with RLS policies — users only see their own groups/expenses
+- [x] **INFR-01**: Supabase database with RLS policies — users only see their own groups/expenses
 - [ ] **INFR-02**: EAS Build configured for internal distribution (iOS TestFlight + Android)
 - [ ] **INFR-03**: Expense amounts capped at ₱999,999
 
@@ -120,11 +120,11 @@
 | UX-02 | Phase 6 | Pending |
 | UX-03 | Phase 6 | Pending |
 | UX-04 | Phase 6 | Pending |
-| UX-05 | Phase 1 | Pending |
+| UX-05 | Phase 1 | Complete |
 | UX-06 | Phase 6 | Pending |
 | UX-07 | Phase 6 | Pending |
 | UX-08 | Phase 6 | Pending |
-| INFR-01 | Phase 1 | Pending |
+| INFR-01 | Phase 1 | Complete |
 | INFR-02 | Phase 6 | Pending |
 | INFR-03 | Phase 4 | Pending |
 
