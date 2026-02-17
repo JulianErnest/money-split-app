@@ -45,11 +45,11 @@ Plans:
   2. First-time user is prompted to set a display name and optional avatar before reaching the home screen
   3. User can sign out and is returned to the auth screen
   4. Returning user is automatically signed in without re-entering OTP (Supabase session persistence)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Phone OTP auth flow with Supabase Auth
-- [ ] 02-02: Profile setup screen and sign-out functionality
+- [ ] 02-01-PLAN.md — Phone OTP auth flow (AuthProvider, phone input with +63 prefix, OTP verification with 6 digit boxes)
+- [ ] 02-02-PLAN.md — Profile setup screen for new users, profile tab with sign-out
 
 ### Phase 3: Groups
 **Goal**: Users can create groups, invite friends via shareable links, and see their groups and members
