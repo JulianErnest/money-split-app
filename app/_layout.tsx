@@ -26,12 +26,16 @@ function RootNavigator() {
 
     const inAuthGroup = segments[0] === "(auth)";
 
+    const inProfileSetup = segments[1] === "profile-setup";
+
     if (!session && !inAuthGroup) {
       // Not signed in — redirect to auth
       router.replace("/(auth)/phone");
-    } else if (session && inAuthGroup) {
-      // Signed in but still on auth screens — redirect to app
-      // isNewUser check: profile-setup will be built in 02-02, for now go to tabs
+    } else if (session && isNewUser && !inProfileSetup) {
+      // Signed in but needs profile setup — redirect to profile setup
+      router.replace("/(auth)/profile-setup");
+    } else if (session && !isNewUser && inAuthGroup) {
+      // Signed in with profile — redirect to app
       router.replace("/(tabs)");
     }
   }, [session, isLoading, segments]);
