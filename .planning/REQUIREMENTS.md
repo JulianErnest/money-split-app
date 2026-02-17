@@ -7,9 +7,9 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can sign in with phone number via OTP (Supabase Auth)
-- [ ] **AUTH-02**: First-time user completes profile setup (display name + optional avatar)
-- [ ] **AUTH-03**: User can sign out from the app
+- [x] **AUTH-01**: User can sign in with phone number via OTP (Supabase Auth)
+- [x] **AUTH-02**: First-time user completes profile setup (display name + optional avatar)
+- [x] **AUTH-03**: User can sign out from the app
 
 ### Groups
 
@@ -100,9 +100,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
+| AUTH-01 | Phase 2 | Complete |
+| AUTH-02 | Phase 2 | Complete |
+| AUTH-03 | Phase 2 | Complete |
 | GRPS-01 | Phase 3 | Pending |
 | GRPS-02 | Phase 3 | Pending |
 | GRPS-03 | Phase 3 | Pending |

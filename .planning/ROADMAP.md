@@ -13,7 +13,7 @@ HatianApp goes from zero to a testable private build in 6 phases, following the 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Design System** - Expo project, Supabase schema with RLS, and dark-first design tokens
-- [ ] **Phase 2: Authentication** - Phone OTP sign-in with profile setup
+- [x] **Phase 2: Authentication** - Phone OTP sign-in with profile setup
 - [ ] **Phase 3: Groups** - Create, join, and browse groups with invite links
 - [ ] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
 - [ ] **Phase 5: Balances** - Debt simplification algorithm and balance views
@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Phone OTP auth flow (AuthProvider, phone input with +63 prefix, OTP verification with 6 digit boxes)
-- [ ] 02-02-PLAN.md — Profile setup screen for new users, profile tab with sign-out
+- [x] 02-01-PLAN.md — Phone OTP auth flow (AuthProvider, phone input with +63 prefix, OTP verification with 6 digit boxes)
+- [x] 02-02-PLAN.md — Profile setup screen for new users, profile tab with sign-out
 
 ### Phase 3: Groups
 **Goal**: Users can create groups, invite friends via shareable links, and see their groups and members
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Design System | 2/2 | Complete | 2026-02-18 |
-| 2. Authentication | 0/2 | Not started | - |
+| 2. Authentication | 2/2 | Complete | 2026-02-18 |
 | 3. Groups | 0/3 | Not started | - |
 | 4. Expenses | 0/3 | Not started | - |
 | 5. Balances | 0/2 | Not started | - |
