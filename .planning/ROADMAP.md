@@ -12,7 +12,7 @@ HatianApp goes from zero to a testable private build in 6 phases, following the 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Design System** - Expo project, Supabase schema with RLS, and dark-first design tokens
+- [x] **Phase 1: Foundation & Design System** - Expo project, Supabase schema with RLS, and dark-first design tokens
 - [ ] **Phase 2: Authentication** - Phone OTP sign-in with profile setup
 - [ ] **Phase 3: Groups** - Create, join, and browse groups with invite links
 - [ ] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — Expo project scaffolding, Supabase CLI + migration with full schema and RLS, typed client, Expo Router tabs
-- [ ] 01-02-PLAN.md — Design system tokens (colors, typography, spacing), reusable UI components (Text, Button, Card, Input, Avatar), custom tab bar with center FAB
+- [x] 01-02-PLAN.md — Design system tokens (colors, typography, spacing), reusable UI components (Text, Button, Card, Input, Avatar), custom tab bar with center FAB
 
 ### Phase 2: Authentication
 **Goal**: Users can sign in with their phone number and have a profile, establishing identity for all group and expense operations
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Design System | 1/2 | In progress | - |
+| 1. Foundation & Design System | 2/2 | Complete | 2026-02-18 |
 | 2. Authentication | 0/2 | Not started | - |
 | 3. Groups | 0/3 | Not started | - |
 | 4. Expenses | 0/3 | Not started | - |
