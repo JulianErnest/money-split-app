@@ -9,6 +9,7 @@ interface Member {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  isPending?: boolean;
 }
 
 interface CustomSplitRowProps {
@@ -71,14 +72,21 @@ export function CustomSplitRow({
   return (
     <View style={styles.row}>
       <Avatar emoji={member.avatar_url || undefined} size="sm" />
-      <Text
-        variant="bodyMedium"
-        color="textPrimary"
-        style={styles.name}
-        numberOfLines={1}
-      >
-        {member.display_name}
-      </Text>
+      <View style={styles.nameContainer}>
+        <Text
+          variant="bodyMedium"
+          color="textPrimary"
+          style={styles.name}
+          numberOfLines={1}
+        >
+          {member.display_name}
+        </Text>
+        {member.isPending && (
+          <Text variant="caption" color="textTertiary">
+            Pending
+          </Text>
+        )}
+      </View>
       <View style={styles.inputContainer}>
         <Text variant="body" color="textTertiary" style={styles.pesoSign}>
           {"\u20B1"}
@@ -109,8 +117,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.md,
   },
-  name: {
+  nameContainer: {
     flex: 1,
+  },
+  name: {
+    flexShrink: 1,
   },
   inputContainer: {
     flexDirection: "row",

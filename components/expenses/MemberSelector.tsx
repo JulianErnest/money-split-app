@@ -8,6 +8,7 @@ interface Member {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  isPending?: boolean;
 }
 
 interface MemberSelectorProps {
@@ -36,14 +37,21 @@ export function MemberSelector({
             onPress={() => onToggle(member.id)}
           >
             <Avatar emoji={member.avatar_url || undefined} size="sm" />
-            <Text
-              variant="bodyMedium"
-              color="textPrimary"
-              style={styles.name}
-              numberOfLines={1}
-            >
-              {member.display_name}
-            </Text>
+            <View style={styles.nameContainer}>
+              <Text
+                variant="bodyMedium"
+                color="textPrimary"
+                style={styles.name}
+                numberOfLines={1}
+              >
+                {member.display_name}
+              </Text>
+              {member.isPending && (
+                <Text variant="caption" color="textTertiary">
+                  Pending
+                </Text>
+              )}
+            </View>
             <View
               style={[styles.checkbox, isSelected && styles.checkboxSelected]}
             >
@@ -82,8 +90,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent,
   },
-  name: {
+  nameContainer: {
     flex: 1,
+  },
+  name: {
+    flexShrink: 1,
   },
   checkbox: {
     width: 22,

@@ -27,17 +27,8 @@ import {
 } from "@/lib/expense-utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { GroupMember, fetchAllMembers } from "@/lib/group-members";
 import { colors, spacing, radius, fontFamily, fontSize } from "@/theme";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface GroupMember {
-  id: string;
-  display_name: string;
-  avatar_url: string | null;
-}
 
 // ---------------------------------------------------------------------------
 // Amount Input Hook
@@ -121,32 +112,14 @@ export default function AddExpenseScreen() {
 
   async function fetchMembers() {
     try {
-      const { data, error } = await supabase
-        .from("group_members")
-        .select("user_id, users (id, display_name, avatar_url)")
-        .eq("group_id", groupId!)
-        .order("joined_at", { ascending: true });
-
-      if (error || !data) {
-        Alert.alert("Error", "Failed to load group members");
-        return;
-      }
-
-      const memberList: GroupMember[] = (data as unknown as Array<{
-        user_id: string;
-        users: { id: string; display_name: string | null; avatar_url: string | null };
-      }>).map((row) => ({
-        id: row.users.id,
-        display_name: row.users.display_name || "Unknown",
-        avatar_url: row.users.avatar_url,
-      }));
+      const memberList = await fetchAllMembers(groupId!);
 
       setMembers(memberList);
       // Default payer to current user
       if (user?.id) {
         setPayerId(user.id);
       }
-      // Default all members selected for equal split
+      // Default all members selected for equal split (includes pending)
       setSelectedMemberIds(memberList.map((m) => m.id));
     } catch {
       Alert.alert("Error", "Failed to load group members");
@@ -154,6 +127,10 @@ export default function AddExpenseScreen() {
       setLoading(false);
     }
   }
+
+  // Derived member lists: real members for payer, all members for splits
+  const realMembers = members.filter((m) => !m.isPending);
+  const allMembers = members;
 
   // -----------------------------------------------------------------------
   // Member toggle for equal split
@@ -202,21 +179,25 @@ export default function AddExpenseScreen() {
     setSubmitting(true);
 
     try {
-      // Build splits
-      let splits: Array<{ user_id: string; amount: number }>;
+      // Build splits -- pending members use pending_member_id instead of user_id
+      function buildSplitEntry(memberId: string, amountPesos: number) {
+        const member = members.find((m) => m.id === memberId);
+        if (member?.isPending) {
+          return { pending_member_id: memberId, amount: amountPesos };
+        }
+        return { user_id: memberId, amount: amountPesos };
+      }
+
+      let splits: Array<{ user_id?: string; pending_member_id?: string; amount: number }>;
       if (splitType === "equal") {
         const equalSplits = calculateEqualSplit(centavos, selectedMemberIds);
-        splits = Object.entries(equalSplits).map(([userId, amt]) => ({
-          user_id: userId,
-          amount: amt / 100, // convert centavos to pesos for DB
-        }));
+        splits = Object.entries(equalSplits).map(([id, amt]) =>
+          buildSplitEntry(id, amt / 100),
+        );
       } else {
         splits = Object.entries(customAmounts)
           .filter(([, amt]) => amt > 0)
-          .map(([userId, amt]) => ({
-            user_id: userId,
-            amount: amt / 100,
-          }));
+          .map(([id, amt]) => buildSplitEntry(id, amt / 100));
       }
 
       const { error } = await supabase.rpc("create_expense", {
@@ -339,7 +320,7 @@ export default function AddExpenseScreen() {
             Who paid?
           </Text>
           <PayerSelector
-            members={members}
+            members={realMembers}
             selectedId={payerId}
             onSelect={setPayerId}
           />
@@ -361,7 +342,7 @@ export default function AddExpenseScreen() {
           {splitType === "equal" ? (
             <>
               <MemberSelector
-                members={members}
+                members={allMembers}
                 selectedIds={selectedMemberIds}
                 onToggle={handleToggleMember}
               />
@@ -384,7 +365,7 @@ export default function AddExpenseScreen() {
                 </Text>
               </View>
               <View style={styles.customSplitList}>
-                {members.map((member) => (
+                {allMembers.map((member) => (
                   <CustomSplitRow
                     key={member.id}
                     member={member}
