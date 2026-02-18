@@ -173,19 +173,22 @@ export interface Database {
         Row: {
           id: string;
           expense_id: string;
-          user_id: string;
+          user_id: string | null;
+          pending_member_id: string | null;
           amount: number;
         };
         Insert: {
           id?: string;
           expense_id: string;
-          user_id: string;
+          user_id?: string | null;
+          pending_member_id?: string | null;
           amount: number;
         };
         Update: {
           id?: string;
           expense_id?: string;
-          user_id?: string;
+          user_id?: string | null;
+          pending_member_id?: string | null;
           amount?: number;
         };
         Relationships: [
@@ -199,6 +202,52 @@ export interface Database {
           {
             foreignKeyName: "expense_splits_user_id_fkey";
             columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expense_splits_pending_member_id_fkey";
+            columns: ["pending_member_id"];
+            isOneToOne: false;
+            referencedRelation: "pending_members";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pending_members: {
+        Row: {
+          id: string;
+          group_id: string;
+          phone_number: string;
+          added_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          phone_number: string;
+          added_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          phone_number?: string;
+          added_by?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pending_members_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pending_members_added_by_fkey";
+            columns: ["added_by"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -221,6 +270,13 @@ export interface Database {
       get_user_group_ids: {
         Args: Record<string, never>;
         Returns: string[];
+      };
+      add_pending_member: {
+        Args: {
+          p_group_id: string;
+          p_phone_number: string;
+        };
+        Returns: string;
       };
       create_expense: {
         Args: {
