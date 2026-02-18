@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
 import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
@@ -17,6 +18,8 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { colors, spacing, radius } from "@/theme";
+import { formatBalanceSummary, formatBalanceColor } from "@/lib/balance-utils";
+import { formatPeso } from "@/lib/expense-utils";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -56,6 +59,9 @@ export default function GroupsScreen() {
 
   const [groups, setGroups] = useState<GroupRow[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+  const [groupBalances, setGroupBalances] = useState<Map<string, number>>(
+    new Map(),
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -108,15 +114,44 @@ export default function GroupsScreen() {
     }
   }, [user]);
 
+  // Fetch per-group net balances for current user
+  const fetchBalances = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.rpc("get_my_group_balances");
+      if (error || !data) return;
+      const map = new Map<string, number>();
+      for (const row of data as Array<{
+        group_id: string;
+        net_balance: number;
+      }>) {
+        const centavos = Math.round(row.net_balance * 100);
+        if (centavos !== 0) {
+          map.set(row.group_id, centavos);
+        }
+      }
+      setGroupBalances(map);
+    } catch {
+      // Silently skip -- don't break the groups list
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchGroups().finally(() => setLoading(false));
   }, [fetchGroups]);
 
+  // Refresh balances on every focus (picks up new expenses)
+  useFocusEffect(
+    useCallback(() => {
+      fetchBalances();
+    }, [fetchBalances]),
+  );
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchGroups();
+    await Promise.all([fetchGroups(), fetchBalances()]);
     setRefreshing(false);
-  }, [fetchGroups]);
+  }, [fetchGroups, fetchBalances]);
 
   // ------- Create group -------
   const handleCreateGroup = useCallback(async () => {
@@ -153,6 +188,7 @@ export default function GroupsScreen() {
       const group = item.groups;
       const count = memberCounts[group.id] || 0;
       const countLabel = count === 1 ? "1 member" : `${count} members`;
+      const netCentavos = groupBalances.get(group.id);
 
       return (
         <Pressable
@@ -169,6 +205,15 @@ export default function GroupsScreen() {
                 <Text variant="caption" color="textSecondary">
                   {countLabel}
                 </Text>
+                {netCentavos != null && (
+                  <Text
+                    variant="caption"
+                    color={formatBalanceColor(netCentavos)}
+                    style={styles.balanceText}
+                  >
+                    {formatBalanceSummary(netCentavos, formatPeso)}
+                  </Text>
+                )}
               </View>
               <Text variant="body" color="textSecondary">
                 {">"}
@@ -178,7 +223,7 @@ export default function GroupsScreen() {
         </Pressable>
       );
     },
-    [router, memberCounts]
+    [router, memberCounts, groupBalances],
   );
 
   const keyExtractor = useCallback(
@@ -336,6 +381,9 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     gap: 2,
+  },
+  balanceText: {
+    marginTop: 2,
   },
   emptyContainer: {
     flex: 1,
