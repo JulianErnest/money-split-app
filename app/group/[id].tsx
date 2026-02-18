@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   Share,
   StyleSheet,
   View,
@@ -29,6 +30,22 @@ function getGroupEmoji(groupName: string): string {
   return EMOJI_LIST[index];
 }
 
+function formatJoinedDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Joined today";
+  if (diffDays === 1) return "Joined yesterday";
+  if (diffDays < 30) return `Joined ${diffDays}d ago`;
+
+  return `Joined ${date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  })}`;
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -41,6 +58,16 @@ interface GroupDetail {
   created_at: string;
 }
 
+interface MemberRow {
+  user_id: string;
+  joined_at: string;
+  users: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -49,6 +76,7 @@ export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [group, setGroup] = useState<GroupDetail | null>(null);
+  const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -58,23 +86,33 @@ export default function GroupDetailScreen() {
       setLoading(false);
       return;
     }
-    fetchGroup();
+    fetchGroupAndMembers();
   }, [id]);
 
-  async function fetchGroup() {
+  async function fetchGroupAndMembers() {
     try {
-      const { data, error: fetchError } = await supabase
-        .from("groups")
-        .select("id, name, invite_code, created_by, created_at")
-        .eq("id", id!)
-        .single();
+      const [groupResult, membersResult] = await Promise.all([
+        supabase
+          .from("groups")
+          .select("id, name, invite_code, created_by, created_at")
+          .eq("id", id!)
+          .single(),
+        supabase
+          .from("group_members")
+          .select("user_id, joined_at, users (id, display_name, avatar_url)")
+          .eq("group_id", id!)
+          .order("joined_at", { ascending: true }),
+      ]);
 
-      if (fetchError || !data) {
+      if (groupResult.error || !groupResult.data) {
         setError(true);
         return;
       }
 
-      setGroup(data);
+      setGroup(groupResult.data);
+      setMembers(
+        (membersResult.data as unknown as MemberRow[]) ?? []
+      );
     } catch {
       setError(true);
     } finally {
@@ -151,40 +189,80 @@ export default function GroupDetailScreen() {
         </Pressable>
       </View>
 
-      {/* Group info */}
-      <View style={styles.groupHeader}>
-        <Avatar emoji={getGroupEmoji(group.name)} size="lg" />
-        <Text variant="h2" color="textPrimary" style={styles.groupName}>
-          {group.name}
-        </Text>
-      </View>
-
-      {/* Share / Invite button */}
-      <View style={styles.shareSection}>
-        <Button
-          label="Invite Friends"
-          variant="primary"
-          onPress={handleShare}
-          style={styles.shareButton}
-        />
-      </View>
-
-      {/* Members section */}
-      <View style={styles.membersSection}>
-        <Card style={styles.membersCard}>
-          <Text variant="bodyMedium" color="textPrimary">
-            Members
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Group info */}
+        <View style={styles.groupHeader}>
+          <Avatar emoji={getGroupEmoji(group.name)} size="lg" />
+          <Text variant="h2" color="textPrimary" style={styles.groupName}>
+            {group.name}
           </Text>
-          {/* Member list added by Plan 03-03 */}
-          <Text
-            variant="body"
-            color="textSecondary"
-            style={styles.memberPlaceholder}
-          >
-            Member list coming soon
-          </Text>
-        </Card>
-      </View>
+        </View>
+
+        {/* Share / Invite button */}
+        <View style={styles.shareSection}>
+          <Button
+            label="Invite Friends"
+            variant="primary"
+            onPress={handleShare}
+            style={styles.shareButton}
+          />
+        </View>
+
+        {/* Members section */}
+        <View style={styles.membersSection}>
+          <View style={styles.membersSectionHeader}>
+            <Text variant="bodyMedium" color="textPrimary">
+              Members
+            </Text>
+            <View style={styles.countBadge}>
+              <Text variant="caption" color="textSecondary">
+                {members.length}
+              </Text>
+            </View>
+          </View>
+
+          {members.map((member) => {
+            const isCreator = member.users.id === group.created_by;
+            const displayName =
+              member.users.display_name || "Unknown";
+            const emoji = member.users.avatar_url || undefined;
+
+            return (
+              <Card key={member.user_id} style={styles.memberCard}>
+                <View style={styles.memberRow}>
+                  <Avatar emoji={emoji} size="sm" />
+                  <View style={styles.memberInfo}>
+                    <View style={styles.memberNameRow}>
+                      <Text
+                        variant="bodyMedium"
+                        color="textPrimary"
+                        numberOfLines={1}
+                        style={styles.memberName}
+                      >
+                        {displayName}
+                      </Text>
+                      {isCreator && (
+                        <View style={styles.creatorBadge}>
+                          <Text variant="caption" color="accent">
+                            Creator
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text variant="caption" color="textSecondary">
+                      {formatJoinedDate(member.joined_at)}
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            );
+          })}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -217,6 +295,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: radius.full,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing[10],
+  },
   groupHeader: {
     alignItems: "center",
     paddingVertical: spacing[6],
@@ -235,13 +319,48 @@ const styles = StyleSheet.create({
   },
   membersSection: {
     paddingHorizontal: spacing[6],
-    flex: 1,
-  },
-  membersCard: {
     gap: spacing[2],
   },
-  memberPlaceholder: {
-    marginTop: spacing[2],
+  membersSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+    marginBottom: spacing[1],
+  },
+  countBadge: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2,
+    minWidth: 24,
+    alignItems: "center",
+  },
+  memberCard: {
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+  },
+  memberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+  },
+  memberInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  memberNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  memberName: {
+    flexShrink: 1,
+  },
+  creatorBadge: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 1,
   },
   errorTitle: {
     marginBottom: spacing[3],
