@@ -318,8 +318,27 @@ export default function GroupDetailScreen() {
             settlements.map((s, idx) => {
               const fromPending = isMemberPending(s.from);
               const toPending = isMemberPending(s.to);
+
+              // Determine drill-down navigation params
+              const isCurrentUserDebtor = s.from === currentUserId;
+              const isCurrentUserCreditor = s.to === currentUserId;
+              const otherMemberId = isCurrentUserDebtor ? s.to : s.from;
+              const drillDirection = isCurrentUserDebtor ? "owe" : "owed";
+              const otherName = getMemberDisplayName(otherMemberId);
+
+              function handleSettlementPress() {
+                // Only navigate if current user is involved in this settlement
+                if (!isCurrentUserDebtor && !isCurrentUserCreditor) return;
+                router.push(
+                  `/group/${id}/balance/${otherMemberId}?direction=${drillDirection}&memberName=${encodeURIComponent(otherName)}&amount=${encodeURIComponent(formatPeso(s.amount))}` as any,
+                );
+              }
+
               return (
-                <Pressable key={`${s.from}-${s.to}-${idx}`}>
+                <Pressable
+                  key={`${s.from}-${s.to}-${idx}`}
+                  onPress={handleSettlementPress}
+                >
                   <Card style={styles.settlementCard}>
                     <View style={styles.settlementRow}>
                       {/* Debtor */}
