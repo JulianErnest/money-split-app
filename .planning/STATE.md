@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 4 (Expenses) complete -- all 3 plans delivered. Ready for Phase 5 (Balances).
+**Current focus:** Phase 4.1 (Pending Members by Phone) in progress -- plan 01 delivered. Database foundation complete.
 
 ## Current Position
 
-Phase: 4 of 6 (Expenses)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-18 -- Completed 04-03-PLAN.md
+Phase: 4.1 of 6 (Pending Members by Phone)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-18 -- Completed 04.1-01-PLAN.md
 
-Progress: [██████████░░░░░] 67% (10/15 plans)
+Progress: [███████████░░░░] 69% (11/16 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 5.5min
-- Total execution time: ~0.92 hours
+- Total plans completed: 11
+- Average duration: 5.1min
+- Total execution time: ~0.95 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [██████████░░░░░] 67% (10/15 plans)
 | 02-authentication | 2/2 | 18min | 9min |
 | 03-groups | 3/3 | 10min | 3.3min |
 | 04-expenses | 3/3 | 15min | 5min |
+| 04.1-pending-members | 1/3 | 1min | 1min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (6min), 03-03 (2min), 04-01 (6min), 04-02 (6min), 04-03 (3min)
-- Trend: stable at ~5min for feature plans
+- Last 5 plans: 03-03 (2min), 04-01 (6min), 04-02 (6min), 04-03 (3min), 04.1-01 (1min)
+- Trend: stable, database-only plans execute fastest
 
 *Updated after each plan completion*
 
@@ -66,10 +67,16 @@ Recent decisions affecting current work:
 - All members selected by default for equal split -- 04-02
 - Inline TextInput for custom split amounts (not custom numpad) -- 04-02
 - useFocusEffect from @react-navigation/native for expense list refresh -- 04-03
+- Inner BEGIN...EXCEPTION per loop iteration in auto-link trigger (never block signups) -- 04.1-01
+- Trigger creates public.users row before group_members insert (FK dependency) -- 04.1-01
 
 ### Pending Todos
 
 None yet.
+
+### Roadmap Evolution
+
+- Phase 4.1 inserted after Phase 4: Pre-register group members by phone number (URGENT) -- users need to split expenses with friends who haven't installed the app yet
 
 ### Blockers/Concerns
 
@@ -78,5 +85,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 04-03-PLAN.md (Phase 4 complete)
+Stopped at: Completed 04.1-01-PLAN.md
 Resume file: None
