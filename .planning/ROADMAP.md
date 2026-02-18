@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Authentication** - Phone OTP sign-in with profile setup
 - [x] **Phase 3: Groups** - Create, join, and browse groups with invite links
 - [x] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
-- [ ] **Phase 4.1: Pending Members by Phone** - Pre-register group members by phone number before they install the app (INSERTED)
+- [x] **Phase 4.1: Pending Members by Phone** - Pre-register group members by phone number before they install the app (INSERTED)
 - [ ] **Phase 5: Balances** - Debt simplification algorithm and balance views
 - [ ] **Phase 6: Polish & Distribution** - Offline support, micro-interactions, and EAS build for testers
 
@@ -112,9 +112,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04.1-01-PLAN.md — Database migrations: pending_members table, expense_splits alterations, auto-link trigger, RPCs
-- [ ] 04.1-02-PLAN.md — Add member by phone modal, unified member type, pending member display in group detail
-- [ ] 04.1-03-PLAN.md — Expense wizard and detail screen updates for pending member splits
+- [x] 04.1-01-PLAN.md — Database migrations: pending_members table, expense_splits alterations, auto-link trigger, RPCs
+- [x] 04.1-02-PLAN.md — Add member by phone modal, unified member type, pending member display in group detail
+- [x] 04.1-03-PLAN.md — Expense wizard and detail screen updates for pending member splits
 
 ### Phase 5: Balances
 
@@ -164,6 +164,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6
 | 2. Authentication                  | 2/2            | Complete    | 2026-02-18 |
 | 3. Groups                          | 3/3            | Complete    | 2026-02-18 |
 | 4. Expenses                        | 3/3            | Complete    | 2026-02-18 |
-| 4.1 Pending Members (INSERTED)     | 0/3            | Not started | -          |
+| 4.1 Pending Members (INSERTED)     | 3/3            | Complete    | 2026-02-18 |
 | 5. Balances                        | 0/2            | Not started | -          |
 | 6. Polish & Distribution           | 0/3            | Not started | -          |
