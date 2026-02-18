@@ -126,12 +126,13 @@ Plans:
 1. User can view simplified balances within a group showing the minimum set of transactions to settle all debts
 2. Each group in the groups list shows a quick net balance summary (e.g., "You owe 350" or "You are owed 200")
 3. User can tap a balance entry to see which expenses contribute to that debt
-   **Plans**: TBD
+   **Plans**: 3 plans
 
 Plans:
 
-- [ ] 05-01: Debt simplification algorithm and balances view
-- [ ] 05-02: Per-group net balance summary and balance drill-down
+- [ ] 05-01-PLAN.md — TDD greedy debt simplification algorithm (simplifyDebts pure function)
+- [ ] 05-02-PLAN.md — Balance RPCs (get_group_balances, get_my_group_balances) and group detail balances section
+- [ ] 05-03-PLAN.md — Per-group net balance summary on groups list and balance drill-down screen
 
 ### Phase 6: Polish & Distribution
 
@@ -165,5 +166,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6
 | 3. Groups                          | 3/3            | Complete    | 2026-02-18 |
 | 4. Expenses                        | 3/3            | Complete    | 2026-02-18 |
 | 4.1 Pending Members (INSERTED)     | 3/3            | Complete    | 2026-02-18 |
-| 5. Balances                        | 0/2            | Not started | -          |
+| 5. Balances                        | 0/3            | Not started | -          |
 | 6. Polish & Distribution           | 0/3            | Not started | -          |
