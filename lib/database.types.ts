@@ -222,6 +222,17 @@ export interface Database {
         Args: Record<string, never>;
         Returns: string[];
       };
+      create_expense: {
+        Args: {
+          p_group_id: string;
+          p_description: string;
+          p_amount: number;
+          p_paid_by: string;
+          p_split_type: string;
+          p_splits: Json;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       [_ in never]: never;
