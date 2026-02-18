@@ -20,9 +20,14 @@ import {
   type ExpenseCardExpense,
   type ExpenseCardSplit,
 } from "@/components/expenses/ExpenseCard";
+import { AddMemberModal } from "@/components/groups/AddMemberModal";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { colors, spacing, radius } from "@/theme";
+import {
+  type GroupMember,
+  fetchAllMembers,
+} from "@/lib/group-members";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -65,16 +70,6 @@ interface GroupDetail {
   created_at: string;
 }
 
-interface MemberRow {
-  user_id: string;
-  joined_at: string;
-  users: {
-    id: string;
-    display_name: string | null;
-    avatar_url: string | null;
-  };
-}
-
 interface ExpenseRow extends ExpenseCardExpense {
   expense_splits: ExpenseCardSplit[];
 }
@@ -88,10 +83,11 @@ export default function GroupDetailScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [group, setGroup] = useState<GroupDetail | null>(null);
-  const [members, setMembers] = useState<MemberRow[]>([]);
+  const [members, setMembers] = useState<GroupMember[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
 
   // Re-fetch on every focus (handles returning from add-expense)
   useFocusEffect(
@@ -107,17 +103,13 @@ export default function GroupDetailScreen() {
 
   async function fetchData() {
     try {
-      const [groupResult, membersResult, expensesResult] = await Promise.all([
+      const [groupResult, allMembers, expensesResult] = await Promise.all([
         supabase
           .from("groups")
           .select("id, name, invite_code, created_by, created_at")
           .eq("id", id!)
           .single(),
-        supabase
-          .from("group_members")
-          .select("user_id, joined_at, users (id, display_name, avatar_url)")
-          .eq("group_id", id!)
-          .order("joined_at", { ascending: true }),
+        fetchAllMembers(id!),
         supabase
           .from("expenses")
           .select(
@@ -133,9 +125,7 @@ export default function GroupDetailScreen() {
       }
 
       setGroup(groupResult.data);
-      setMembers(
-        (membersResult.data as unknown as MemberRow[]) ?? [],
-      );
+      setMembers(allMembers);
       setExpenses(
         (expensesResult.data as unknown as ExpenseRow[]) ?? [],
       );
@@ -230,13 +220,19 @@ export default function GroupDetailScreen() {
           </Text>
         </View>
 
-        {/* Share / Invite button */}
+        {/* Share / Invite + Add Member buttons */}
         <View style={styles.shareSection}>
           <Button
             label="Invite Friends"
             variant="primary"
             onPress={handleShare}
             style={styles.shareButton}
+          />
+          <Button
+            label="Add Member"
+            variant="secondary"
+            onPress={() => setShowAddMember(true)}
+            style={styles.addMemberButton}
           />
         </View>
 
@@ -300,13 +296,45 @@ export default function GroupDetailScreen() {
           </View>
 
           {members.map((member) => {
-            const isCreator = member.users.id === group.created_by;
-            const displayName =
-              member.users.display_name || "Unknown";
-            const emoji = member.users.avatar_url || undefined;
+            if (member.isPending) {
+              return (
+                <Card key={member.id} style={styles.memberCard}>
+                  <View style={styles.memberRow}>
+                    <View style={styles.pendingAvatar}>
+                      <Text variant="body" color="textSecondary">
+                        {"#"}
+                      </Text>
+                    </View>
+                    <View style={styles.memberInfo}>
+                      <View style={styles.memberNameRow}>
+                        <Text
+                          variant="bodyMedium"
+                          color="textPrimary"
+                          numberOfLines={1}
+                          style={styles.memberName}
+                        >
+                          {member.display_name}
+                        </Text>
+                        <View style={styles.pendingBadge}>
+                          <Text variant="caption" color="warning">
+                            Pending
+                          </Text>
+                        </View>
+                      </View>
+                      <Text variant="caption" color="textTertiary">
+                        Pending signup
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              );
+            }
+
+            const isCreator = member.id === group.created_by;
+            const emoji = member.avatar_url || undefined;
 
             return (
-              <Card key={member.user_id} style={styles.memberCard}>
+              <Card key={member.id} style={styles.memberCard}>
                 <View style={styles.memberRow}>
                   <Avatar emoji={emoji} size="sm" />
                   <View style={styles.memberInfo}>
@@ -317,7 +345,7 @@ export default function GroupDetailScreen() {
                         numberOfLines={1}
                         style={styles.memberName}
                       >
-                        {displayName}
+                        {member.display_name}
                       </Text>
                       {isCreator && (
                         <View style={styles.creatorBadge}>
@@ -327,9 +355,6 @@ export default function GroupDetailScreen() {
                         </View>
                       )}
                     </View>
-                    <Text variant="caption" color="textSecondary">
-                      {formatJoinedDate(member.joined_at)}
-                    </Text>
                   </View>
                 </View>
               </Card>
@@ -337,6 +362,14 @@ export default function GroupDetailScreen() {
           })}
         </View>
       </ScrollView>
+
+      {/* Add Member Modal */}
+      <AddMemberModal
+        visible={showAddMember}
+        groupId={id!}
+        onClose={() => setShowAddMember(false)}
+        onAdded={() => fetchData()}
+      />
     </SafeAreaView>
   );
 }
@@ -387,8 +420,12 @@ const styles = StyleSheet.create({
   shareSection: {
     paddingHorizontal: spacing[6],
     paddingBottom: spacing[3],
+    gap: spacing[2],
   },
   shareButton: {
+    width: "100%",
+  },
+  addMemberButton: {
     width: "100%",
   },
   addExpenseSection: {
@@ -451,6 +488,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 1,
+  },
+  pendingBadge: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 1,
+  },
+  pendingAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   errorTitle: {
     marginBottom: spacing[3],
