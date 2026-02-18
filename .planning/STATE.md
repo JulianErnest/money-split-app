@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 5 (Balances) in progress -- plan 01 (debt simplification algorithm) complete. Plans 02-03 remaining.
+**Current focus:** Phase 5 (Balances) in progress -- plans 01-02 complete. Plan 03 remaining.
 
 ## Current Position
 
 Phase: 5 of 6 (Balances)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-18 -- Completed 05-01-PLAN.md
+Last activity: 2026-02-18 -- Completed 05-02-PLAN.md
 
-Progress: [██████████████░] 88% (14/16 plans)
+Progress: [███████████████░] 94% (15/16 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 4.5min
-- Total execution time: ~1.0 hours
+- Total plans completed: 15
+- Average duration: 4.3min
+- Total execution time: ~1.1 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [██████████████░] 88% (14/16 plans)
 | 03-groups | 3/3 | 10min | 3.3min |
 | 04-expenses | 3/3 | 15min | 5min |
 | 04.1-pending-members | 3/3 | 7min | 2.3min |
-| 05-balances | 1/3 | 2min | 2min |
+| 05-balances | 2/3 | 5min | 2.5min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03 (3min), 04.1-01 (1min), 04.1-02 (3min), 04.1-03 (3min), 05-01 (2min)
-- Trend: stable, TDD algorithm plan fast
+- Last 5 plans: 04.1-01 (1min), 04.1-02 (3min), 04.1-03 (3min), 05-01 (2min), 05-02 (3min)
+- Trend: stable, fast execution
 
 *Updated after each plan completion*
 
@@ -73,6 +73,8 @@ Recent decisions affecting current work:
 - Hash symbol (#) as pending member avatar placeholder -- 04.1-02
 - Conditional split payload: pending_member_id vs user_id in expense splits -- 04.1-03
 - Greedy two-pointer algorithm for debt simplification (O(n log n), optimal for small groups) -- 05-01
+- Left join paid on owed in balance RPC (pending members cannot be payers) -- 05-02
+- Separate balance member flags Map for accurate pending detection from RPC data -- 05-02
 
 ### Pending Todos
 
@@ -89,5 +91,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 05-01-PLAN.md (Phase 5 plan 1 of 3)
+Stopped at: Completed 05-02-PLAN.md (Phase 5 plan 2 of 3)
 Resume file: None
