@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,12 +9,19 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import * as Linking from "expo-linking";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
+import {
+  ExpenseCard,
+  type ExpenseCardExpense,
+  type ExpenseCardSplit,
+} from "@/components/expenses/ExpenseCard";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { colors, spacing, radius } from "@/theme";
 
 // ---------------------------------------------------------------------------
@@ -68,6 +75,10 @@ interface MemberRow {
   };
 }
 
+interface ExpenseRow extends ExpenseCardExpense {
+  expense_splits: ExpenseCardSplit[];
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -75,23 +86,28 @@ interface MemberRow {
 export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    if (!id) {
-      setError(true);
-      setLoading(false);
-      return;
-    }
-    fetchGroupAndMembers();
-  }, [id]);
+  // Re-fetch on every focus (handles returning from add-expense)
+  useFocusEffect(
+    useCallback(() => {
+      if (!id) {
+        setError(true);
+        setLoading(false);
+        return;
+      }
+      fetchData();
+    }, [id]),
+  );
 
-  async function fetchGroupAndMembers() {
+  async function fetchData() {
     try {
-      const [groupResult, membersResult] = await Promise.all([
+      const [groupResult, membersResult, expensesResult] = await Promise.all([
         supabase
           .from("groups")
           .select("id, name, invite_code, created_by, created_at")
@@ -102,6 +118,13 @@ export default function GroupDetailScreen() {
           .select("user_id, joined_at, users (id, display_name, avatar_url)")
           .eq("group_id", id!)
           .order("joined_at", { ascending: true }),
+        supabase
+          .from("expenses")
+          .select(
+            "id, description, amount, paid_by, split_type, created_at, users!expenses_paid_by_fkey(display_name, avatar_url), expense_splits(user_id, amount)",
+          )
+          .eq("group_id", id!)
+          .order("created_at", { ascending: false }),
       ]);
 
       if (groupResult.error || !groupResult.data) {
@@ -111,7 +134,10 @@ export default function GroupDetailScreen() {
 
       setGroup(groupResult.data);
       setMembers(
-        (membersResult.data as unknown as MemberRow[]) ?? []
+        (membersResult.data as unknown as MemberRow[]) ?? [],
+      );
+      setExpenses(
+        (expensesResult.data as unknown as ExpenseRow[]) ?? [],
       );
     } catch {
       setError(true);
@@ -177,6 +203,8 @@ export default function GroupDetailScreen() {
     );
   }
 
+  const currentUserId = user?.id ?? "";
+
   // ------- Main render -------
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -212,9 +240,55 @@ export default function GroupDetailScreen() {
           />
         </View>
 
+        {/* Add Expense button */}
+        <View style={styles.addExpenseSection}>
+          <Button
+            label="Add Expense"
+            variant="primary"
+            onPress={() => router.push(`/group/${id}/add-expense`)}
+            style={styles.addExpenseButton}
+          />
+        </View>
+
+        {/* Expenses section */}
+        <View style={styles.expensesSection}>
+          <View style={styles.sectionHeader}>
+            <Text variant="bodyMedium" color="textPrimary">
+              Expenses
+            </Text>
+            <View style={styles.countBadge}>
+              <Text variant="caption" color="textSecondary">
+                {expenses.length}
+              </Text>
+            </View>
+          </View>
+
+          {expenses.length === 0 ? (
+            <Text
+              variant="body"
+              color="textSecondary"
+              style={styles.emptyText}
+            >
+              No expenses yet
+            </Text>
+          ) : (
+            expenses.map((expense) => (
+              <ExpenseCard
+                key={expense.id}
+                expense={expense}
+                splits={expense.expense_splits}
+                currentUserId={currentUserId}
+                onPress={() =>
+                  router.push(`/group/${id}/expense/${expense.id}`)
+                }
+              />
+            ))
+          )}
+        </View>
+
         {/* Members section */}
         <View style={styles.membersSection}>
-          <View style={styles.membersSectionHeader}>
+          <View style={styles.sectionHeader}>
             <Text variant="bodyMedium" color="textPrimary">
               Members
             </Text>
@@ -312,16 +386,24 @@ const styles = StyleSheet.create({
   },
   shareSection: {
     paddingHorizontal: spacing[6],
-    paddingBottom: spacing[6],
+    paddingBottom: spacing[3],
   },
   shareButton: {
     width: "100%",
   },
-  membersSection: {
+  addExpenseSection: {
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[6],
+  },
+  addExpenseButton: {
+    width: "100%",
+  },
+  expensesSection: {
     paddingHorizontal: spacing[6],
     gap: spacing[2],
+    marginBottom: spacing[6],
   },
-  membersSectionHeader: {
+  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[2],
@@ -334,6 +416,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     minWidth: 24,
     alignItems: "center",
+  },
+  emptyText: {
+    textAlign: "center",
+    paddingVertical: spacing[6],
+  },
+  membersSection: {
+    paddingHorizontal: spacing[6],
+    gap: spacing[2],
   },
   memberCard: {
     paddingVertical: spacing[3],
