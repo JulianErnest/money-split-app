@@ -82,3 +82,32 @@ export function netBalancesToCentavos(
 
   return result;
 }
+
+// ---------------------------------------------------------------------------
+// Display helpers
+// ---------------------------------------------------------------------------
+
+/** Color token name for a balance amount (centavos). */
+export function formatBalanceColor(
+  amountCentavos: number,
+): "accent" | "error" | "textSecondary" {
+  if (amountCentavos > 0) return "accent";
+  if (amountCentavos < 0) return "error";
+  return "textSecondary";
+}
+
+/**
+ * Human-readable summary of a net balance.
+ * Positive = "You are owed {amount}", Negative = "You owe {amount}", Zero = "Settled up"
+ *
+ * @param netCentavos - net balance in centavos (positive = creditor)
+ * @param formatPeso - formatting function from expense-utils
+ */
+export function formatBalanceSummary(
+  netCentavos: number,
+  formatPeso: (centavos: number) => string,
+): string {
+  if (netCentavos > 0) return `You are owed P${formatPeso(netCentavos)}`;
+  if (netCentavos < 0) return `You owe P${formatPeso(-netCentavos)}`;
+  return "Settled up";
+}

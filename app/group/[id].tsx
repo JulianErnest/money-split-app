@@ -28,6 +28,12 @@ import {
   type GroupMember,
   fetchAllMembers,
 } from "@/lib/group-members";
+import {
+  type Settlement,
+  simplifyDebts,
+  netBalancesToCentavos,
+} from "@/lib/balance-utils";
+import { formatPeso } from "@/lib/expense-utils";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -85,6 +91,10 @@ export default function GroupDetailScreen() {
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const [balanceMemberFlags, setBalanceMemberFlags] = useState<
+    Map<string, boolean>
+  >(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -103,21 +113,23 @@ export default function GroupDetailScreen() {
 
   async function fetchData() {
     try {
-      const [groupResult, allMembers, expensesResult] = await Promise.all([
-        supabase
-          .from("groups")
-          .select("id, name, invite_code, created_by, created_at")
-          .eq("id", id!)
-          .single(),
-        fetchAllMembers(id!),
-        supabase
-          .from("expenses")
-          .select(
-            "id, description, amount, paid_by, split_type, created_at, users!expenses_paid_by_fkey(display_name, avatar_url), expense_splits(user_id, amount)",
-          )
-          .eq("group_id", id!)
-          .order("created_at", { ascending: false }),
-      ]);
+      const [groupResult, allMembers, expensesResult, balancesResult] =
+        await Promise.all([
+          supabase
+            .from("groups")
+            .select("id, name, invite_code, created_by, created_at")
+            .eq("id", id!)
+            .single(),
+          fetchAllMembers(id!),
+          supabase
+            .from("expenses")
+            .select(
+              "id, description, amount, paid_by, split_type, created_at, users!expenses_paid_by_fkey(display_name, avatar_url), expense_splits(user_id, amount)",
+            )
+            .eq("group_id", id!)
+            .order("created_at", { ascending: false }),
+          supabase.rpc("get_group_balances", { p_group_id: id! }),
+        ]);
 
       if (groupResult.error || !groupResult.data) {
         setError(true);
@@ -129,6 +141,26 @@ export default function GroupDetailScreen() {
       setExpenses(
         (expensesResult.data as unknown as ExpenseRow[]) ?? [],
       );
+
+      // Compute simplified settlements from balance data
+      if (balancesResult.data && !balancesResult.error) {
+        const rows = balancesResult.data as Array<{
+          member_id: string;
+          is_pending: boolean;
+          net_balance: number;
+        }>;
+        const centavosMap = netBalancesToCentavos(rows);
+        setSettlements(simplifyDebts(centavosMap));
+
+        // Track which member_ids are pending for display
+        const flags = new Map<string, boolean>();
+        for (const row of rows) {
+          flags.set(row.member_id, row.is_pending);
+        }
+        setBalanceMemberFlags(flags);
+      } else {
+        setSettlements([]);
+      }
     } catch {
       setError(true);
     } finally {
@@ -195,6 +227,26 @@ export default function GroupDetailScreen() {
 
   const currentUserId = user?.id ?? "";
 
+  // Build a lookup map for member display names
+  const memberMap = new Map<string, GroupMember>();
+  for (const m of members) {
+    memberMap.set(m.id, m);
+  }
+
+  function getMemberDisplayName(memberId: string): string {
+    const m = memberMap.get(memberId);
+    if (m) return m.display_name;
+    return memberId.slice(0, 8);
+  }
+
+  function isMemberPending(memberId: string): boolean {
+    // Check the balance RPC flags first, then fall back to member list
+    const flag = balanceMemberFlags.get(memberId);
+    if (flag !== undefined) return flag;
+    const m = memberMap.get(memberId);
+    return m?.isPending ?? false;
+  }
+
   // ------- Main render -------
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -244,6 +296,99 @@ export default function GroupDetailScreen() {
             onPress={() => router.push(`/group/${id}/add-expense`)}
             style={styles.addExpenseButton}
           />
+        </View>
+
+        {/* Balances section */}
+        <View style={styles.balancesSection}>
+          <View style={styles.sectionHeader}>
+            <Text variant="bodyMedium" color="textPrimary">
+              Balances
+            </Text>
+          </View>
+
+          {settlements.length === 0 ? (
+            <Text
+              variant="body"
+              color="textSecondary"
+              style={styles.emptyText}
+            >
+              All settled up
+            </Text>
+          ) : (
+            settlements.map((s, idx) => {
+              const fromPending = isMemberPending(s.from);
+              const toPending = isMemberPending(s.to);
+              return (
+                <Pressable key={`${s.from}-${s.to}-${idx}`}>
+                  <Card style={styles.settlementCard}>
+                    <View style={styles.settlementRow}>
+                      {/* Debtor */}
+                      <View style={styles.settlementPerson}>
+                        {fromPending ? (
+                          <View style={styles.pendingAvatarSmall}>
+                            <Text variant="caption" color="textSecondary">
+                              {"#"}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Avatar
+                            emoji={
+                              memberMap.get(s.from)?.avatar_url || undefined
+                            }
+                            size="sm"
+                          />
+                        )}
+                        <Text
+                          variant="caption"
+                          color="textPrimary"
+                          numberOfLines={1}
+                          style={styles.settlementName}
+                        >
+                          {getMemberDisplayName(s.from)}
+                        </Text>
+                      </View>
+
+                      {/* Arrow + Amount */}
+                      <View style={styles.settlementCenter}>
+                        <Text variant="caption" color="textTertiary">
+                          owes
+                        </Text>
+                        <Text variant="bodyMedium" color="error">
+                          P{formatPeso(s.amount)}
+                        </Text>
+                      </View>
+
+                      {/* Creditor */}
+                      <View style={styles.settlementPerson}>
+                        {toPending ? (
+                          <View style={styles.pendingAvatarSmall}>
+                            <Text variant="caption" color="textSecondary">
+                              {"#"}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Avatar
+                            emoji={
+                              memberMap.get(s.to)?.avatar_url || undefined
+                            }
+                            size="sm"
+                          />
+                        )}
+                        <Text
+                          variant="caption"
+                          color="textPrimary"
+                          numberOfLines={1}
+                          style={styles.settlementName}
+                        >
+                          {getMemberDisplayName(s.to)}
+                        </Text>
+                      </View>
+                    </View>
+                  </Card>
+                </Pressable>
+              );
+            })
+          )}
         </View>
 
         {/* Expenses section */}
@@ -434,6 +579,41 @@ const styles = StyleSheet.create({
   },
   addExpenseButton: {
     width: "100%",
+  },
+  balancesSection: {
+    paddingHorizontal: spacing[6],
+    gap: spacing[2],
+    marginBottom: spacing[6],
+  },
+  settlementCard: {
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+  },
+  settlementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  settlementPerson: {
+    alignItems: "center",
+    gap: spacing[1],
+    flex: 1,
+  },
+  settlementCenter: {
+    alignItems: "center",
+    paddingHorizontal: spacing[2],
+  },
+  settlementName: {
+    textAlign: "center",
+    maxWidth: 90,
+  },
+  pendingAvatarSmall: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   expensesSection: {
     paddingHorizontal: spacing[6],
