@@ -22,10 +22,10 @@
 
 ### Expenses
 
-- [ ] **EXPN-01**: User can add an expense with description, amount (₱), who paid, and split type
-- [ ] **EXPN-02**: User can split an expense equally among selected members
-- [ ] **EXPN-03**: User can split an expense with custom amounts per member
-- [ ] **EXPN-04**: User can view a running list of expenses in a group, sorted by most recent
+- [x] **EXPN-01**: User can add an expense with description, amount (₱), who paid, and split type
+- [x] **EXPN-02**: User can split an expense equally among selected members
+- [x] **EXPN-03**: User can split an expense with custom amounts per member
+- [x] **EXPN-04**: User can view a running list of expenses in a group, sorted by most recent
 
 ### Balances
 
@@ -48,7 +48,7 @@
 
 - [x] **INFR-01**: Supabase database with RLS policies — users only see their own groups/expenses
 - [ ] **INFR-02**: EAS Build configured for internal distribution (iOS TestFlight + Android)
-- [ ] **INFR-03**: Expense amounts capped at ₱999,999
+- [x] **INFR-03**: Expense amounts capped at ₱999,999
 
 ## v2 Requirements
 

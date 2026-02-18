@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation & Design System** - Expo project, Supabase schema with RLS, and dark-first design tokens
 - [x] **Phase 2: Authentication** - Phone OTP sign-in with profile setup
 - [x] **Phase 3: Groups** - Create, join, and browse groups with invite links
-- [ ] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
+- [x] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
 - [ ] **Phase 5: Balances** - Debt simplification algorithm and balance views
 - [ ] **Phase 6: Polish & Distribution** - Offline support, micro-interactions, and EAS build for testers
 
@@ -81,9 +81,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — TDD expense utils (split math, peso formatting) + create_expense RPC migration
-- [ ] 04-02-PLAN.md — Add expense wizard with numpad, payer selection, equal/custom splits, and RPC submit
-- [ ] 04-03-PLAN.md — Expense list in group detail, expense detail view with split breakdown
+- [x] 04-01-PLAN.md — TDD expense utils (split math, peso formatting) + create_expense RPC migration
+- [x] 04-02-PLAN.md — Add expense wizard with numpad, payer selection, equal/custom splits, and RPC submit
+- [x] 04-03-PLAN.md — Expense list in group detail, expense detail view with split breakdown
 
 ### Phase 5: Balances
 **Goal**: Users can see simplified "who owes who" balances that minimize the number of transactions needed
@@ -126,6 +126,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation & Design System | 2/2 | Complete | 2026-02-18 |
 | 2. Authentication | 2/2 | Complete | 2026-02-18 |
 | 3. Groups | 3/3 | Complete | 2026-02-18 |
-| 4. Expenses | 0/3 | Not started | - |
+| 4. Expenses | 3/3 | Complete | 2026-02-18 |
 | 5. Balances | 0/2 | Not started | - |
 | 6. Polish & Distribution | 0/3 | Not started | - |
