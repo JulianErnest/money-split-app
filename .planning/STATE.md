@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 4.1 (Pending Members by Phone) in progress -- plan 02 delivered. Frontend integration complete (member type, modal, group detail).
+**Current focus:** Phase 4.1 (Pending Members by Phone) complete -- all 3 plans delivered. Ready for Phase 5 (Settlements/Balances).
 
 ## Current Position
 
 Phase: 4.1 of 6 (Pending Members by Phone)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-18 -- Completed 04.1-02-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-18 -- Completed 04.1-03-PLAN.md
 
-Progress: [████████████░░░] 75% (12/16 plans)
+Progress: [█████████████░░] 81% (13/16 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 4.9min
+- Total plans completed: 13
+- Average duration: 4.7min
 - Total execution time: ~1.0 hours
 
 **By Phase:**
@@ -31,11 +31,11 @@ Progress: [████████████░░░] 75% (12/16 plans)
 | 02-authentication | 2/2 | 18min | 9min |
 | 03-groups | 3/3 | 10min | 3.3min |
 | 04-expenses | 3/3 | 15min | 5min |
-| 04.1-pending-members | 2/3 | 4min | 2min |
+| 04.1-pending-members | 3/3 | 7min | 2.3min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (6min), 04-02 (6min), 04-03 (3min), 04.1-01 (1min), 04.1-02 (3min)
-- Trend: stable, frontend integration plans faster with established patterns
+- Last 5 plans: 04-02 (6min), 04-03 (3min), 04.1-01 (1min), 04.1-02 (3min), 04.1-03 (3min)
+- Trend: stable, pending member plans consistently fast
 
 *Updated after each plan completion*
 
@@ -70,6 +70,7 @@ Recent decisions affecting current work:
 - Inner BEGIN...EXCEPTION per loop iteration in auto-link trigger (never block signups) -- 04.1-01
 - Trigger creates public.users row before group_members insert (FK dependency) -- 04.1-01
 - Hash symbol (#) as pending member avatar placeholder -- 04.1-02
+- Conditional split payload: pending_member_id vs user_id in expense splits -- 04.1-03
 
 ### Pending Todos
 
@@ -86,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 04.1-02-PLAN.md
+Stopped at: Completed 04.1-03-PLAN.md (Phase 4.1 complete)
 Resume file: None
