@@ -55,6 +55,7 @@ export default function GroupsScreen() {
   const router = useRouter();
 
   const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -79,7 +80,29 @@ export default function GroupsScreen() {
         console.error("Failed to fetch groups:", error.message);
         return;
       }
-      setGroups((data as unknown as GroupRow[]) ?? []);
+
+      const rows = (data as unknown as GroupRow[]) ?? [];
+      setGroups(rows);
+
+      // Fetch member counts for all groups in a single query
+      if (rows.length > 0) {
+        const groupIds = rows.map((r) => r.groups.id);
+        const { data: countData } = await supabase
+          .from("group_members")
+          .select("group_id")
+          .in("group_id", groupIds);
+
+        if (countData) {
+          const counts = countData.reduce(
+            (acc: Record<string, number>, row: { group_id: string }) => {
+              acc[row.group_id] = (acc[row.group_id] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          );
+          setMemberCounts(counts);
+        }
+      }
     } catch (err) {
       console.error("Unexpected error fetching groups:", err);
     }
@@ -128,6 +151,9 @@ export default function GroupsScreen() {
   const renderItem = useCallback(
     ({ item }: { item: GroupRow }) => {
       const group = item.groups;
+      const count = memberCounts[group.id] || 0;
+      const countLabel = count === 1 ? "1 member" : `${count} members`;
+
       return (
         <Pressable
           onPress={() => router.push(`/group/${group.id}` as any)}
@@ -140,13 +166,19 @@ export default function GroupsScreen() {
                 <Text variant="bodyMedium" color="textPrimary">
                   {group.name}
                 </Text>
+                <Text variant="caption" color="textSecondary">
+                  {countLabel}
+                </Text>
               </View>
+              <Text variant="body" color="textSecondary">
+                {">"}
+              </Text>
             </View>
           </Card>
         </Pressable>
       );
     },
-    [router]
+    [router, memberCounts]
   );
 
   const keyExtractor = useCallback(
@@ -303,6 +335,7 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    gap: 2,
   },
   emptyContainer: {
     flex: 1,
