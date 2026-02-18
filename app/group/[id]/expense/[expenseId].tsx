@@ -13,6 +13,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { formatPeso } from "@/lib/expense-utils";
+import { formatPhoneDisplay } from "@/lib/group-members";
 import { colors, spacing, radius } from "@/theme";
 
 // ---------------------------------------------------------------------------
@@ -20,12 +21,16 @@ import { colors, spacing, radius } from "@/theme";
 // ---------------------------------------------------------------------------
 
 interface ExpenseSplitRow {
-  user_id: string;
+  user_id: string | null;
+  pending_member_id: string | null;
   amount: number;
   users: {
     display_name: string | null;
     avatar_url: string | null;
-  };
+  } | null;
+  pending_members: {
+    phone_number: string;
+  } | null;
 }
 
 interface ExpenseDetail {
@@ -81,7 +86,7 @@ export default function ExpenseDetailScreen() {
       const { data, error: fetchError } = await supabase
         .from("expenses")
         .select(
-          "*, users!expenses_paid_by_fkey(display_name, avatar_url), expense_splits(user_id, amount, users(display_name, avatar_url))",
+          "*, users!expenses_paid_by_fkey(display_name, avatar_url), expense_splits(user_id, pending_member_id, amount, users(display_name, avatar_url), pending_members(phone_number))",
         )
         .eq("id", expenseId!)
         .single();
@@ -208,13 +213,19 @@ export default function ExpenseDetailScreen() {
         </Text>
 
         {expense.expense_splits.map((split) => {
-          const memberName = split.users.display_name || "Unknown";
-          const memberEmoji = split.users.avatar_url || undefined;
+          const isPendingSplit = !!split.pending_member_id && !split.user_id;
+          const memberName = isPendingSplit
+            ? formatPhoneDisplay(split.pending_members?.phone_number ?? "")
+            : split.users?.display_name || "Unknown";
+          const memberEmoji = isPendingSplit
+            ? undefined
+            : split.users?.avatar_url || undefined;
           const splitCentavos = Math.round(split.amount * 100);
-          const isPayer = split.user_id === expense.paid_by;
+          const isPayer = !isPendingSplit && split.user_id === expense.paid_by;
+          const splitKey = split.user_id || split.pending_member_id || String(split.amount);
 
           return (
-            <Card key={split.user_id} style={styles.splitCard}>
+            <Card key={splitKey} style={styles.splitCard}>
               <View style={styles.splitRow}>
                 <Avatar emoji={memberEmoji} size="sm" />
                 <View style={styles.splitInfo}>
@@ -231,6 +242,13 @@ export default function ExpenseDetailScreen() {
                       <View style={styles.paidBadge}>
                         <Text variant="caption" color="accent">
                           paid
+                        </Text>
+                      </View>
+                    )}
+                    {isPendingSplit && (
+                      <View style={styles.pendingBadge}>
+                        <Text variant="caption" color="textTertiary">
+                          Pending
                         </Text>
                       </View>
                     )}
@@ -347,6 +365,12 @@ const styles = StyleSheet.create({
   },
   paidBadge: {
     backgroundColor: colors.accentSubtle,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 1,
+  },
+  pendingBadge: {
+    backgroundColor: colors.surface,
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 1,
