@@ -13,12 +13,12 @@
 
 ### Groups
 
-- [ ] **GRPS-01**: User can create a group with a name
-- [ ] **GRPS-02**: User can generate a shareable invite link for a group
-- [ ] **GRPS-03**: User can join a group via deep link (Expo deep linking)
-- [ ] **GRPS-04**: User can view list of groups they belong to
-- [ ] **GRPS-05**: User can view members of a group
-- [ ] **GRPS-06**: Groups display auto-generated avatars
+- [x] **GRPS-01**: User can create a group with a name
+- [x] **GRPS-02**: User can generate a shareable invite link for a group
+- [x] **GRPS-03**: User can join a group via deep link (Expo deep linking)
+- [x] **GRPS-04**: User can view list of groups they belong to
+- [x] **GRPS-05**: User can view members of a group
+- [x] **GRPS-06**: Groups display auto-generated avatars
 
 ### Expenses
 
@@ -103,12 +103,12 @@
 | AUTH-01 | Phase 2 | Complete |
 | AUTH-02 | Phase 2 | Complete |
 | AUTH-03 | Phase 2 | Complete |
-| GRPS-01 | Phase 3 | Pending |
-| GRPS-02 | Phase 3 | Pending |
-| GRPS-03 | Phase 3 | Pending |
-| GRPS-04 | Phase 3 | Pending |
-| GRPS-05 | Phase 3 | Pending |
-| GRPS-06 | Phase 3 | Pending |
+| GRPS-01 | Phase 3 | Complete |
+| GRPS-02 | Phase 3 | Complete |
+| GRPS-03 | Phase 3 | Complete |
+| GRPS-04 | Phase 3 | Complete |
+| GRPS-05 | Phase 3 | Complete |
+| GRPS-06 | Phase 3 | Complete |
 | EXPN-01 | Phase 4 | Pending |
 | EXPN-02 | Phase 4 | Pending |
 | EXPN-03 | Phase 4 | Pending |
