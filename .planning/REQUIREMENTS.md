@@ -29,9 +29,9 @@
 
 ### Balances
 
-- [ ] **BLNC-01**: User can view simplified balances within a group (debt simplification algorithm)
-- [ ] **BLNC-02**: User can see a quick net balance summary per group
-- [ ] **BLNC-03**: User can tap a balance to see which expenses contribute to it
+- [x] **BLNC-01**: User can view simplified balances within a group (debt simplification algorithm)
+- [x] **BLNC-02**: User can see a quick net balance summary per group
+- [x] **BLNC-03**: User can tap a balance to see which expenses contribute to it
 
 ### UX & Polish
 
@@ -109,13 +109,13 @@
 | GRPS-04 | Phase 3 | Complete |
 | GRPS-05 | Phase 3 | Complete |
 | GRPS-06 | Phase 3 | Complete |
-| EXPN-01 | Phase 4 | Pending |
-| EXPN-02 | Phase 4 | Pending |
-| EXPN-03 | Phase 4 | Pending |
-| EXPN-04 | Phase 4 | Pending |
-| BLNC-01 | Phase 5 | Pending |
-| BLNC-02 | Phase 5 | Pending |
-| BLNC-03 | Phase 5 | Pending |
+| EXPN-01 | Phase 4 | Complete |
+| EXPN-02 | Phase 4 | Complete |
+| EXPN-03 | Phase 4 | Complete |
+| EXPN-04 | Phase 4 | Complete |
+| BLNC-01 | Phase 5 | Complete |
+| BLNC-02 | Phase 5 | Complete |
+| BLNC-03 | Phase 5 | Complete |
 | UX-01 | Phase 6 | Pending |
 | UX-02 | Phase 6 | Pending |
 | UX-03 | Phase 6 | Pending |
@@ -126,7 +126,7 @@
 | UX-08 | Phase 6 | Pending |
 | INFR-01 | Phase 1 | Complete |
 | INFR-02 | Phase 6 | Pending |
-| INFR-03 | Phase 4 | Pending |
+| INFR-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 27 total

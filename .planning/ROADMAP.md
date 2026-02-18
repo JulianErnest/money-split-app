@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Groups** - Create, join, and browse groups with invite links
 - [x] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
 - [x] **Phase 4.1: Pending Members by Phone** - Pre-register group members by phone number before they install the app (INSERTED)
-- [ ] **Phase 5: Balances** - Debt simplification algorithm and balance views
+- [x] **Phase 5: Balances** - Debt simplification algorithm and balance views
 - [ ] **Phase 6: Polish & Distribution** - Offline support, micro-interactions, and EAS build for testers
 
 ## Phase Details
@@ -130,9 +130,9 @@ Plans:
 
 Plans:
 
-- [ ] 05-01-PLAN.md — TDD greedy debt simplification algorithm (simplifyDebts pure function)
-- [ ] 05-02-PLAN.md — Balance RPCs (get_group_balances, get_my_group_balances) and group detail balances section
-- [ ] 05-03-PLAN.md — Per-group net balance summary on groups list and balance drill-down screen
+- [x] 05-01-PLAN.md — TDD greedy debt simplification algorithm (simplifyDebts pure function)
+- [x] 05-02-PLAN.md — Balance RPCs (get_group_balances, get_my_group_balances) and group detail balances section
+- [x] 05-03-PLAN.md — Per-group net balance summary on groups list and balance drill-down screen
 
 ### Phase 6: Polish & Distribution
 
@@ -166,5 +166,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6
 | 3. Groups                          | 3/3            | Complete    | 2026-02-18 |
 | 4. Expenses                        | 3/3            | Complete    | 2026-02-18 |
 | 4.1 Pending Members (INSERTED)     | 3/3            | Complete    | 2026-02-18 |
-| 5. Balances                        | 0/3            | Not started | -          |
+| 5. Balances                        | 3/3            | Complete    | 2026-02-18 |
 | 6. Polish & Distribution           | 0/3            | Not started | -          |
