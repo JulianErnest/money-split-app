@@ -78,12 +78,12 @@ Plans:
   3. User can assign custom amounts per member, and the app validates they sum to the total
   4. User can view a chronological list of expenses in a group, most recent first
   5. Expense amounts are capped at 999,999 pesos with clear validation feedback
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Add expense form with equal split logic
-- [ ] 04-02: Custom split flow and amount validation
-- [ ] 04-03: Expense list view in group detail
+- [ ] 04-01-PLAN.md — TDD expense utils (split math, peso formatting) + create_expense RPC migration
+- [ ] 04-02-PLAN.md — Add expense wizard with numpad, payer selection, equal/custom splits, and RPC submit
+- [ ] 04-03-PLAN.md — Expense list in group detail, expense detail view with split breakdown
 
 ### Phase 5: Balances
 **Goal**: Users can see simplified "who owes who" balances that minimize the number of transactions needed
