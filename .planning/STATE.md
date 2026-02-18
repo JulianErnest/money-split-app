@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 4 (Expenses) in progress -- plan 1 of 3 delivered.
+**Current focus:** Phase 4 (Expenses) in progress -- plan 2 of 3 delivered.
 
 ## Current Position
 
 Phase: 4 of 6 (Expenses)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-18 -- Completed 04-01-PLAN.md
+Last activity: 2026-02-18 -- Completed 04-02-PLAN.md
 
-Progress: [████████░░░░░░░] 53% (8/15 plans)
+Progress: [█████████░░░░░░] 60% (9/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 5.9min
-- Total execution time: ~0.78 hours
+- Total plans completed: 9
+- Average duration: 5.8min
+- Total execution time: ~0.87 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [████████░░░░░░░] 53% (8/15 plans)
 | 01-foundation | 2/2 | 13min | 6.5min |
 | 02-authentication | 2/2 | 18min | 9min |
 | 03-groups | 3/3 | 10min | 3.3min |
-| 04-expenses | 1/3 | 6min | 6min |
+| 04-expenses | 2/3 | 12min | 6min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (15min), 03-01 (2min), 03-02 (6min), 03-03 (2min), 04-01 (6min)
-- Trend: stable (TDD plan took slightly longer due to test infra setup)
+- Last 5 plans: 03-01 (2min), 03-02 (6min), 03-03 (2min), 04-01 (6min), 04-02 (6min)
+- Trend: stable at ~6min for feature plans
 
 *Updated after each plan completion*
 
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - Batch member count query with client-side reduce (not N+1) -- 03-03
 - ScrollView for member list (small lists, simpler than nested FlatList) -- 03-03
 - Jest with ts-jest for test infrastructure (not vitest) -- 04-01
+- useAmountInput hook with raw display string for numpad state -- 04-02
+- All members selected by default for equal split -- 04-02
+- Inline TextInput for custom split amounts (not custom numpad) -- 04-02
 
 ### Pending Todos
 
@@ -74,5 +77,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 04-01-PLAN.md
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
