@@ -289,6 +289,23 @@ export interface Database {
         };
         Returns: string;
       };
+      get_group_balances: {
+        Args: {
+          p_group_id: string;
+        };
+        Returns: Array<{
+          member_id: string;
+          is_pending: boolean;
+          net_balance: number;
+        }>;
+      };
+      get_my_group_balances: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          group_id: string;
+          net_balance: number;
+        }>;
+      };
     };
     Enums: {
       [_ in never]: never;
