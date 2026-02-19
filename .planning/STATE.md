@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 6 of 6 (Polish & Distribution)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-02-19 -- Completed 06-01-PLAN.md
+Last activity: 2026-02-19 -- Completed 06-02-PLAN.md
 
-Progress: [█████████████████░░░] 81% (17/21 plans)
+Progress: [██████████████████░░] 86% (18/21 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
+- Total plans completed: 18
 - Average duration: 4.1min
-- Total execution time: ~1.2 hours
+- Total execution time: ~1.25 hours
 
 **By Phase:**
 
@@ -33,10 +33,10 @@ Progress: [█████████████████░░░] 81% (17
 | 04-expenses | 3/3 | 15min | 5min |
 | 04.1-pending-members | 3/3 | 7min | 2.3min |
 | 05-balances | 3/3 | 7min | 2.3min |
-| 06-polish-distribution | 1/5 | 4min | 4min |
+| 06-polish-distribution | 2/5 | 9min | 4.5min |
 
 **Recent Trend:**
-- Last 5 plans: 04.1-03 (3min), 05-01 (2min), 05-02 (3min), 05-03 (2min), 06-01 (4min)
+- Last 5 plans: 05-01 (2min), 05-02 (3min), 05-03 (2min), 06-01 (4min), 06-02 (5min)
 - Trend: stable execution
 
 *Updated after each plan completion*
@@ -80,6 +80,9 @@ Recent decisions affecting current work:
 - Settlement drill-down only navigates when current user is involved -- 05-03
 - Treat netinfo isConnected null as online (avoid false offline flash on startup) -- 06-01
 - Shared SQLite DB (hatian_offline.db) for offline queue and cached data -- 06-01
+- Cache group detail as serializable object with Map converted to tuple arrays -- 06-02
+- Show back button during skeleton loading state for navigation continuity -- 06-02
+- MotiView fade-in animation on data refresh but not initial load -- 06-02
 
 ### Pending Todos
 
@@ -96,5 +99,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 06-01-PLAN.md
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
