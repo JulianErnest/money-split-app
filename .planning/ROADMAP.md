@@ -155,7 +155,7 @@ Plans:
 - [x] 06-03-PLAN.md — Bottom sheets replacing modals, empty states with Taglish microcopy
 - [x] 06-04-PLAN.md — EAS Build configuration for internal distribution
 - [x] 06-05-PLAN.md — Offline behavioral wiring: sync-on-reconnect, error toast with Retry, optimistic enqueue in screens
-- [ ] 06-06-PLAN.md — Gap closure: fix offline banner false positive and pull-to-refresh on short-content screens
+- [x] 06-06-PLAN.md — Gap closure: fix offline banner false positive and pull-to-refresh on short-content screens
 
 ## Progress
 
@@ -170,4 +170,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6
 | 4. Expenses                        | 3/3            | Complete    | 2026-02-18 |
 | 4.1 Pending Members (INSERTED)     | 3/3            | Complete    | 2026-02-18 |
 | 5. Balances                        | 3/3            | Complete    | 2026-02-18 |
-| 6. Polish & Distribution           | 5/6            | Gap closure | 2026-02-19 |
+| 6. Polish & Distribution           | 6/6            | Complete    | 2026-02-19 |
