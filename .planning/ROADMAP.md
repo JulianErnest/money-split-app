@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
 - [x] **Phase 4.1: Pending Members by Phone** - Pre-register group members by phone number before they install the app (INSERTED)
 - [x] **Phase 5: Balances** - Debt simplification algorithm and balance views
-- [ ] **Phase 6: Polish & Distribution** - Offline support, micro-interactions, and EAS build for testers
+- [x] **Phase 6: Polish & Distribution** - Offline support, micro-interactions, and EAS build for testers
 
 ## Phase Details
 
@@ -150,11 +150,11 @@ Plans:
 
 Plans:
 
-- [ ] 06-01-PLAN.md — Install deps, network context, offline queue, cached data layer, wire providers into root layout
-- [ ] 06-02-PLAN.md — Skeleton loaders, pull-to-refresh, cached data wiring, haptic feedback on key actions
-- [ ] 06-03-PLAN.md — Bottom sheets replacing modals, empty states with Taglish microcopy
-- [ ] 06-04-PLAN.md — EAS Build configuration for internal distribution
-- [ ] 06-05-PLAN.md — Offline behavioral wiring: sync-on-reconnect, error toast with Retry, optimistic enqueue in screens
+- [x] 06-01-PLAN.md — Install deps, network context, offline queue, cached data layer, wire providers into root layout
+- [x] 06-02-PLAN.md — Skeleton loaders, pull-to-refresh, cached data wiring, haptic feedback on key actions
+- [x] 06-03-PLAN.md — Bottom sheets replacing modals, empty states with Taglish microcopy
+- [x] 06-04-PLAN.md — EAS Build configuration for internal distribution
+- [x] 06-05-PLAN.md — Offline behavioral wiring: sync-on-reconnect, error toast with Retry, optimistic enqueue in screens
 
 ## Progress
 
@@ -169,4 +169,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6
 | 4. Expenses                        | 3/3            | Complete    | 2026-02-18 |
 | 4.1 Pending Members (INSERTED)     | 3/3            | Complete    | 2026-02-18 |
 | 5. Balances                        | 3/3            | Complete    | 2026-02-18 |
-| 6. Polish & Distribution           | 0/5            | Not started | -          |
+| 6. Polish & Distribution           | 5/5            | Complete    | 2026-02-19 |
