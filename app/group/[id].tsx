@@ -328,6 +328,7 @@ export default function GroupDetailScreen() {
   }
 
   const currentUserId = user?.id ?? "";
+  const isGroupCreator = user?.id === group?.created_by;
 
   // Build a lookup map for member display names
   const memberMap = new Map<string, GroupMember>();
@@ -389,12 +390,14 @@ export default function GroupDetailScreen() {
             onPress={handleShare}
             style={styles.shareButton}
           />
-          <Button
-            label="Add Member"
-            variant="secondary"
-            onPress={openAddMember}
-            style={styles.addMemberButton}
-          />
+          {isGroupCreator && (
+            <Button
+              label="Add Member"
+              variant="secondary"
+              onPress={openAddMember}
+              style={styles.addMemberButton}
+            />
+          )}
         </View>
 
         {/* Add Expense button */}
