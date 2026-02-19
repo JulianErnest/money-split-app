@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 5 (Balances) complete. Ready for Phase 6 (Polish).
+**Current focus:** Phase 6 (Polish & Distribution) in progress.
 
 ## Current Position
 
-Phase: 5 of 6 (Balances)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-18 -- Completed 05-03-PLAN.md
+Phase: 6 of 6 (Polish & Distribution)
+Plan: 1 of 5 in current phase
+Status: In progress
+Last activity: 2026-02-19 -- Completed 06-01-PLAN.md
 
-Progress: [████████████████] 100% (16/16 plans)
+Progress: [█████████████████░░░] 81% (17/21 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 4.2min
-- Total execution time: ~1.1 hours
+- Total plans completed: 17
+- Average duration: 4.1min
+- Total execution time: ~1.2 hours
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ Progress: [████████████████] 100% (16/16 plans)
 | 04-expenses | 3/3 | 15min | 5min |
 | 04.1-pending-members | 3/3 | 7min | 2.3min |
 | 05-balances | 3/3 | 7min | 2.3min |
+| 06-polish-distribution | 1/5 | 4min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: 04.1-02 (3min), 04.1-03 (3min), 05-01 (2min), 05-02 (3min), 05-03 (2min)
-- Trend: stable, fast execution
+- Last 5 plans: 04.1-03 (3min), 05-01 (2min), 05-02 (3min), 05-03 (2min), 06-01 (4min)
+- Trend: stable execution
 
 *Updated after each plan completion*
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - Separate balance member flags Map for accurate pending detection from RPC data -- 05-02
 - Balance fetch on groups list uses useFocusEffect separately from groups fetch -- 05-03
 - Settlement drill-down only navigates when current user is involved -- 05-03
+- Treat netinfo isConnected null as online (avoid false offline flash on startup) -- 06-01
+- Shared SQLite DB (hatian_offline.db) for offline queue and cached data -- 06-01
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-18
-Stopped at: Completed 05-03-PLAN.md (Phase 5 complete)
+Last session: 2026-02-19
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
