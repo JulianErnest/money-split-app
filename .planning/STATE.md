@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 7 of 9 (Invite Infrastructure)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-19 — Roadmap created for v1.1
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-19 — Completed 07-01-PLAN.md
 
-Progress: [################..] 88% (22/28 plans across all milestones)
+Progress: [#################.] 89% (23/28 plans across all milestones)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [################..] 88% (22/28 plans across all milestones)
 - Total execution time: ~1.4 hours
 
 **Current Milestone (v1.1):**
-- Total plans completed: 0
+- Total plans completed: 1
 - Estimated plans: 6
 
 ## Accumulated Context
@@ -38,11 +38,13 @@ Recent decisions affecting current work:
 - Creator-only phone invites for security
 - Whole-balance settlement only for simplicity
 - Decline removes associated expense splits
+- Phone normalization uses ltrim(p_phone_number, '+') for all comparisons and storage
+- Creator guard checks groups.created_by = current_user_id; client gates Add Member button
 
 ### Known Issues
 
-- Phone format mismatch: Supabase Auth stores phone without `+` prefix, app sends with `+` — causes lookup failures in `add_pending_member`
-- Any group member can currently add anyone by phone — no permission check on creator
+- Phone format mismatch: RESOLVED in 07-01 (migration 00018 restores ltrim normalization)
+- Any group member can add by phone: RESOLVED in 07-01 (creator guard added server + client)
 
 ### Pending Todos
 
@@ -55,5 +57,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Roadmap created for v1.1 milestone
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
