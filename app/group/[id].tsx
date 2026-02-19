@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Share,
@@ -11,10 +11,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Linking from "expo-linking";
+import * as Haptics from "expo-haptics";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
+import { GroupDetailSkeleton } from "@/components/ui/Skeleton";
+import { AnimatedRefreshControl } from "@/components/ui/PullToRefresh";
 import {
   ExpenseCard,
   type ExpenseCardExpense,
@@ -23,6 +26,7 @@ import {
 import { AddMemberModal } from "@/components/groups/AddMemberModal";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { getCachedData, setCachedData } from "@/lib/cached-data";
 import { colors, spacing, radius } from "@/theme";
 import {
   type GroupMember,
@@ -80,6 +84,14 @@ interface ExpenseRow extends ExpenseCardExpense {
   expense_splits: ExpenseCardSplit[];
 }
 
+interface CachedGroupDetail {
+  group: GroupDetail;
+  expenses: ExpenseRow[];
+  members: GroupMember[];
+  settlements: Settlement[];
+  balanceMemberFlags: [string, boolean][];
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -96,8 +108,24 @@ export default function GroupDetailScreen() {
     Map<string, boolean>
   >(new Map());
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
+
+  // ------- Load cached data on mount -------
+  useEffect(() => {
+    if (!user || !id) return;
+    const cached = getCachedData<CachedGroupDetail>(`${user.id}:group_${id}`);
+    if (cached) {
+      setGroup(cached.group);
+      setExpenses(cached.expenses);
+      setMembers(cached.members);
+      setSettlements(cached.settlements);
+      if (cached.balanceMemberFlags) {
+        setBalanceMemberFlags(new Map(cached.balanceMemberFlags));
+      }
+    }
+  }, [user, id]);
 
   // Re-fetch on every focus (handles returning from add-expense)
   useFocusEffect(
@@ -161,6 +189,35 @@ export default function GroupDetailScreen() {
       } else {
         setSettlements([]);
       }
+
+      // Cache the fetched data for instant reopens
+      if (user && groupResult.data) {
+        const flagsArray: [string, boolean][] = [];
+        if (balancesResult.data && !balancesResult.error) {
+          for (const row of balancesResult.data as Array<{
+            member_id: string;
+            is_pending: boolean;
+          }>) {
+            flagsArray.push([row.member_id, row.is_pending]);
+          }
+        }
+        setCachedData(`${user.id}:group_${id}`, {
+          group: groupResult.data,
+          expenses:
+            (expensesResult.data as unknown as ExpenseRow[]) ?? [],
+          members: allMembers,
+          settlements: simplifyDebts(
+            netBalancesToCentavos(
+              (balancesResult.data as Array<{
+                member_id: string;
+                is_pending: boolean;
+                net_balance: number;
+              }>) ?? [],
+            ),
+          ),
+          balanceMemberFlags: flagsArray,
+        } satisfies CachedGroupDetail);
+      }
     } catch {
       setError(true);
     } finally {
@@ -168,8 +225,15 @@ export default function GroupDetailScreen() {
     }
   }
 
+  async function handleRefresh() {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }
+
   async function handleShare() {
     if (!group) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const url = Linking.createURL(`join/${group.invite_code}`);
     try {
@@ -181,13 +245,49 @@ export default function GroupDetailScreen() {
     }
   }
 
+  function handleRemoveMember(member: GroupMember) {
+    Alert.alert(
+      "Remove Member",
+      `Remove ${member.display_name} from this group? Their expense splits will also be deleted.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            const { error: rpcError } = await supabase.rpc(
+              "remove_group_member",
+              {
+                p_group_id: id!,
+                p_member_id: member.id,
+                p_is_pending: member.isPending,
+              },
+            );
+            if (rpcError) {
+              Alert.alert("Error", rpcError.message);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              return;
+            }
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            fetchData();
+          },
+        },
+      ],
+    );
+  }
+
   // ------- Loading state -------
-  if (loading) {
+  if (loading && !group) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.accent} />
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.headerBar}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Text variant="h2" color="accent">
+              {"<"}
+            </Text>
+          </Pressable>
         </View>
+        <GroupDetailSkeleton />
       </SafeAreaView>
     );
   }
@@ -263,6 +363,12 @@ export default function GroupDetailScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <AnimatedRefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
       >
         {/* Group info */}
         <View style={styles.groupHeader}>
@@ -293,7 +399,10 @@ export default function GroupDetailScreen() {
           <Button
             label="Add Expense"
             variant="primary"
-            onPress={() => router.push(`/group/${id}/add-expense`)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/group/${id}/add-expense`);
+            }}
             style={styles.addExpenseButton}
           />
         </View>
@@ -460,6 +569,10 @@ export default function GroupDetailScreen() {
           </View>
 
           {members.map((member) => {
+            const isCreator = !member.isPending && member.id === group.created_by;
+            const isSelf = !member.isPending && member.id === currentUserId;
+            const canRemove = !isCreator && !isSelf;
+
             if (member.isPending) {
               return (
                 <Card key={member.id} style={styles.memberCard}>
@@ -489,12 +602,20 @@ export default function GroupDetailScreen() {
                         Pending signup
                       </Text>
                     </View>
+                    <Pressable
+                      onPress={() => handleRemoveMember(member)}
+                      style={styles.removeButton}
+                      hitSlop={8}
+                    >
+                      <Text variant="caption" color="error">
+                        Remove
+                      </Text>
+                    </Pressable>
                   </View>
                 </Card>
               );
             }
 
-            const isCreator = member.id === group.created_by;
             const emoji = member.avatar_url || undefined;
 
             return (
@@ -518,8 +639,26 @@ export default function GroupDetailScreen() {
                           </Text>
                         </View>
                       )}
+                      {isSelf && !isCreator && (
+                        <View style={styles.creatorBadge}>
+                          <Text variant="caption" color="textTertiary">
+                            You
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
+                  {canRemove && (
+                    <Pressable
+                      onPress={() => handleRemoveMember(member)}
+                      style={styles.removeButton}
+                      hitSlop={8}
+                    >
+                      <Text variant="caption" color="error">
+                        Remove
+                      </Text>
+                    </Pressable>
+                  )}
                 </View>
               </Card>
             );
@@ -693,6 +832,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 1,
+  },
+  removeButton: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
   },
   pendingAvatar: {
     width: 36,
