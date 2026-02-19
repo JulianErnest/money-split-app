@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -11,12 +11,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import { MotiView } from "moti";
+import * as Haptics from "expo-haptics";
 import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
 import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { GroupsListSkeleton } from "@/components/ui/Skeleton";
+import { AnimatedRefreshControl } from "@/components/ui/PullToRefresh";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
+import { getCachedData, setCachedData } from "@/lib/cached-data";
 import { colors, spacing, radius } from "@/theme";
 import { formatBalanceSummary, formatBalanceColor } from "@/lib/balance-utils";
 import { formatPeso } from "@/lib/expense-utils";
@@ -64,11 +69,27 @@ export default function GroupsScreen() {
   );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const initialLoadDone = useRef(false);
 
   // Create group modal state
   const [showCreate, setShowCreate] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // ------- Load cached data on mount -------
+  useEffect(() => {
+    if (!user) return;
+    const cached = getCachedData<GroupRow[]>(`${user.id}:groups`);
+    if (cached && cached.length > 0) {
+      setGroups(cached);
+    }
+    const cachedCounts = getCachedData<Record<string, number>>(
+      `${user.id}:group_counts`,
+    );
+    if (cachedCounts) {
+      setMemberCounts(cachedCounts);
+    }
+  }, [user]);
 
   // ------- Fetch groups -------
   const fetchGroups = useCallback(async () => {
@@ -89,6 +110,7 @@ export default function GroupsScreen() {
 
       const rows = (data as unknown as GroupRow[]) ?? [];
       setGroups(rows);
+      setCachedData(`${user.id}:groups`, rows);
 
       // Fetch member counts for all groups in a single query
       if (rows.length > 0) {
@@ -107,6 +129,7 @@ export default function GroupsScreen() {
             {} as Record<string, number>
           );
           setMemberCounts(counts);
+          setCachedData(`${user.id}:group_counts`, counts);
         }
       }
     } catch (err) {
@@ -137,7 +160,10 @@ export default function GroupsScreen() {
   }, [user]);
 
   useEffect(() => {
-    fetchGroups().finally(() => setLoading(false));
+    fetchGroups().finally(() => {
+      setLoading(false);
+      initialLoadDone.current = true;
+    });
   }, [fetchGroups]);
 
   // Refresh balances on every focus (picks up new expenses)
@@ -169,14 +195,17 @@ export default function GroupsScreen() {
 
       if (error) {
         Alert.alert("Error", error.message);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
 
       setNewGroupName("");
       setShowCreate(false);
       await fetchGroups();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Something went wrong.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setCreating(false);
     }
@@ -190,7 +219,7 @@ export default function GroupsScreen() {
       const countLabel = count === 1 ? "1 member" : `${count} members`;
       const netCentavos = groupBalances.get(group.id);
 
-      return (
+      const content = (
         <Pressable
           onPress={() => router.push(`/group/${group.id}` as any)}
           style={styles.cardWrapper}
@@ -222,6 +251,21 @@ export default function GroupsScreen() {
           </Card>
         </Pressable>
       );
+
+      // Fade-in animation only on data refresh (not initial load)
+      if (initialLoadDone.current) {
+        return (
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ type: "timing", duration: 300 }}
+          >
+            {content}
+          </MotiView>
+        );
+      }
+
+      return content;
     },
     [router, memberCounts, groupBalances],
   );
@@ -267,16 +311,24 @@ export default function GroupsScreen() {
         </Pressable>
       </View>
 
-      {/* Groups list */}
-      <FlatList
-        data={groups}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={ListEmpty}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-      />
+      {/* Skeleton while loading with no cached data */}
+      {loading && groups.length === 0 ? (
+        <GroupsListSkeleton />
+      ) : (
+        <FlatList
+          data={groups}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={ListEmpty}
+          refreshControl={
+            <AnimatedRefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+          }
+        />
+      )}
 
       {/* Create group modal */}
       <Modal
