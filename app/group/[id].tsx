@@ -365,6 +365,7 @@ export default function GroupDetailScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        alwaysBounceVertical={true}
         refreshControl={
           <AnimatedRefreshControl
             refreshing={refreshing}

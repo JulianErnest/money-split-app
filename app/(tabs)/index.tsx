@@ -376,6 +376,7 @@ export default function GroupsScreen() {
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.list}
           ListEmptyComponent={ListEmpty}
+          alwaysBounceVertical={true}
           refreshControl={
             <AnimatedRefreshControl
               refreshing={refreshing}
