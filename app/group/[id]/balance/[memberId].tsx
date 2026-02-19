@@ -164,10 +164,10 @@ export default function BalanceDrillDownScreen() {
         </View>
         <View style={styles.expenseAmounts}>
           <Text variant="caption" color="textSecondary">
-            Total: P{formatPeso(item.amount)}
+            Total: {"\u20B1"}{formatPeso(item.amount)}
           </Text>
           <Text variant="caption" color={headerColor}>
-            Share: P{formatPeso(item.debtor_share)}
+            Share: {"\u20B1"}{formatPeso(item.debtor_share)}
           </Text>
         </View>
       </Card>
@@ -213,7 +213,7 @@ export default function BalanceDrillDownScreen() {
         </Text>
         {amount && (
           <Text variant="h1" color={headerColor} style={styles.amountText}>
-            P{amount}
+            {"\u20B1"}{amount}
           </Text>
         )}
       </View>

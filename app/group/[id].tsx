@@ -18,12 +18,14 @@ import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { GroupDetailSkeleton } from "@/components/ui/Skeleton";
 import { AnimatedRefreshControl } from "@/components/ui/PullToRefresh";
+import { useBottomSheet } from "@/components/ui/BottomSheet";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   ExpenseCard,
   type ExpenseCardExpense,
   type ExpenseCardSplit,
 } from "@/components/expenses/ExpenseCard";
-import { AddMemberModal } from "@/components/groups/AddMemberModal";
+import { AddMemberSheet } from "@/components/groups/AddMemberModal";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
@@ -110,7 +112,7 @@ export default function GroupDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
-  const [showAddMember, setShowAddMember] = useState(false);
+  const { ref: addMemberRef, open: openAddMember, close: closeAddMember } = useBottomSheet();
 
   // ------- Load cached data on mount -------
   useEffect(() => {
@@ -389,7 +391,7 @@ export default function GroupDetailScreen() {
           <Button
             label="Add Member"
             variant="secondary"
-            onPress={() => setShowAddMember(true)}
+            onPress={openAddMember}
             style={styles.addMemberButton}
           />
         </View>
@@ -416,13 +418,11 @@ export default function GroupDetailScreen() {
           </View>
 
           {settlements.length === 0 ? (
-            <Text
-              variant="body"
-              color="textSecondary"
-              style={styles.emptyText}
-            >
-              All settled up
-            </Text>
+            <EmptyState
+              emoji="✅"
+              headline="All settled!"
+              subtext="Walang utang-utangan. Nice!"
+            />
           ) : (
             settlements.map((s, idx) => {
               const fromPending = isMemberPending(s.from);
@@ -482,7 +482,7 @@ export default function GroupDetailScreen() {
                           owes
                         </Text>
                         <Text variant="bodyMedium" color="error">
-                          P{formatPeso(s.amount)}
+                          {"\u20B1"}{formatPeso(s.amount)}
                         </Text>
                       </View>
 
@@ -533,13 +533,11 @@ export default function GroupDetailScreen() {
           </View>
 
           {expenses.length === 0 ? (
-            <Text
-              variant="body"
-              color="textSecondary"
-              style={styles.emptyText}
-            >
-              No expenses yet
-            </Text>
+            <EmptyState
+              emoji="🧾"
+              headline="No expenses yet"
+              subtext="Mag-add ng expense para ma-track kung sino may utang"
+            />
           ) : (
             expenses.map((expense) => (
               <ExpenseCard
@@ -666,11 +664,11 @@ export default function GroupDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Add Member Modal */}
-      <AddMemberModal
-        visible={showAddMember}
+      {/* Add Member Bottom Sheet */}
+      <AddMemberSheet
+        ref={addMemberRef}
         groupId={id!}
-        onClose={() => setShowAddMember(false)}
+        onClose={closeAddMember}
         onAdded={() => fetchData()}
       />
     </SafeAreaView>

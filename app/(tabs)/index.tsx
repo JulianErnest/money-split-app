@@ -2,10 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
-  Modal,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,6 +17,12 @@ import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { GroupsListSkeleton } from "@/components/ui/Skeleton";
 import { AnimatedRefreshControl } from "@/components/ui/PullToRefresh";
+import {
+  AppBottomSheet,
+  BottomSheetTextInput,
+  useBottomSheet,
+} from "@/components/ui/BottomSheet";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
@@ -76,8 +80,8 @@ export default function GroupsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const initialLoadDone = useRef(false);
 
-  // Create group modal state
-  const [showCreate, setShowCreate] = useState(false);
+  // Create group bottom sheet state
+  const { ref: createSheetRef, open: openCreateSheet, close: closeCreateSheet } = useBottomSheet();
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -222,7 +226,7 @@ export default function GroupsScreen() {
       };
       setGroups((prev) => [optimisticRow, ...prev]);
       setNewGroupName("");
-      setShowCreate(false);
+      closeCreateSheet();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return;
     }
@@ -240,7 +244,7 @@ export default function GroupsScreen() {
       }
 
       setNewGroupName("");
-      setShowCreate(false);
+      closeCreateSheet();
       await fetchGroups();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: any) {
@@ -329,11 +333,11 @@ export default function GroupsScreen() {
   const ListEmpty = useCallback(() => {
     if (loading) return null;
     return (
-      <View style={styles.emptyContainer}>
-        <Text variant="body" color="textSecondary" style={styles.emptyText}>
-          No groups yet. Tap the + button to create one!
-        </Text>
-      </View>
+      <EmptyState
+        emoji="🪙"
+        headline="Wala ka pang group!"
+        subtext="Tap + to create one, or ask a friend for an invite code"
+      />
     );
   }, [loading]);
 
@@ -346,7 +350,7 @@ export default function GroupsScreen() {
           Groups
         </Text>
         <Pressable
-          onPress={() => setShowCreate(true)}
+          onPress={() => openCreateSheet()}
           style={({ pressed }) => [
             styles.addButton,
             pressed && styles.addButtonPressed,
@@ -381,54 +385,48 @@ export default function GroupsScreen() {
         />
       )}
 
-      {/* Create group modal */}
-      <Modal
-        visible={showCreate}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCreate(false)}
+      {/* Create group bottom sheet */}
+      <AppBottomSheet
+        ref={createSheetRef}
+        snapPoints={["45%"]}
+        onDismiss={() => setNewGroupName("")}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowCreate(false)}
-        >
-          <Pressable style={styles.modalContent} onPress={() => {}}>
-            <Text variant="h2" color="textPrimary" style={styles.modalTitle}>
-              New Group
-            </Text>
+        <View style={styles.sheetContent}>
+          <Text variant="h2" color="textPrimary" style={styles.sheetTitle}>
+            New Group
+          </Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Group name"
-              placeholderTextColor={colors.inputPlaceholder}
-              value={newGroupName}
-              onChangeText={setNewGroupName}
-              maxLength={50}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={handleCreateGroup}
+          <BottomSheetTextInput
+            style={styles.input}
+            placeholder="Group name"
+            placeholderTextColor={colors.inputPlaceholder}
+            value={newGroupName}
+            onChangeText={setNewGroupName}
+            maxLength={50}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleCreateGroup}
+          />
+
+          <View style={styles.sheetButtons}>
+            <Button
+              label="Cancel"
+              variant="ghost"
+              onPress={() => {
+                setNewGroupName("");
+                closeCreateSheet();
+              }}
             />
-
-            <View style={styles.modalButtons}>
-              <Button
-                label="Cancel"
-                variant="ghost"
-                onPress={() => {
-                  setNewGroupName("");
-                  setShowCreate(false);
-                }}
-              />
-              <Button
-                label="Create"
-                variant="primary"
-                onPress={handleCreateGroup}
-                loading={creating}
-                disabled={newGroupName.trim().length === 0}
-              />
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+            <Button
+              label="Create"
+              variant="primary"
+              onPress={handleCreateGroup}
+              loading={creating}
+              disabled={newGroupName.trim().length === 0}
+            />
+          </View>
+        </View>
+      </AppBottomSheet>
     </SafeAreaView>
   );
 }
@@ -491,29 +489,12 @@ const styles = StyleSheet.create({
   balanceText: {
     marginTop: 2,
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: spacing[16],
-  },
-  emptyText: {
-    textAlign: "center",
-    paddingHorizontal: spacing[8],
-  },
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
+  // Bottom sheet
+  sheetContent: {
     paddingHorizontal: spacing[6],
+    paddingTop: spacing[2],
   },
-  modalContent: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: radius.xl,
-    padding: spacing[6],
-  },
-  modalTitle: {
+  sheetTitle: {
     marginBottom: spacing[4],
   },
   input: {
@@ -527,7 +508,7 @@ const styles = StyleSheet.create({
     borderColor: colors.inputBorder,
     marginBottom: spacing[4],
   },
-  modalButtons: {
+  sheetButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: spacing[3],
