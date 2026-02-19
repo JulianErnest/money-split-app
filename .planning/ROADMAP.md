@@ -114,7 +114,7 @@ Plans:
 
 **Milestone Goal:** Fix the broken invite/pending member system with proper consent-based invites, and add manual settle-up so users can record payments.
 
-- [ ] **Phase 7: Invite Infrastructure** - Fix phone lookup, add invite schema, enforce creator-only permissions
+- [x] **Phase 7: Invite Infrastructure** - Fix phone lookup, add invite schema, enforce creator-only permissions
 - [ ] **Phase 8: Invite UX** - Invite inbox, accept/decline flows, decline cleanup
 - [ ] **Phase 9: Settle Up** - Record settlements, update balances, view history
 
@@ -133,8 +133,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Phone normalization fix + creator-only guard in add_pending_member RPC, client-side Add Member button gating
-- [ ] 07-02-PLAN.md — Invite status/user_id schema on pending_members, consent-aware add_pending_member and auto-link trigger, client member fetching update
+- [x] 07-01-PLAN.md — Phone normalization fix + creator-only guard in add_pending_member RPC, client-side Add Member button gating
+- [x] 07-02-PLAN.md — Invite status/user_id schema on pending_members, consent-aware add_pending_member and auto-link trigger, client member fetching update
 
 ### Phase 8: Invite UX
 
@@ -182,6 +182,6 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 4.1 Pending Members (INSERTED) | v1.0 | 3/3 | Complete | 2026-02-18 |
 | 5. Balances | v1.0 | 3/3 | Complete | 2026-02-18 |
 | 6. Polish & Distribution | v1.0 | 6/6 | Complete | 2026-02-19 |
-| 7. Invite Infrastructure | v1.1 | 0/2 | Not started | - |
+| 7. Invite Infrastructure | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 8. Invite UX | v1.1 | 0/2 | Not started | - |
 | 9. Settle Up | v1.1 | 0/2 | Not started | - |

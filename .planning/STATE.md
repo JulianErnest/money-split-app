@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 7 — Invite Infrastructure
+**Current focus:** Phase 8 — Invite UX
 
 ## Current Position
 
-Phase: 7 of 9 (Invite Infrastructure)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-19 — Completed 07-02-PLAN.md
+Phase: 8 of 9 (Invite UX)
+Plan: 0 of 2 in current phase
+Status: Ready to plan
+Last activity: 2026-02-19 — Completed Phase 7 (Invite Infrastructure)
 
 Progress: [##################] 93% (24/28 plans across all milestones)
 
