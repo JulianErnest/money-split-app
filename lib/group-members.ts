@@ -10,6 +10,7 @@ export interface GroupMember {
   avatar_url: string | null;
   isPending: boolean;
   phone_number?: string; // only for pending members, E.164 format
+  invite_status?: "pending" | "accepted" | "declined"; // only for pending members
 }
 
 // ---------------------------------------------------------------------------
@@ -54,7 +55,7 @@ export async function fetchAllMembers(
       .eq("group_id", groupId),
     supabase
       .from("pending_members")
-      .select("id, phone_number")
+      .select("id, phone_number, nickname, invite_status")
       .eq("group_id", groupId),
   ]);
 
@@ -70,10 +71,11 @@ export async function fetchAllMembers(
   const pendingMembers: GroupMember[] = (pendingResult.data ?? []).map(
     (row: any) => ({
       id: row.id,
-      display_name: formatPhoneDisplay(row.phone_number),
+      display_name: row.nickname || formatPhoneDisplay(row.phone_number),
       avatar_url: null,
       isPending: true,
       phone_number: row.phone_number,
+      invite_status: row.invite_status ?? "pending",
     }),
   );
 

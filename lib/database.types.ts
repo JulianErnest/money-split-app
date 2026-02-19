@@ -222,6 +222,9 @@ export interface Database {
           phone_number: string;
           added_by: string;
           created_at: string;
+          nickname: string | null;
+          invite_status: string;
+          user_id: string | null;
         };
         Insert: {
           id?: string;
@@ -229,6 +232,9 @@ export interface Database {
           phone_number: string;
           added_by: string;
           created_at?: string;
+          nickname?: string | null;
+          invite_status?: string;
+          user_id?: string | null;
         };
         Update: {
           id?: string;
@@ -236,6 +242,9 @@ export interface Database {
           phone_number?: string;
           added_by?: string;
           created_at?: string;
+          nickname?: string | null;
+          invite_status?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -275,8 +284,17 @@ export interface Database {
         Args: {
           p_group_id: string;
           p_phone_number: string;
+          p_nickname?: string | null;
         };
         Returns: string;
+      };
+      remove_group_member: {
+        Args: {
+          p_group_id: string;
+          p_member_id: string;
+          p_is_pending?: boolean;
+        };
+        Returns: undefined;
       };
       create_expense: {
         Args: {
