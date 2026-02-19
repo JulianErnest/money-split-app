@@ -16,6 +16,8 @@ import { colors } from "@/theme";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { NetworkProvider } from "@/lib/network-context";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
+import { ToastProvider } from "@/components/ui/Toast";
+import { useSyncOnReconnect } from "@/lib/sync-manager";
 
 // Prevent the splash screen from auto-hiding before fonts load
 SplashScreen.preventAutoHideAsync();
@@ -63,6 +65,11 @@ function RootNavigator() {
   );
 }
 
+function SyncWatcher() {
+  useSyncOnReconnect();
+  return null;
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_400Regular,
@@ -86,11 +93,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <NetworkProvider>
-          <BottomSheetModalProvider>
-            <RootNavigator />
-            <OfflineBanner />
-            <StatusBar style="light" />
-          </BottomSheetModalProvider>
+          <ToastProvider>
+            <BottomSheetModalProvider>
+              <SyncWatcher />
+              <RootNavigator />
+              <OfflineBanner />
+              <StatusBar style="light" />
+            </BottomSheetModalProvider>
+          </ToastProvider>
         </NetworkProvider>
       </AuthProvider>
     </GestureHandlerRootView>

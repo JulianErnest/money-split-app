@@ -22,6 +22,9 @@ import { AnimatedRefreshControl } from "@/components/ui/PullToRefresh";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
+import { useNetwork } from "@/lib/network-context";
+import { enqueue } from "@/lib/offline-queue";
+import { syncCompleteListeners } from "@/lib/sync-manager";
 import { colors, spacing, radius } from "@/theme";
 import { formatBalanceSummary, formatBalanceColor } from "@/lib/balance-utils";
 import { formatPeso } from "@/lib/expense-utils";
@@ -45,6 +48,7 @@ function getGroupEmoji(groupName: string): string {
 
 interface GroupRow {
   group_id: string;
+  pending?: boolean;
   groups: {
     id: string;
     name: string;
@@ -61,6 +65,7 @@ interface GroupRow {
 export default function GroupsScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { isOnline } = useNetwork();
 
   const [groups, setGroups] = useState<GroupRow[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
@@ -166,6 +171,20 @@ export default function GroupsScreen() {
     });
   }, [fetchGroups]);
 
+  // ------- Subscribe to sync-complete to re-fetch after offline flush -------
+  useEffect(() => {
+    const listener = () => {
+      // Remove optimistic pending rows and re-fetch from server
+      setGroups((prev) => prev.filter((g) => !g.pending));
+      fetchGroups();
+      fetchBalances();
+    };
+    syncCompleteListeners.add(listener);
+    return () => {
+      syncCompleteListeners.delete(listener);
+    };
+  }, [fetchGroups, fetchBalances]);
+
   // Refresh balances on every focus (picks up new expenses)
   useFocusEffect(
     useCallback(() => {
@@ -184,6 +203,27 @@ export default function GroupsScreen() {
     const trimmed = newGroupName.trim();
     if (trimmed.length === 0 || trimmed.length > 50) {
       Alert.alert("Invalid name", "Group name must be 1-50 characters.");
+      return;
+    }
+
+    // Offline path: enqueue and add optimistic row
+    if (!isOnline) {
+      enqueue("create_group", { group_name: trimmed });
+      const optimisticRow: GroupRow = {
+        group_id: `pending-${Date.now()}`,
+        pending: true,
+        groups: {
+          id: `pending-${Date.now()}`,
+          name: trimmed,
+          invite_code: "",
+          created_by: user?.id ?? "",
+          created_at: new Date().toISOString(),
+        },
+      };
+      setGroups((prev) => [optimisticRow, ...prev]);
+      setNewGroupName("");
+      setShowCreate(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return;
     }
 
@@ -209,20 +249,23 @@ export default function GroupsScreen() {
     } finally {
       setCreating(false);
     }
-  }, [newGroupName, fetchGroups]);
+  }, [newGroupName, fetchGroups, isOnline, user]);
 
   // ------- Render helpers -------
   const renderItem = useCallback(
     ({ item }: { item: GroupRow }) => {
       const group = item.groups;
+      const isPending = item.pending === true;
       const count = memberCounts[group.id] || 0;
       const countLabel = count === 1 ? "1 member" : `${count} members`;
       const netCentavos = groupBalances.get(group.id);
 
       const content = (
         <Pressable
-          onPress={() => router.push(`/group/${group.id}` as any)}
-          style={styles.cardWrapper}
+          onPress={() => {
+            if (!isPending) router.push(`/group/${group.id}` as any);
+          }}
+          style={[styles.cardWrapper, isPending && styles.pendingCard]}
         >
           <Card style={styles.card}>
             <View style={styles.row}>
@@ -231,10 +274,16 @@ export default function GroupsScreen() {
                 <Text variant="bodyMedium" color="textPrimary">
                   {group.name}
                 </Text>
-                <Text variant="caption" color="textSecondary">
-                  {countLabel}
-                </Text>
-                {netCentavos != null && (
+                {isPending ? (
+                  <Text variant="caption" color="warning">
+                    Pending sync...
+                  </Text>
+                ) : (
+                  <Text variant="caption" color="textSecondary">
+                    {countLabel}
+                  </Text>
+                )}
+                {netCentavos != null && !isPending && (
                   <Text
                     variant="caption"
                     color={formatBalanceColor(netCentavos)}
@@ -244,9 +293,11 @@ export default function GroupsScreen() {
                   </Text>
                 )}
               </View>
-              <Text variant="body" color="textSecondary">
-                {">"}
-              </Text>
+              {!isPending && (
+                <Text variant="body" color="textSecondary">
+                  {">"}
+                </Text>
+              )}
             </View>
           </Card>
         </Pressable>
@@ -421,6 +472,9 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     // Pressable wrapper for the Card
+  },
+  pendingCard: {
+    opacity: 0.6,
   },
   card: {
     // inherits Card defaults

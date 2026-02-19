@@ -27,6 +27,8 @@ import {
 } from "@/lib/expense-utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { useNetwork } from "@/lib/network-context";
+import { enqueue } from "@/lib/offline-queue";
 import { GroupMember, fetchAllMembers } from "@/lib/group-members";
 import { colors, spacing, radius, fontFamily, fontSize } from "@/theme";
 
@@ -82,6 +84,7 @@ export default function AddExpenseScreen() {
   const { id: groupId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const { isOnline } = useNetwork();
   const pagerRef = useRef<PagerView>(null);
 
   // Data loading state
@@ -200,14 +203,23 @@ export default function AddExpenseScreen() {
           .map(([id, amt]) => buildSplitEntry(id, amt / 100));
       }
 
-      const { error } = await supabase.rpc("create_expense", {
+      const rpcParams = {
         p_group_id: groupId!,
         p_description: description.trim(),
         p_amount: centavos / 100,
         p_paid_by: payerId,
         p_split_type: splitType,
         p_splits: splits as unknown as import("@/lib/database.types").Json,
-      });
+      };
+
+      // Offline path: enqueue and navigate back
+      if (!isOnline) {
+        enqueue("add_expense", { rpcParams });
+        router.back();
+        return;
+      }
+
+      const { error } = await supabase.rpc("create_expense", rpcParams);
 
       if (error) {
         Alert.alert("Error", error.message || "Failed to create expense");
