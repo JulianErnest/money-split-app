@@ -10,8 +10,9 @@ const NetworkContext = createContext<NetworkContextValue>({ isOnline: true });
 export function NetworkProvider({ children }: { children: React.ReactNode }) {
   const netInfo = useNetInfo();
 
-  // Treat null as online to avoid false positives on app start
-  const isOnline = netInfo.isConnected !== false;
+  // Treat null/unknown as online to avoid false positives on app start
+  const isOnline =
+    netInfo.type === "unknown" || netInfo.isConnected !== false;
 
   return (
     <NetworkContext.Provider value={{ isOnline }}>
