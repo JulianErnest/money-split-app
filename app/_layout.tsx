@@ -10,8 +10,12 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { colors } from "@/theme";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { NetworkProvider } from "@/lib/network-context";
+import { OfflineBanner } from "@/components/ui/OfflineBanner";
 
 // Prevent the splash screen from auto-hiding before fonts load
 SplashScreen.preventAutoHideAsync();
@@ -79,9 +83,16 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <RootNavigator />
-      <StatusBar style="light" />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <NetworkProvider>
+          <BottomSheetModalProvider>
+            <RootNavigator />
+            <OfflineBanner />
+            <StatusBar style="light" />
+          </BottomSheetModalProvider>
+        </NetworkProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
