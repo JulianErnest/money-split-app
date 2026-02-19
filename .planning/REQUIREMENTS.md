@@ -72,24 +72,24 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INV-01 | — | Pending |
-| INV-02 | — | Pending |
-| INV-03 | — | Pending |
-| INV-04 | — | Pending |
-| INV-05 | — | Pending |
-| INV-06 | — | Pending |
-| INV-07 | — | Pending |
-| INV-08 | — | Pending |
-| SETL-01 | — | Pending |
-| SETL-02 | — | Pending |
-| SETL-03 | — | Pending |
-| SETL-04 | — | Pending |
+| INV-01 | Phase 7 | Pending |
+| INV-02 | Phase 7 | Pending |
+| INV-03 | Phase 7 | Pending |
+| INV-04 | Phase 8 | Pending |
+| INV-05 | Phase 8 | Pending |
+| INV-06 | Phase 8 | Pending |
+| INV-07 | Phase 8 | Pending |
+| INV-08 | Phase 7 | Pending |
+| SETL-01 | Phase 9 | Pending |
+| SETL-02 | Phase 9 | Pending |
+| SETL-03 | Phase 9 | Pending |
+| SETL-04 | Phase 9 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-19*
-*Last updated: 2026-02-19 after initial definition*
+*Last updated: 2026-02-19 after roadmap creation*

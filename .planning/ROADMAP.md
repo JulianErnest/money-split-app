@@ -1,8 +1,9 @@
 # Roadmap: HatianApp (Filipino Splitwise)
 
-## Overview
+## Milestones
 
-HatianApp goes from zero to a testable private build in 6 phases, following the natural dependency chain: foundation and design system first, then authentication, groups, expenses, balance computation, and finally UX polish with distribution. Each phase delivers a complete, verifiable capability that unblocks the next, culminating in a build that 5-10 friends can install and use to split real expenses.
+- v1.0 MVP - Phases 1-6 (shipped 2026-02-19)
+- v1.1 Invites & Settle Up - Phases 7-9 (in progress)
 
 ## Phases
 
@@ -13,28 +14,15 @@ HatianApp goes from zero to a testable private build in 6 phases, following the 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Foundation & Design System** - Expo project, Supabase schema with RLS, and dark-first design tokens
-- [x] **Phase 2: Authentication** - Phone OTP sign-in with profile setup
-- [x] **Phase 3: Groups** - Create, join, and browse groups with invite links
-- [x] **Phase 4: Expenses** - Add and view expenses with equal and custom splits
-- [x] **Phase 4.1: Pending Members by Phone** - Pre-register group members by phone number before they install the app (INSERTED)
-- [x] **Phase 5: Balances** - Debt simplification algorithm and balance views
-- [x] **Phase 6: Polish & Distribution** - Offline support, micro-interactions, and EAS build for testers
-
-## Phase Details
+<details>
+<summary>v1.0 MVP (Phases 1-6) - SHIPPED 2026-02-19</summary>
 
 ### Phase 1: Foundation & Design System
 
 **Goal**: The project skeleton exists with a working Supabase backend and a reusable dark-first design system, so all subsequent phases build on solid infrastructure
 **Depends on**: Nothing (first phase)
 **Requirements**: INFR-01, UX-05
-**Success Criteria** (what must be TRUE):
-
-1. Expo app launches on a device/simulator and renders a screen using the dark-first theme with soft green accent
-2. Supabase database tables (users, groups, group_members, expenses, expense_splits) exist with RLS policies that restrict access to owned data
-3. Design tokens (colors, typography, spacing) are defined and applied consistently from a single source of truth
-4. Expo Router navigation shell is in place with bottom tabs or stack navigator ready for screens
-   **Plans**: 2 plans
+**Plans**: 2 plans
 
 Plans:
 
@@ -46,13 +34,7 @@ Plans:
 **Goal**: Users can sign in with their phone number and have a profile, establishing identity for all group and expense operations
 **Depends on**: Phase 1
 **Requirements**: AUTH-01, AUTH-02, AUTH-03
-**Success Criteria** (what must be TRUE):
-
-1. User can enter a Philippine phone number, receive an OTP, and sign in successfully
-2. First-time user is prompted to set a display name and optional avatar before reaching the home screen
-3. User can sign out and is returned to the auth screen
-4. Returning user is automatically signed in without re-entering OTP (Supabase session persistence)
-   **Plans**: 2 plans
+**Plans**: 2 plans
 
 Plans:
 
@@ -64,14 +46,7 @@ Plans:
 **Goal**: Users can create groups, invite friends via shareable links, and see their groups and members
 **Depends on**: Phase 2
 **Requirements**: GRPS-01, GRPS-02, GRPS-03, GRPS-04, GRPS-05, GRPS-06
-**Success Criteria** (what must be TRUE):
-
-1. User can create a new group by entering a name and sees it appear in their groups list
-2. User can generate a shareable invite link and send it via the system share sheet
-3. Another user can tap the invite link and join the group via Expo deep linking
-4. User can view all groups they belong to on the home screen, each with an auto-generated avatar
-5. User can tap into a group and see its list of members
-   **Plans**: 3 plans
+**Plans**: 3 plans
 
 Plans:
 
@@ -84,14 +59,7 @@ Plans:
 **Goal**: Users can add shared expenses to a group with equal or custom splits, and browse the expense history
 **Depends on**: Phase 3
 **Requirements**: EXPN-01, EXPN-02, EXPN-03, EXPN-04, INFR-03
-**Success Criteria** (what must be TRUE):
-
-1. User can add an expense with description, amount in pesos, who paid, and split type (equal or custom)
-2. User can select which group members are involved in an equal split, and the app divides the amount evenly
-3. User can assign custom amounts per member, and the app validates they sum to the total
-4. User can view a chronological list of expenses in a group, most recent first
-5. Expense amounts are capped at 999,999 pesos with clear validation feedback
-   **Plans**: 3 plans
+**Plans**: 3 plans
 
 Plans:
 
@@ -100,18 +68,13 @@ Plans:
 - [x] 04-03-PLAN.md — Expense list in group detail, expense detail view with split breakdown
 
 ### Phase 4.1: Pending Members by Phone (INSERTED)
+
 **Goal**: Users can add friends to a group by phone number before they install the app, include them in expense splits, and have their accounts auto-link when they sign up
 **Depends on**: Phase 4
-**Requirements**: TBD
-**Success Criteria** (what must be TRUE):
-  1. User can add a group member by entering a +63 phone number, even if that person hasn't signed up
-  2. Pending members appear in the group member list with a "pending" indicator
-  3. Pending members can be selected in expense splits (equal and custom)
-  4. When a pending member signs up with their phone number, their account auto-links and they see existing debts
-  5. Existing expense splits referencing the pending member transfer to the real account
 **Plans**: 3 plans
 
 Plans:
+
 - [x] 04.1-01-PLAN.md — Database migrations: pending_members table, expense_splits alterations, auto-link trigger, RPCs
 - [x] 04.1-02-PLAN.md — Add member by phone modal, unified member type, pending member display in group detail
 - [x] 04.1-03-PLAN.md — Expense wizard and detail screen updates for pending member splits
@@ -121,12 +84,7 @@ Plans:
 **Goal**: Users can see simplified "who owes who" balances that minimize the number of transactions needed
 **Depends on**: Phase 4
 **Requirements**: BLNC-01, BLNC-02, BLNC-03
-**Success Criteria** (what must be TRUE):
-
-1. User can view simplified balances within a group showing the minimum set of transactions to settle all debts
-2. Each group in the groups list shows a quick net balance summary (e.g., "You owe 350" or "You are owed 200")
-3. User can tap a balance entry to see which expenses contribute to that debt
-   **Plans**: 3 plans
+**Plans**: 3 plans
 
 Plans:
 
@@ -139,14 +97,7 @@ Plans:
 **Goal**: The app feels polished with offline support and micro-interactions, and is distributed to testers via EAS
 **Depends on**: Phase 5
 **Requirements**: UX-01, UX-02, UX-03, UX-04, UX-06, UX-07, UX-08, INFR-02
-**Success Criteria** (what must be TRUE):
-
-1. User can perform actions (add expense, create group) while offline; actions queue and sync when connectivity returns, with a toast on failure
-2. Lists show skeleton loaders during initial load and support pull-to-refresh with smooth animation
-3. Key actions (add expense, join group) trigger haptic feedback; forms and actions use bottom sheet patterns
-4. Empty states display friendly microcopy with helpful guidance; peso sign and casual Taglish tone are used throughout
-5. Testers can install the app via EAS internal distribution (TestFlight for iOS, APK/AAB for Android)
-   **Plans**: 6 plans
+**Plans**: 6 plans
 
 Plans:
 
@@ -157,17 +108,80 @@ Plans:
 - [x] 06-05-PLAN.md — Offline behavioral wiring: sync-on-reconnect, error toast with Retry, optimistic enqueue in screens
 - [x] 06-06-PLAN.md — Gap closure: fix offline banner false positive and pull-to-refresh on short-content screens
 
+</details>
+
+### v1.1 Invites & Settle Up (In Progress)
+
+**Milestone Goal:** Fix the broken invite/pending member system with proper consent-based invites, and add manual settle-up so users can record payments.
+
+- [ ] **Phase 7: Invite Infrastructure** - Fix phone lookup, add invite schema, enforce creator-only permissions
+- [ ] **Phase 8: Invite UX** - Invite inbox, accept/decline flows, decline cleanup
+- [ ] **Phase 9: Settle Up** - Record settlements, update balances, view history
+
+## Phase Details
+
+### Phase 7: Invite Infrastructure
+
+**Goal**: The database correctly handles phone lookups and models invites as a consent-based flow, with only group creators allowed to send phone invites
+**Depends on**: Phase 6 (v1.0 complete)
+**Requirements**: INV-01, INV-02, INV-03, INV-08
+**Success Criteria** (what must be TRUE):
+  1. Looking up a user by phone number succeeds regardless of whether the number includes a `+` prefix or not (the format mismatch bug is resolved)
+  2. Only the group creator can add members by phone number; other members see the option disabled or hidden
+  3. When the creator adds someone by phone, that person appears as a pending invite (not as a full group member) until they accept
+  4. Joining a group via invite link (share sheet deep link) continues to work as an instant auto-join with no accept/decline step
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01: Phone format normalization fix and creator-only permission guard in RPC
+- [ ] 07-02: Invite schema migration (pending_members gains invite status) and updated add-member flow
+
+### Phase 8: Invite UX
+
+**Goal**: Users who have been invited to a group by phone can see, accept, or decline those invites from within the app
+**Depends on**: Phase 7
+**Requirements**: INV-04, INV-05, INV-06, INV-07
+**Success Criteria** (what must be TRUE):
+  1. User sees a list of pending group invites on the home screen (or a visible inbox section) showing which group invited them and who sent the invite
+  2. User can accept an invite and immediately becomes a full group member with access to the group's expenses and balances
+  3. User can decline an invite, which removes the invite from their inbox
+  4. When a user declines an invite, all expense splits that referenced their pending member record are deleted so balances recalculate correctly
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01: Invite inbox UI on home screen, accept invite RPC and flow
+- [ ] 08-02: Decline invite RPC with cascading split cleanup, decline UI flow
+
+### Phase 9: Settle Up
+
+**Goal**: Users can record that a debt between two people has been settled, and the app reflects this in all balance views
+**Depends on**: Phase 7 (needs working balances from v1.0; independent of Phase 8 invite UX)
+**Requirements**: SETL-01, SETL-02, SETL-03, SETL-04
+**Success Criteria** (what must be TRUE):
+  1. User can tap "Settle up" on a balance entry and confirm settling the full net amount owed between themselves and another member
+  2. The settlement is recorded with the amount, who paid, who received, and the timestamp
+  3. After settling, the balance between those two people in the group updates to reflect the payment (reducing or zeroing the displayed debt)
+  4. User can view a history of settlements within a group showing who paid who, how much, and when
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: Settlements table, record_settlement RPC, balance RPC updates to incorporate settlements
+- [ ] 09-02: Settle up UI flow from balance view, settlement history screen
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6
+Phases execute in numeric order: 7 -> 8 -> 9
 
-| Phase                              | Plans Complete | Status      | Completed  |
-| ---------------------------------- | -------------- | ----------- | ---------- |
-| 1. Foundation & Design System      | 2/2            | Complete    | 2026-02-18 |
-| 2. Authentication                  | 2/2            | Complete    | 2026-02-18 |
-| 3. Groups                          | 3/3            | Complete    | 2026-02-18 |
-| 4. Expenses                        | 3/3            | Complete    | 2026-02-18 |
-| 4.1 Pending Members (INSERTED)     | 3/3            | Complete    | 2026-02-18 |
-| 5. Balances                        | 3/3            | Complete    | 2026-02-18 |
-| 6. Polish & Distribution           | 6/6            | Complete    | 2026-02-19 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Foundation & Design System | v1.0 | 2/2 | Complete | 2026-02-18 |
+| 2. Authentication | v1.0 | 2/2 | Complete | 2026-02-18 |
+| 3. Groups | v1.0 | 3/3 | Complete | 2026-02-18 |
+| 4. Expenses | v1.0 | 3/3 | Complete | 2026-02-18 |
+| 4.1 Pending Members (INSERTED) | v1.0 | 3/3 | Complete | 2026-02-18 |
+| 5. Balances | v1.0 | 3/3 | Complete | 2026-02-18 |
+| 6. Polish & Distribution | v1.0 | 6/6 | Complete | 2026-02-19 |
+| 7. Invite Infrastructure | v1.1 | 0/2 | Not started | - |
+| 8. Invite UX | v1.1 | 0/2 | Not started | - |
+| 9. Settle Up | v1.1 | 0/2 | Not started | - |
