@@ -146,13 +146,14 @@ Plans:
 3. Key actions (add expense, join group) trigger haptic feedback; forms and actions use bottom sheet patterns
 4. Empty states display friendly microcopy with helpful guidance; peso sign and casual Taglish tone are used throughout
 5. Testers can install the app via EAS internal distribution (TestFlight for iOS, APK/AAB for Android)
-   **Plans**: TBD
+   **Plans**: 4 plans
 
 Plans:
 
-- [ ] 06-01: Offline queue with optimistic UI and sync logic
-- [ ] 06-02: Skeleton loaders, pull-to-refresh, haptics, and bottom sheets
-- [ ] 06-03: Empty states, Taglish microcopy, and EAS build configuration
+- [ ] 06-01-PLAN.md — Install deps, network context, offline queue, cached data layer, wire providers into root layout
+- [ ] 06-02-PLAN.md — Skeleton loaders, pull-to-refresh, haptic feedback on key actions
+- [ ] 06-03-PLAN.md — Bottom sheets replacing modals, empty states with Taglish microcopy
+- [ ] 06-04-PLAN.md — EAS Build configuration for internal distribution
 
 ## Progress
 
@@ -167,4 +168,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6
 | 4. Expenses                        | 3/3            | Complete    | 2026-02-18 |
 | 4.1 Pending Members (INSERTED)     | 3/3            | Complete    | 2026-02-18 |
 | 5. Balances                        | 3/3            | Complete    | 2026-02-18 |
-| 6. Polish & Distribution           | 0/3            | Not started | -          |
+| 6. Polish & Distribution           | 0/4            | Not started | -          |
