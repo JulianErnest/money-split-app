@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 6 of 6 (Polish & Distribution)
-Plan: 2 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-02-19 -- Completed 06-02-PLAN.md
+Last activity: 2026-02-19 -- Completed 06-05-PLAN.md
 
-Progress: [██████████████████░░] 86% (18/21 plans)
+Progress: [████████████████████] 95% (20/21 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
-- Average duration: 4.1min
-- Total execution time: ~1.25 hours
+- Total plans completed: 20
+- Average duration: 4.0min
+- Total execution time: ~1.33 hours
 
 **By Phase:**
 
@@ -33,10 +33,10 @@ Progress: [██████████████████░░] 86% (18
 | 04-expenses | 3/3 | 15min | 5min |
 | 04.1-pending-members | 3/3 | 7min | 2.3min |
 | 05-balances | 3/3 | 7min | 2.3min |
-| 06-polish-distribution | 2/5 | 9min | 4.5min |
+| 06-polish-distribution | 4/5 | 13min | 3.3min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (2min), 05-02 (3min), 05-03 (2min), 06-01 (4min), 06-02 (5min)
+- Last 5 plans: 05-03 (2min), 06-01 (4min), 06-02 (5min), 06-04 (0min), 06-05 (4min)
 - Trend: stable execution
 
 *Updated after each plan completion*
@@ -83,6 +83,9 @@ Recent decisions affecting current work:
 - Cache group detail as serializable object with Map converted to tuple arrays -- 06-02
 - Show back button during skeleton loading state for navigation continuity -- 06-02
 - MotiView fade-in animation on data refresh but not initial load -- 06-02
+- Single flush on reconnect, no silent auto-retry, user controls retry via toast Retry button -- 06-05
+- Optimistic pending rows with opacity 0.6 and warning-color "Pending sync..." label -- 06-05
+- syncCompleteListeners Set for decoupled cross-component sync notifications -- 06-05
 
 ### Pending Todos
 
@@ -99,5 +102,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 06-02-PLAN.md
+Stopped at: Completed 06-05-PLAN.md
 Resume file: None
