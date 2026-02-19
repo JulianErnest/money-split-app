@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -11,6 +10,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
+import { BalanceDetailSkeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { colors, spacing, radius } from "@/theme";
@@ -182,10 +182,15 @@ export default function BalanceDrillDownScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.accent} />
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.headerBar}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Text variant="h2" color="accent">
+              {"<"}
+            </Text>
+          </Pressable>
         </View>
+        <BalanceDetailSkeleton />
       </SafeAreaView>
     );
   }
@@ -252,11 +257,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   headerBar: {
     flexDirection: "row",
