@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 7 of 9 (Invite Infrastructure)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-19 — Completed 07-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-19 — Completed 07-02-PLAN.md
 
-Progress: [#################.] 89% (23/28 plans across all milestones)
+Progress: [##################] 93% (24/28 plans across all milestones)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [#################.] 89% (23/28 plans across all milestones)
 - Total execution time: ~1.4 hours
 
 **Current Milestone (v1.1):**
-- Total plans completed: 1
+- Total plans completed: 2
 - Estimated plans: 6
 
 ## Accumulated Context
@@ -40,11 +40,14 @@ Recent decisions affecting current work:
 - Decline removes associated expense splits
 - Phone normalization uses ltrim(p_phone_number, '+') for all comparisons and storage
 - Creator guard checks groups.created_by = current_user_id; client gates Add Member button
+- Phone-added users always become pending invites, never auto-added members (INV-03)
+- Auto-link trigger links identity (user_id) but does not auto-join groups
 
 ### Known Issues
 
 - Phone format mismatch: RESOLVED in 07-01 (migration 00018 restores ltrim normalization)
 - Any group member can add by phone: RESOLVED in 07-01 (creator guard added server + client)
+- supabase db reset not verified for 00019 (Docker not running; SQL follows same patterns as verified 00018)
 
 ### Pending Todos
 
@@ -57,5 +60,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 07-01-PLAN.md
+Stopped at: Completed 07-02-PLAN.md (Phase 7 complete)
 Resume file: None
