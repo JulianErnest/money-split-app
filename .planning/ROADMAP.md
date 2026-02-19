@@ -130,11 +130,11 @@ Plans:
   2. Only the group creator can add members by phone number; other members see the option disabled or hidden
   3. When the creator adds someone by phone, that person appears as a pending invite (not as a full group member) until they accept
   4. Joining a group via invite link (share sheet deep link) continues to work as an instant auto-join with no accept/decline step
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: Phone format normalization fix and creator-only permission guard in RPC
-- [ ] 07-02: Invite schema migration (pending_members gains invite status) and updated add-member flow
+- [ ] 07-01-PLAN.md — Phone normalization fix + creator-only guard in add_pending_member RPC, client-side Add Member button gating
+- [ ] 07-02-PLAN.md — Invite status/user_id schema on pending_members, consent-aware add_pending_member and auto-link trigger, client member fetching update
 
 ### Phase 8: Invite UX
 
