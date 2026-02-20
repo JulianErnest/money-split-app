@@ -150,11 +150,11 @@ Plans:
   2. Each activity item displays description/type, amount, who paid, and which group it belongs to
   3. Tapping an activity item navigates the user to the relevant group or expense detail
   4. When more than 5 activities exist, user sees a "See all" option to view full history
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md — Supabase RPC (get_recent_activity with UNION ALL), ActivityItem type, fetch functions, timestamp formatters
+- [ ] 11-02-PLAN.md — Dashboard activity section wiring, skeleton loading, Activity History screen with infinite scroll and day headers
 
 #### Phase 12: Group Cards & Visual Polish
 
