@@ -37,7 +37,6 @@ import { syncCompleteListeners } from "@/lib/sync-manager";
 import { colors, radius, spacing } from "@/theme";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiPressable } from "moti/interactions";
 import { MotiView } from "moti";
@@ -45,7 +44,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { Alert, Pressable, SectionList, StyleSheet, View } from "react-native";
@@ -64,22 +62,6 @@ function getGroupEmoji(groupName: string): string {
   return EMOJI_LIST[index];
 }
 
-/** Returns gradient colors based on balance direction. */
-function getBalanceGradientColors(
-  netBalance: number,
-): [string, string, string] {
-  if (netBalance > 0) {
-    // Positive (owed to user) -> green glow
-    return ["#0D0D0D", "rgba(159, 232, 112, 0.12)", "#0D0D0D"];
-  }
-  if (netBalance < 0) {
-    // Negative (user owes) -> red glow
-    return ["#0D0D0D", "rgba(232, 84, 84, 0.12)", "#0D0D0D"];
-  }
-  // Zero / settled -> neutral amber glow
-  return ["#0D0D0D", "rgba(245, 166, 35, 0.08)", "#0D0D0D"];
-}
-
 // ---------------------------------------------------------------------------
 // Balance Summary Header
 // ---------------------------------------------------------------------------
@@ -94,12 +76,7 @@ function BalanceSummaryHeader({
   if (!hasGroups) return null;
 
   return (
-    <LinearGradient
-      colors={getBalanceGradientColors(netBalance)}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={balanceSummaryStyles.container}
-    >
+    <View style={balanceSummaryStyles.container}>
       <Text variant="caption" color="textSecondary">
         Overall Balance
       </Text>
@@ -109,7 +86,7 @@ function BalanceSummaryHeader({
       <Text variant="body" color="textSecondary">
         {formatBalanceSummary(netBalance, formatPeso)}
       </Text>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -136,8 +113,6 @@ interface GroupRow {
     created_at: string;
   };
 }
-
-type SectionType = "invite" | "group";
 
 interface InviteSection {
   title: string;
@@ -280,7 +255,7 @@ export default function GroupsScreen() {
   const fetchActivities = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await fetchRecentActivity(5);
+      const data = await fetchRecentActivity(3);
       setActivities(data);
       setCachedData(`${user.id}:recent_activity`, data);
     } catch {
