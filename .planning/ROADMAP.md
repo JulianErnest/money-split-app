@@ -153,8 +153,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Supabase RPC (get_recent_activity with UNION ALL), ActivityItem type, fetch functions, timestamp formatters
-- [ ] 11-02-PLAN.md — Dashboard activity section wiring, skeleton loading, Activity History screen with infinite scroll and day headers
+- [x] 11-01-PLAN.md — Supabase RPC (get_recent_activity with UNION ALL), ActivityItem type, fetch functions, timestamp formatters
+- [x] 11-02-PLAN.md — Dashboard activity section wiring, skeleton loading, Activity History screen with infinite scroll and day headers
 
 #### Phase 12: Group Cards & Visual Polish
 
@@ -185,5 +185,5 @@ Plans:
 | 8. Invite UX | v1.1 | 2/2 | Complete | 2026-02-20 |
 | 9. Settle Up | v1.1 | 2/2 | Complete | 2026-02-20 |
 | 10. Balance Summary & Dashboard Layout | v1.2 | 1/1 | Complete | 2026-02-21 |
-| 11. Activity Feed | v1.2 | 0/2 | Not started | - |
+| 11. Activity Feed | v1.2 | 2/2 | Complete | 2026-02-21 |
 | 12. Group Cards & Visual Polish | v1.2 | 0/1 | Not started | - |

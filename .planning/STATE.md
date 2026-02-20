@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.2 Home Screen Dashboard — Phase 11: Activity Feed (complete)
+**Current focus:** v1.2 Home Screen Dashboard — Phase 11: Activity Feed complete, ready for Phase 12
 
 ## Current Position
 
@@ -65,5 +65,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 11-02-PLAN.md — Phase 11 (Activity Feed) complete
+Stopped at: Phase 11 (Activity Feed) fully complete — ready for Phase 12 (Group Cards & Visual Polish)
 Resume file: None

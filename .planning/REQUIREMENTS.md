@@ -15,11 +15,11 @@ Requirements for Home Screen Dashboard milestone.
 
 ### Activity Feed
 
-- [ ] **ACT-01**: Home screen shows the 5 most recent expenses across all user's groups
-- [ ] **ACT-02**: Home screen shows the 5 most recent settlements across all user's groups, merged chronologically with expenses
-- [ ] **ACT-03**: Each activity item shows description/type, amount, who paid, and which group
-- [ ] **ACT-04**: Tapping an activity item navigates to the relevant expense detail or group
-- [ ] **ACT-05**: A "See all" option is available when there's more activity beyond the 5 shown
+- [x] **ACT-01**: Home screen shows the 5 most recent expenses across all user's groups
+- [x] **ACT-02**: Home screen shows the 5 most recent settlements across all user's groups, merged chronologically with expenses
+- [x] **ACT-03**: Each activity item shows description/type, amount, who paid, and which group
+- [x] **ACT-04**: Tapping an activity item navigates to the relevant expense detail or group
+- [x] **ACT-05**: A "See all" option is available when there's more activity beyond the 5 shown
 
 ### Visual Design
 
@@ -65,11 +65,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BAL-01 | Phase 10 | Complete |
 | BAL-02 | Phase 10 | Complete |
 | BAL-03 | Phase 10 | Complete |
-| ACT-01 | Phase 11 | Pending |
-| ACT-02 | Phase 11 | Pending |
-| ACT-03 | Phase 11 | Pending |
-| ACT-04 | Phase 11 | Pending |
-| ACT-05 | Phase 11 | Pending |
+| ACT-01 | Phase 11 | Complete |
+| ACT-02 | Phase 11 | Complete |
+| ACT-03 | Phase 11 | Complete |
+| ACT-04 | Phase 11 | Complete |
+| ACT-05 | Phase 11 | Complete |
 | VIS-01 | Phase 10 | Complete |
 | VIS-02 | Phase 10 | Complete |
 | VIS-03 | Phase 12 | Pending |
@@ -83,4 +83,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-21 after roadmap creation*
+*Last updated: 2026-02-21 after phase 11 completion*
