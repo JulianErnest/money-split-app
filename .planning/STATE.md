@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Planning next milestone
+**Current focus:** v1.2 Home Screen Dashboard
 
 ## Current Position
 
-Phase: 9 of 9 (all complete)
-Plan: N/A
-Status: Milestone v1.1 complete
-Last activity: 2026-02-20 — v1.1 milestone archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-20 — Milestone v1.2 started
 
-Progress: [######################] 100% (28/28 plans across all milestones)
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -49,5 +49,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: v1.1 milestone complete — ready for next milestone
+Stopped at: Defining requirements for v1.2
 Resume file: None

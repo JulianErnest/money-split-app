@@ -8,9 +8,17 @@ A mobile expense-splitting app built for Filipino users — peso-first, designed
 
 A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
 
-## Current Milestone: Planning next milestone
+## Current Milestone: v1.2 Home Screen Dashboard
 
-v1.0 and v1.1 shipped. Ready for next milestone planning.
+**Goal:** Transform the home screen from a plain groups list into a proper dashboard with balance summary, activity feed, and polished visual design.
+
+**Target features:**
+- Net balance summary header across all groups
+- Recent activity feed (expenses + settlements across groups)
+- Redesigned group cards with richer visual weight
+- Visual hierarchy and dashboard layout
+- Branded personality and warmth in the UI
+- Quick add expense via FAB with group picker
 
 ## Requirements
 
@@ -44,7 +52,11 @@ v1.0 and v1.1 shipped. Ready for next milestone planning.
 
 ### Active
 
-(None — next milestone not yet defined)
+- [ ] Dashboard-style home screen with visual hierarchy and branded personality
+- [ ] Net balance summary header (single total across all groups)
+- [ ] Cross-group activity feed (recent expenses and settlements)
+- [ ] Redesigned group cards with richer info and visual weight
+- [ ] Quick add expense via FAB with group picker
 
 ### Out of Scope
 
@@ -112,4 +124,4 @@ v1.0 and v1.1 shipped. Ready for next milestone planning.
 | Separate settlements table (not expense type) | Clean separation of concerns, no expense query pollution | ✓ Good |
 
 ---
-*Last updated: 2026-02-20 after v1.1 milestone*
+*Last updated: 2026-02-20 after v1.2 milestone started*
