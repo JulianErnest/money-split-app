@@ -26,6 +26,8 @@ import {
   type ExpenseCardSplit,
 } from "@/components/expenses/ExpenseCard";
 import { AddMemberSheet } from "@/components/groups/AddMemberModal";
+import { SettleConfirmSheet } from "@/components/settlements/SettleConfirmSheet";
+import { useToast } from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
@@ -112,7 +114,22 @@ export default function GroupDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+  const [selectedSettle, setSelectedSettle] = useState<Settlement | null>(null);
+  const [settlementHistory, setSettlementHistory] = useState<
+    Array<{
+      id: string;
+      paid_by: string;
+      paid_to: string;
+      amount: number;
+      created_by: string;
+      created_at: string;
+      payer_name: string;
+      receiver_name: string;
+    }>
+  >([]);
   const { ref: addMemberRef, open: openAddMember, close: closeAddMember } = useBottomSheet();
+  const { ref: settleSheetRef, open: openSettleSheet, close: closeSettleSheet } = useBottomSheet();
+  const { showToast } = useToast();
 
   // ------- Load cached data on mount -------
   useEffect(() => {
@@ -143,7 +160,7 @@ export default function GroupDetailScreen() {
 
   async function fetchData() {
     try {
-      const [groupResult, allMembers, expensesResult, balancesResult] =
+      const [groupResult, allMembers, expensesResult, balancesResult, settleHistoryResult] =
         await Promise.all([
           supabase
             .from("groups")
@@ -159,6 +176,13 @@ export default function GroupDetailScreen() {
             .eq("group_id", id!)
             .order("created_at", { ascending: false }),
           supabase.rpc("get_group_balances", { p_group_id: id! }),
+          supabase
+            .from("settlements")
+            .select(
+              "id, paid_by, paid_to, amount, created_by, created_at, payer:users!settlements_paid_by_fkey(display_name), receiver:users!settlements_paid_to_fkey(display_name)",
+            )
+            .eq("group_id", id!)
+            .order("created_at", { ascending: false }),
         ]);
 
       if (groupResult.error || !groupResult.data) {
@@ -190,6 +214,32 @@ export default function GroupDetailScreen() {
         setBalanceMemberFlags(flags);
       } else {
         setSettlements([]);
+      }
+
+      // Process settlement history
+      if (settleHistoryResult.data && !settleHistoryResult.error) {
+        const mapped = (settleHistoryResult.data as unknown as Array<{
+          id: string;
+          paid_by: string;
+          paid_to: string;
+          amount: number;
+          created_by: string;
+          created_at: string;
+          payer: { display_name: string } | null;
+          receiver: { display_name: string } | null;
+        }>).map((row) => ({
+          id: row.id,
+          paid_by: row.paid_by,
+          paid_to: row.paid_to,
+          amount: row.amount,
+          created_by: row.created_by,
+          created_at: row.created_at,
+          payer_name: row.payer?.display_name ?? row.paid_by.slice(0, 8),
+          receiver_name: row.receiver?.display_name ?? row.paid_to.slice(0, 8),
+        }));
+        setSettlementHistory(mapped);
+      } else {
+        setSettlementHistory([]);
       }
 
       // Cache the fetched data for instant reopens
@@ -350,6 +400,43 @@ export default function GroupDetailScreen() {
     return m?.isPending ?? false;
   }
 
+  function handleDeleteSettlement(sh: (typeof settlementHistory)[number]) {
+    // Only the creator can delete
+    if (sh.created_by !== currentUserId) return;
+
+    Alert.alert(
+      "Delete Settlement",
+      `Remove this settlement of \u20B1${formatPeso(Math.round(sh.amount * 100))}? The balance will revert.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const { error: rpcError } = await supabase.rpc(
+              "delete_settlement",
+              {
+                p_settlement_id: sh.id,
+              },
+            );
+            if (rpcError) {
+              showToast({ message: rpcError.message, type: "error" });
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Error,
+              );
+              return;
+            }
+            Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Success,
+            );
+            showToast({ message: "Settlement removed", type: "success" });
+            fetchData();
+          },
+        },
+      ],
+    );
+  }
+
   // ------- Main render -------
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -431,6 +518,11 @@ export default function GroupDetailScreen() {
             settlements.map((s, idx) => {
               const fromPending = isMemberPending(s.from);
               const toPending = isMemberPending(s.to);
+
+              // Settle eligibility
+              const canSettle =
+                s.from === currentUserId || s.to === currentUserId;
+              const bothReal = !fromPending && !toPending;
 
               // Determine drill-down navigation params
               const isCurrentUserDebtor = s.from === currentUserId;
@@ -515,11 +607,79 @@ export default function GroupDetailScreen() {
                           {getMemberDisplayName(s.to)}
                         </Text>
                       </View>
+
+                      {/* Settle button */}
+                      {canSettle && bothReal && (
+                        <Pressable
+                          onPress={() => {
+                            setSelectedSettle(s);
+                            openSettleSheet();
+                          }}
+                          style={styles.settleButton}
+                          hitSlop={8}
+                        >
+                          <Text variant="caption" color="accent">
+                            Settle
+                          </Text>
+                        </Pressable>
+                      )}
                     </View>
                   </Card>
                 </Pressable>
               );
             })
+          )}
+        </View>
+
+        {/* Settlement History section */}
+        <View style={styles.settlementHistorySection}>
+          <View style={styles.sectionHeader}>
+            <Text variant="bodyMedium" color="textPrimary">
+              Settlement History
+            </Text>
+            {settlementHistory.length > 0 && (
+              <View style={styles.countBadge}>
+                <Text variant="caption" color="textSecondary">
+                  {settlementHistory.length}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {settlementHistory.length === 0 ? (
+            <EmptyState
+              emoji="🤝"
+              headline="No settlements yet"
+              subtext="Settle balances to record payments here"
+            />
+          ) : (
+            settlementHistory.map((sh) => (
+              <Pressable
+                key={sh.id}
+                onLongPress={() => handleDeleteSettlement(sh)}
+              >
+                <Card style={styles.settlementHistoryCard}>
+                  <View style={styles.settlementHistoryRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="bodyMedium" color="textPrimary">
+                        {sh.payer_name} paid {sh.receiver_name}
+                      </Text>
+                      <Text variant="caption" color="textTertiary">
+                        {new Date(sh.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </Text>
+                    </View>
+                    <Text variant="bodyMedium" color="accent">
+                      {"\u20B1"}
+                      {formatPeso(Math.round(sh.amount * 100))}
+                    </Text>
+                  </View>
+                </Card>
+              </Pressable>
+            ))
           )}
         </View>
 
@@ -675,6 +835,23 @@ export default function GroupDetailScreen() {
         onClose={closeAddMember}
         onAdded={() => fetchData()}
       />
+
+      {/* Settle Confirmation Bottom Sheet */}
+      {selectedSettle && (
+        <SettleConfirmSheet
+          ref={settleSheetRef}
+          groupId={id!}
+          payerName={getMemberDisplayName(selectedSettle.from)}
+          payerId={selectedSettle.from}
+          receiverName={getMemberDisplayName(selectedSettle.to)}
+          receiverId={selectedSettle.to}
+          amountCentavos={selectedSettle.amount}
+          onSettled={async () => {
+            await fetchData();
+          }}
+          onClose={closeSettleSheet}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -857,5 +1034,24 @@ const styles = StyleSheet.create({
   },
   homeButton: {
     minWidth: 200,
+  },
+  settleButton: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+  },
+  settlementHistorySection: {
+    paddingHorizontal: spacing[6],
+    gap: spacing[2],
+    marginBottom: spacing[6],
+  },
+  settlementHistoryCard: {
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+  },
+  settlementHistoryRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    gap: spacing[3],
   },
 });
