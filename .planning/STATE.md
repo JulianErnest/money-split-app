@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.2 Home Screen Dashboard — Phase 10: Balance Summary & Dashboard Layout
+**Current focus:** v1.2 Home Screen Dashboard — Phase 11: Activity Feed
 
 ## Current Position
 
-Phase: 10 of 12 (Balance Summary & Dashboard Layout)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-21 — Completed 10-01-PLAN.md
+Phase: 11 of 12 (Activity Feed)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-21 — Completed 11-01-PLAN.md
 
-Progress: ██░░░░░░░░ 20% (1/5 plans across v1.2)
+Progress: ████░░░░░░ 40% (2/5 plans across v1.2)
 
 ## Performance Metrics
 
@@ -28,8 +28,9 @@ Progress: ██░░░░░░░░ 20% (1/5 plans across v1.2)
 - Timeline: 2 days (Feb 19-20)
 
 **v1.2 Milestone:**
-- Plans completed: 1
+- Plans completed: 2
 - 10-01: 7min
+- 11-01: 2min
 
 ## Accumulated Context
 
@@ -40,6 +41,8 @@ Full decision log in PROJECT.md Key Decisions table.
 - Balance display without +/- prefix, using color + descriptor text for direction
 - Activity placeholder visible as "Coming soon" to validate layout spacing
 - useMemo for dashboardHeader (JSX element, not render function)
+- RPC returns pesos as-is; UI layer handles peso-to-centavo conversion for activity feed
+- Offset-based pagination (not cursor) for activity feed simplicity
 
 ### Known Issues
 
@@ -58,5 +61,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 10-01-PLAN.md — Phase 10 complete, ready for Phase 11
+Stopped at: Completed 11-01-PLAN.md — Activity data layer done, ready for 11-02 (UI)
 Resume file: None
