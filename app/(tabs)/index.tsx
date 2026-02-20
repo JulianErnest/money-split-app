@@ -49,6 +49,42 @@ function getGroupEmoji(groupName: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Balance Summary Header
+// ---------------------------------------------------------------------------
+
+function BalanceSummaryHeader({
+  netBalance,
+  hasGroups,
+}: {
+  netBalance: number;
+  hasGroups: boolean;
+}) {
+  if (!hasGroups) return null;
+
+  return (
+    <View style={balanceSummaryStyles.container}>
+      <Text variant="caption" color="textSecondary">
+        Overall Balance
+      </Text>
+      <Text variant="moneyLarge" color={formatBalanceColor(netBalance)}>
+        P{formatPeso(Math.abs(netBalance))}
+      </Text>
+      <Text variant="body" color="textSecondary">
+        {formatBalanceSummary(netBalance, formatPeso)}
+      </Text>
+    </View>
+  );
+}
+
+const balanceSummaryStyles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    paddingVertical: spacing[6],
+    paddingHorizontal: spacing[6],
+  },
+});
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -95,6 +131,15 @@ export default function GroupsScreen() {
   const [groupBalances, setGroupBalances] = useState<Map<string, number>>(
     new Map(),
   );
+
+  const netBalance = useMemo(() => {
+    let total = 0;
+    for (const centavos of groupBalances.values()) {
+      total += centavos;
+    }
+    return total;
+  }, [groupBalances]);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const initialLoadDone = useRef(false);
@@ -570,8 +615,8 @@ export default function GroupsScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text variant="h1" color="textPrimary">
-          Groups
+        <Text variant="h2" color="textPrimary">
+          Home
         </Text>
         <Pressable
           onPress={() => openCreateSheet()}
