@@ -81,3 +81,22 @@ export async function fetchAllMembers(
 
   return [...realMembers, ...pendingMembers];
 }
+
+// ---------------------------------------------------------------------------
+// Invite inbox
+// ---------------------------------------------------------------------------
+
+/** Row returned by the get_my_pending_invites RPC. */
+export interface InviteRow {
+  pending_member_id: string;
+  group_id: string;
+  group_name: string;
+  invited_by_name: string;
+}
+
+/** Fetch pending invites for the current authenticated user. */
+export async function fetchPendingInvites(): Promise<InviteRow[]> {
+  const { data, error } = await supabase.rpc("get_my_pending_invites");
+  if (error || !data) return [];
+  return data as InviteRow[];
+}
