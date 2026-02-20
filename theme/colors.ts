@@ -23,6 +23,10 @@ export const palette = {
   greenSubtle: "#1A2E10",
   red: "#E85454",
   yellow: "#FFEB69",
+  amber: "#F5A623",
+  amberSubtle: "#2A2010",
+  coral: "#FF6B6B",
+  coralSubtle: "#2A1515",
 } as const;
 
 export const colors = {
@@ -75,4 +79,10 @@ export const colors = {
   tabBarBorder: palette.dark3,
   tabActive: palette.green,
   tabInactive: palette.gray1,
+
+  // Warm accents (brand touches)
+  warmAccent: palette.amber,
+  warmAccentSubtle: palette.amberSubtle,
+  warmSecondary: palette.coral,
+  warmSecondarySubtle: palette.coralSubtle,
 } as const;
