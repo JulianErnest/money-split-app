@@ -9,9 +9,9 @@ Requirements for Home Screen Dashboard milestone.
 
 ### Balance Summary
 
-- [ ] **BAL-01**: User sees their net balance across all groups prominently at the top of the home screen
-- [ ] **BAL-02**: Balance is color-coded — green when owed money, red when owing, neutral when settled
-- [ ] **BAL-03**: Balance header has visual weight — large typography, distinct from the rest of the page
+- [x] **BAL-01**: User sees their net balance across all groups prominently at the top of the home screen
+- [x] **BAL-02**: Balance is color-coded — green when owed money, red when owing, neutral when settled
+- [x] **BAL-03**: Balance header has visual weight — large typography, distinct from the rest of the page
 
 ### Activity Feed
 
@@ -23,8 +23,8 @@ Requirements for Home Screen Dashboard milestone.
 
 ### Visual Design
 
-- [ ] **VIS-01**: Home screen uses a sectioned dashboard layout: balance → activity → groups with clear visual separation
-- [ ] **VIS-02**: Typography hierarchy with varied sizes and weights guides the eye through sections
+- [x] **VIS-01**: Home screen uses a sectioned dashboard layout: balance → activity → groups with clear visual separation
+- [x] **VIS-02**: Typography hierarchy with varied sizes and weights guides the eye through sections
 - [ ] **VIS-03**: Accent/brand touches — colored balance area, subtle card treatments, warm empty states
 - [ ] **VIS-04**: Group cards show richer info: last activity date, member avatar stack, per-group balance
 
@@ -62,16 +62,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BAL-01 | Phase 10 | Pending |
-| BAL-02 | Phase 10 | Pending |
-| BAL-03 | Phase 10 | Pending |
+| BAL-01 | Phase 10 | Complete |
+| BAL-02 | Phase 10 | Complete |
+| BAL-03 | Phase 10 | Complete |
 | ACT-01 | Phase 11 | Pending |
 | ACT-02 | Phase 11 | Pending |
 | ACT-03 | Phase 11 | Pending |
 | ACT-04 | Phase 11 | Pending |
 | ACT-05 | Phase 11 | Pending |
-| VIS-01 | Phase 10 | Pending |
-| VIS-02 | Phase 10 | Pending |
+| VIS-01 | Phase 10 | Complete |
+| VIS-02 | Phase 10 | Complete |
 | VIS-03 | Phase 12 | Pending |
 | VIS-04 | Phase 12 | Pending |
 | QAC-01 | Phase 10 | Complete |
