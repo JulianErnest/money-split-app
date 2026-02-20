@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.2 Home Screen Dashboard — Phase 11: Activity Feed complete, ready for Phase 12
+**Current focus:** v1.2 Home Screen Dashboard — Phase 12: Group Cards & Visual Polish, Plan 01 complete
 
 ## Current Position
 
-Phase: 11 of 12 (Activity Feed)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-21 — Completed 11-02-PLAN.md
+Phase: 12 of 12 (Group Cards & Visual Polish)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-21 — Completed 12-01-PLAN.md
 
-Progress: ██████░░░░ 60% (3/5 plans across v1.2)
+Progress: ████████░░ 80% (4/5 plans across v1.2)
 
 ## Performance Metrics
 
@@ -28,10 +28,11 @@ Progress: ██████░░░░ 60% (3/5 plans across v1.2)
 - Timeline: 2 days (Feb 19-20)
 
 **v1.2 Milestone:**
-- Plans completed: 3
+- Plans completed: 4
 - 10-01: 7min
 - 11-01: 2min
 - 11-02: 5min
+- 12-01: 2min
 
 ## Accumulated Context
 
@@ -47,6 +48,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Dashboard sections reordered: groups before invites, invites only shown when pending
 - Activity items use text-only type indicators (E/S in colored circles) for density
 - Compact empty state on dashboard, full EmptyState on history screen
+- CSS-only glassmorphism (5% white bg + 8% white border) instead of expo-blur
+- RPC returns raw arrays; TypeScript layer zips into typed objects
+- supabase.rpc cast via (as any) since database types not regenerated until migration applied
 
 ### Known Issues
 
@@ -65,5 +69,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Phase 11 (Activity Feed) fully complete — ready for Phase 12 (Group Cards & Visual Polish)
+Stopped at: Completed 12-01-PLAN.md — building blocks ready, Plan 02 will wire them into dashboard
 Resume file: None
