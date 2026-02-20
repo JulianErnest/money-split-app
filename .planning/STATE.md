@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 10 of 12 (Balance Summary & Dashboard Layout)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-21 — Roadmap created for v1.2 milestone
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-02-21 — Completed 10-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0% (0/5 plans across v1.2)
+Progress: ██░░░░░░░░ 20% (1/5 plans across v1.2)
 
 ## Performance Metrics
 
@@ -27,16 +27,25 @@ Progress: ░░░░░░░░░░ 0% (0/5 plans across v1.2)
 - Total plans completed: 6
 - Timeline: 2 days (Feb 19-20)
 
+**v1.2 Milestone:**
+- Plans completed: 1
+- 10-01: 7min
+
 ## Accumulated Context
 
 ### Decisions
 
 Full decision log in PROJECT.md Key Decisions table.
 
+- Balance display without +/- prefix, using color + descriptor text for direction
+- Activity placeholder visible as "Coming soon" to validate layout spacing
+- useMemo for dashboardHeader (JSX element, not render function)
+
 ### Known Issues
 
 - supabase db reset not verified for 00019 (Docker not running; SQL follows same patterns as verified 00018)
 - Pre-existing TypeScript error in app/(tabs)/index.tsx (SectionList type mismatch from phase 08-02) -- cosmetic, does not affect runtime
+- Pre-existing TypeScript error in app/_layout.tsx (segments tuple index) -- cosmetic, does not affect runtime
 
 ### Pending Todos
 
@@ -49,5 +58,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Roadmap created for v1.2 — ready to plan Phase 10
+Stopped at: Completed 10-01-PLAN.md — Phase 10 complete, ready for Phase 11
 Resume file: None

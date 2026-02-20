@@ -138,7 +138,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — Balance summary header with net balance computation, color-coding, dashboard section layout with activity placeholder and visual dividers
+- [x] 10-01-PLAN.md — Balance summary header with net balance computation, color-coding, dashboard section layout with activity placeholder and visual dividers
 
 #### Phase 11: Activity Feed
 
@@ -184,6 +184,6 @@ Plans:
 | 7. Invite Infrastructure | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 8. Invite UX | v1.1 | 2/2 | Complete | 2026-02-20 |
 | 9. Settle Up | v1.1 | 2/2 | Complete | 2026-02-20 |
-| 10. Balance Summary & Dashboard Layout | v1.2 | 0/1 | Not started | - |
+| 10. Balance Summary & Dashboard Layout | v1.2 | 1/1 | Complete | 2026-02-21 |
 | 11. Activity Feed | v1.2 | 0/2 | Not started | - |
 | 12. Group Cards & Visual Polish | v1.2 | 0/1 | Not started | - |
