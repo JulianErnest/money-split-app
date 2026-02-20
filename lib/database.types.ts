@@ -324,6 +324,23 @@ export interface Database {
           net_balance: number;
         }>;
       };
+      get_my_pending_invites: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          pending_member_id: string;
+          group_id: string;
+          group_name: string;
+          invited_by_name: string;
+        }>;
+      };
+      accept_invite: {
+        Args: { p_pending_member_id: string };
+        Returns: string;
+      };
+      decline_invite: {
+        Args: { p_pending_member_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
