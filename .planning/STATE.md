@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 9 — Settle Up
+**Current focus:** Phase 9 — Settle Up (COMPLETE)
 
 ## Current Position
 
 Phase: 9 of 9 (Settle Up)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-20 — Completed 09-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-20 — Completed 09-02-PLAN.md
 
-Progress: [#####################] 96% (27/28 plans across all milestones)
+Progress: [######################] 100% (28/28 plans across all milestones)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [#####################] 96% (27/28 plans across all milestones)
 - Total execution time: ~1.4 hours
 
 **Current Milestone (v1.1):**
-- Total plans completed: 5
+- Total plans completed: 6
 - Estimated plans: 6
 
 ## Accumulated Context
@@ -51,23 +51,27 @@ Recent decisions affecting current work:
 - No amount validation in record_settlement (race condition tolerance; UI enforces whole-balance)
 - No time window on delete_settlement (creator guard sufficient for small user base)
 - Settlement math: paid_by +settled_out, paid_to -settled_in
+- Settlement history between Balances and Expenses sections
+- Long-press to delete settlement (creator only)
+- Settle button at far right of balance card row
 
 ### Known Issues
 
 - Phone format mismatch: RESOLVED in 07-01 (migration 00018 restores ltrim normalization)
 - Any group member can add by phone: RESOLVED in 07-01 (creator guard added server + client)
 - supabase db reset not verified for 00019 (Docker not running; SQL follows same patterns as verified 00018)
+- Pre-existing TypeScript error in app/(tabs)/index.tsx (SectionList type mismatch from phase 08-02) -- cosmetic, does not affect runtime
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 09-01-PLAN.md — Settle-up backend (table, RPCs, balance updates)
+Stopped at: Completed 09-02-PLAN.md — Settle-up UI (bottom sheet, settle buttons, history, delete)
 Resume file: None
