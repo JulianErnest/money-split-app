@@ -415,6 +415,25 @@ export interface Database {
         };
         Returns: undefined;
       };
+      get_recent_activity: {
+        Args: {
+          p_limit?: number;
+          p_offset?: number;
+          p_since?: string;
+        };
+        Returns: Array<{
+          id: string;
+          type: string;
+          description: string;
+          amount: number;
+          payer_name: string;
+          payer_id: string;
+          group_name: string;
+          group_id: string;
+          expense_id: string | null;
+          created_at: string;
+        }>;
+      };
     };
     Enums: {
       [_ in never]: never;
