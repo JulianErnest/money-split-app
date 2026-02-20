@@ -162,11 +162,11 @@ Plans:
   2. The settlement is recorded with the amount, who paid, who received, and the timestamp
   3. After settling, the balance between those two people in the group updates to reflect the payment (reducing or zeroing the displayed debt)
   4. User can view a history of settlements within a group showing who paid who, how much, and when
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: Settlements table, record_settlement RPC, balance RPC updates to incorporate settlements
-- [ ] 09-02: Settle up UI flow from balance view, settlement history screen
+- [ ] 09-01-PLAN.md -- Settlements table, record_settlement/delete_settlement RPCs, balance RPC updates to incorporate settlements, database types
+- [ ] 09-02-PLAN.md -- SettleConfirmSheet component, settle button on balance rows, settlement history section, delete settlement flow
 
 ## Progress
 
