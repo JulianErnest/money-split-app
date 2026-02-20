@@ -571,7 +571,7 @@ export default function GroupsScreen() {
   const renderSectionHeader = useCallback(
     ({ section }: { section: HomeSection }) => (
       <View style={styles.sectionHeader}>
-        <Text variant="caption" color="textSecondary">
+        <Text variant="label" color="textSecondary">
           {section.title}
         </Text>
       </View>
@@ -610,6 +610,39 @@ export default function GroupsScreen() {
     return String(index);
   }, []);
 
+  const dashboardHeader = useMemo(
+    () => (
+      <View>
+        <BalanceSummaryHeader
+          netBalance={netBalance}
+          hasGroups={groups.length > 0}
+        />
+
+        {groups.length > 0 && (
+          <>
+            <View style={styles.sectionDivider} />
+
+            <View style={styles.activitySection}>
+              <Text variant="label" color="textSecondary">
+                Recent Activity
+              </Text>
+              <Text
+                variant="caption"
+                color="textTertiary"
+                style={styles.activityPlaceholder}
+              >
+                Coming soon
+              </Text>
+            </View>
+
+            <View style={styles.sectionDivider} />
+          </>
+        )}
+      </View>
+    ),
+    [netBalance, groups.length],
+  );
+
   // ------- Main render -------
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -636,6 +669,7 @@ export default function GroupsScreen() {
         <GroupsListSkeleton />
       ) : (
         <SectionList
+          ListHeaderComponent={dashboardHeader}
           sections={sections as any}
           renderItem={renderItem}
           renderSectionHeader={renderSectionHeader}
@@ -739,6 +773,19 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingTop: spacing[4],
     paddingBottom: spacing[2],
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: colors.borderSubtle,
+    marginHorizontal: spacing[6],
+  },
+  activitySection: {
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[5],
+    gap: spacing[2],
+  },
+  activityPlaceholder: {
+    fontStyle: "italic" as const,
   },
   cardWrapper: {
     // Pressable wrapper for the Card
