@@ -30,7 +30,7 @@ Requirements for Home Screen Dashboard milestone.
 
 ### Quick Actions
 
-- [ ] **QAC-01**: FAB navigates to add expense with group picker (already built)
+- [x] **QAC-01**: FAB navigates to add expense with group picker (already built)
 
 ## Future Requirements
 
@@ -62,25 +62,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BAL-01 | — | Pending |
-| BAL-02 | — | Pending |
-| BAL-03 | — | Pending |
-| ACT-01 | — | Pending |
-| ACT-02 | — | Pending |
-| ACT-03 | — | Pending |
-| ACT-04 | — | Pending |
-| ACT-05 | — | Pending |
-| VIS-01 | — | Pending |
-| VIS-02 | — | Pending |
-| VIS-03 | — | Pending |
-| VIS-04 | — | Pending |
-| QAC-01 | — | Pending |
+| BAL-01 | Phase 10 | Pending |
+| BAL-02 | Phase 10 | Pending |
+| BAL-03 | Phase 10 | Pending |
+| ACT-01 | Phase 11 | Pending |
+| ACT-02 | Phase 11 | Pending |
+| ACT-03 | Phase 11 | Pending |
+| ACT-04 | Phase 11 | Pending |
+| ACT-05 | Phase 11 | Pending |
+| VIS-01 | Phase 10 | Pending |
+| VIS-02 | Phase 10 | Pending |
+| VIS-03 | Phase 12 | Pending |
+| VIS-04 | Phase 12 | Pending |
+| QAC-01 | Phase 10 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-20 after initial definition*
+*Last updated: 2026-02-21 after roadmap creation*

@@ -4,6 +4,7 @@
 
 - v1.0 MVP - Phases 1-6 (shipped 2026-02-19)
 - v1.1 Invites & Settle Up - Phases 7-9 (shipped 2026-02-20)
+- v1.2 Home Screen Dashboard - Phases 10-12 (in progress)
 
 ## Phases
 
@@ -119,6 +120,57 @@ Plans:
 
 </details>
 
+### v1.2 Home Screen Dashboard (In Progress)
+
+**Milestone Goal:** Transform the home screen from a plain groups list into a proper dashboard with balance summary, activity feed, enriched group cards, and polished visual design.
+
+#### Phase 10: Balance Summary & Dashboard Layout
+
+**Goal**: User opens the app and immediately sees their financial position across all groups in a clear, sectioned dashboard layout
+**Depends on**: Phase 9 (existing home screen, existing `get_my_group_balances` RPC)
+**Requirements**: BAL-01, BAL-02, BAL-03, VIS-01, VIS-02, QAC-01
+**Success Criteria** (what must be TRUE):
+  1. User sees a single net balance number at the top of the home screen that sums across all groups
+  2. Balance is color-coded: green when others owe the user, red when the user owes others, neutral when settled up
+  3. Balance header has large, prominent typography that is visually distinct from the rest of the screen
+  4. Home screen is clearly divided into visual sections (balance, activity placeholder, groups) with distinct separation
+  5. FAB for quick-add expense continues to work (pre-completed)
+**Plans**: TBD
+
+Plans:
+- [ ] 10-01: TBD
+- [ ] 10-02: TBD
+
+#### Phase 11: Activity Feed
+
+**Goal**: User can see what happened recently across all their groups without navigating into each one
+**Depends on**: Phase 10 (dashboard layout with activity section placeholder)
+**Requirements**: ACT-01, ACT-02, ACT-03, ACT-04, ACT-05
+**Success Criteria** (what must be TRUE):
+  1. Home screen shows the 5 most recent activities (expenses and settlements merged chronologically) across all groups
+  2. Each activity item displays description/type, amount, who paid, and which group it belongs to
+  3. Tapping an activity item navigates the user to the relevant group or expense detail
+  4. When more than 5 activities exist, user sees a "See all" option to view full history
+**Plans**: TBD
+
+Plans:
+- [ ] 11-01: TBD
+- [ ] 11-02: TBD
+
+#### Phase 12: Group Cards & Visual Polish
+
+**Goal**: The home screen feels like a polished, branded product with rich group cards and warm visual personality
+**Depends on**: Phase 11 (complete dashboard content)
+**Requirements**: VIS-03, VIS-04
+**Success Criteria** (what must be TRUE):
+  1. Group cards show last activity date, member avatar stack, and per-group balance at a glance
+  2. Dashboard has accent/brand touches: colored balance area, subtle card treatments, and warm empty states
+  3. Empty states (no groups, no activity) feel friendly and guide the user toward action
+**Plans**: TBD
+
+Plans:
+- [ ] 12-01: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -133,3 +185,6 @@ Plans:
 | 7. Invite Infrastructure | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 8. Invite UX | v1.1 | 2/2 | Complete | 2026-02-20 |
 | 9. Settle Up | v1.1 | 2/2 | Complete | 2026-02-20 |
+| 10. Balance Summary & Dashboard Layout | v1.2 | 0/2 | Not started | - |
+| 11. Activity Feed | v1.2 | 0/2 | Not started | - |
+| 12. Group Cards & Visual Polish | v1.2 | 0/1 | Not started | - |
