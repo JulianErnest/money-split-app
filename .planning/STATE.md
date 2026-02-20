@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.2 Home Screen Dashboard — Phase 11: Activity Feed
+**Current focus:** v1.2 Home Screen Dashboard — Phase 11: Activity Feed (complete)
 
 ## Current Position
 
 Phase: 11 of 12 (Activity Feed)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-21 — Completed 11-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-21 — Completed 11-02-PLAN.md
 
-Progress: ████░░░░░░ 40% (2/5 plans across v1.2)
+Progress: ██████░░░░ 60% (3/5 plans across v1.2)
 
 ## Performance Metrics
 
@@ -28,9 +28,10 @@ Progress: ████░░░░░░ 40% (2/5 plans across v1.2)
 - Timeline: 2 days (Feb 19-20)
 
 **v1.2 Milestone:**
-- Plans completed: 2
+- Plans completed: 3
 - 10-01: 7min
 - 11-01: 2min
+- 11-02: 5min
 
 ## Accumulated Context
 
@@ -39,10 +40,13 @@ Progress: ████░░░░░░ 40% (2/5 plans across v1.2)
 Full decision log in PROJECT.md Key Decisions table.
 
 - Balance display without +/- prefix, using color + descriptor text for direction
-- Activity placeholder visible as "Coming soon" to validate layout spacing
+- Activity placeholder visible as "Coming soon" to validate layout spacing -- now replaced with real feed
 - useMemo for dashboardHeader (JSX element, not render function)
 - RPC returns pesos as-is; UI layer handles peso-to-centavo conversion for activity feed
 - Offset-based pagination (not cursor) for activity feed simplicity
+- Dashboard sections reordered: groups before invites, invites only shown when pending
+- Activity items use text-only type indicators (E/S in colored circles) for density
+- Compact empty state on dashboard, full EmptyState on history screen
 
 ### Known Issues
 
@@ -61,5 +65,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 11-01-PLAN.md — Activity data layer done, ready for 11-02 (UI)
+Stopped at: Completed 11-02-PLAN.md — Phase 11 (Activity Feed) complete
 Resume file: None
