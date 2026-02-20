@@ -149,7 +149,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Invite RPCs (accept, decline, get_my_pending_invites), RLS policy for invite inbox, database types update
+- [x] 08-01-PLAN.md — Invite RPCs (accept, decline, get_my_pending_invites), RLS policy for invite inbox, database types update
 - [ ] 08-02-PLAN.md — Home screen SectionList with Pending Invites section, invite cards with accept/decline, toast + navigation flows
 
 ### Phase 9: Settle Up
@@ -183,5 +183,5 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 5. Balances | v1.0 | 3/3 | Complete | 2026-02-18 |
 | 6. Polish & Distribution | v1.0 | 6/6 | Complete | 2026-02-19 |
 | 7. Invite Infrastructure | v1.1 | 2/2 | Complete | 2026-02-19 |
-| 8. Invite UX | v1.1 | 0/2 | Planned | - |
+| 8. Invite UX | v1.1 | 1/2 | In progress | - |
 | 9. Settle Up | v1.1 | 0/2 | Not started | - |

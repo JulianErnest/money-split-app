@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 8 of 9 (Invite UX)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-19 — Completed Phase 7 (Invite Infrastructure)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-20 — Completed 08-01-PLAN.md
 
-Progress: [##################] 93% (24/28 plans across all milestones)
+Progress: [###################] 96% (25/28 plans across all milestones)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [##################] 93% (24/28 plans across all milestones)
 - Total execution time: ~1.4 hours
 
 **Current Milestone (v1.1):**
-- Total plans completed: 2
+- Total plans completed: 3
 - Estimated plans: 6
 
 ## Accumulated Context
@@ -42,6 +42,8 @@ Recent decisions affecting current work:
 - Creator guard checks groups.created_by = current_user_id; client gates Add Member button
 - Phone-added users always become pending invites, never auto-added members (INV-03)
 - Auto-link trigger links identity (user_id) but does not auto-join groups
+- Hard delete on decline (not soft delete) to allow re-invite by creator
+- Security definer RPC for inbox query to bypass groups table RLS
 
 ### Known Issues
 
@@ -59,6 +61,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-19
-Stopped at: Completed 07-02-PLAN.md (Phase 7 complete)
+Last session: 2026-02-20
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
