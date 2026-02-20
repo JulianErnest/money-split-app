@@ -18,10 +18,10 @@
 
 ### Settle Up
 
-- [ ] **SETL-01**: User can mark the whole net balance as settled between themselves and another group member
-- [ ] **SETL-02**: Settlement is recorded with amount, payer, payee, and timestamp
-- [ ] **SETL-03**: User can view settlement history in a group (who paid who, when)
-- [ ] **SETL-04**: Settled amounts reduce the displayed balance between two people in balance views
+- [x] **SETL-01**: User can mark the whole net balance as settled between themselves and another group member
+- [x] **SETL-02**: Settlement is recorded with amount, payer, payee, and timestamp
+- [x] **SETL-03**: User can view settlement history in a group (who paid who, when)
+- [x] **SETL-04**: Settled amounts reduce the displayed balance between two people in balance views
 
 ## v2 Requirements
 
@@ -80,10 +80,10 @@
 | INV-06 | Phase 8 | Complete |
 | INV-07 | Phase 8 | Complete |
 | INV-08 | Phase 7 | Complete |
-| SETL-01 | Phase 9 | Pending |
-| SETL-02 | Phase 9 | Pending |
-| SETL-03 | Phase 9 | Pending |
-| SETL-04 | Phase 9 | Pending |
+| SETL-01 | Phase 9 | Complete |
+| SETL-02 | Phase 9 | Complete |
+| SETL-03 | Phase 9 | Complete |
+| SETL-04 | Phase 9 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 12 total

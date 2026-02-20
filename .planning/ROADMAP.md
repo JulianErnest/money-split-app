@@ -3,7 +3,7 @@
 ## Milestones
 
 - v1.0 MVP - Phases 1-6 (shipped 2026-02-19)
-- v1.1 Invites & Settle Up - Phases 7-9 (in progress)
+- v1.1 Invites & Settle Up - Phases 7-9 (shipped 2026-02-20)
 
 ## Phases
 
@@ -110,13 +110,13 @@ Plans:
 
 </details>
 
-### v1.1 Invites & Settle Up (In Progress)
+### v1.1 Invites & Settle Up (Complete)
 
 **Milestone Goal:** Fix the broken invite/pending member system with proper consent-based invites, and add manual settle-up so users can record payments.
 
 - [x] **Phase 7: Invite Infrastructure** - Fix phone lookup, add invite schema, enforce creator-only permissions
 - [x] **Phase 8: Invite UX** - Invite inbox, accept/decline flows, decline cleanup
-- [ ] **Phase 9: Settle Up** - Record settlements, update balances, view history
+- [x] **Phase 9: Settle Up** - Record settlements, update balances, view history
 
 ## Phase Details
 
@@ -165,8 +165,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- Settlements table, record_settlement/delete_settlement RPCs, balance RPC updates to incorporate settlements, database types
-- [ ] 09-02-PLAN.md -- SettleConfirmSheet component, settle button on balance rows, settlement history section, delete settlement flow
+- [x] 09-01-PLAN.md -- Settlements table, record_settlement/delete_settlement RPCs, balance RPC updates to incorporate settlements, database types
+- [x] 09-02-PLAN.md -- SettleConfirmSheet component, settle button on balance rows, settlement history section, delete settlement flow
 
 ## Progress
 
@@ -184,4 +184,4 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 6. Polish & Distribution | v1.0 | 6/6 | Complete | 2026-02-19 |
 | 7. Invite Infrastructure | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 8. Invite UX | v1.1 | 2/2 | Complete | 2026-02-20 |
-| 9. Settle Up | v1.1 | 0/2 | Not started | - |
+| 9. Settle Up | v1.1 | 2/2 | Complete | 2026-02-20 |
