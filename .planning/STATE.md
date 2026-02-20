@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** Phase 8 — Invite UX
+**Current focus:** Phase 9 — Settle Up
 
 ## Current Position
 
 Phase: 8 of 9 (Invite UX)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-20 — Completed 08-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-20 — Completed 08-02-PLAN.md
 
-Progress: [###################] 96% (25/28 plans across all milestones)
+Progress: [####################] 96% (26/28 plans across all milestones)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [###################] 96% (25/28 plans across all milestones)
 - Total execution time: ~1.4 hours
 
 **Current Milestone (v1.1):**
-- Total plans completed: 3
+- Total plans completed: 4
 - Estimated plans: 6
 
 ## Accumulated Context
@@ -44,6 +44,10 @@ Recent decisions affecting current work:
 - Auto-link trigger links identity (user_id) but does not auto-join groups
 - Hard delete on decline (not soft delete) to allow re-invite by creator
 - Security definer RPC for inbox query to bypass groups table RLS
+- Single-tap accept with no confirmation dialog
+- Decline shows Alert warning before proceeding
+- Decline removes card silently with no toast
+- Pending Invites section always visible with empty state when no invites
 
 ### Known Issues
 
@@ -62,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 08-01-PLAN.md
+Stopped at: Completed 08-02-PLAN.md — Phase 8 complete
 Resume file: None

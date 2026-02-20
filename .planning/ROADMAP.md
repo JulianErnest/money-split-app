@@ -115,7 +115,7 @@ Plans:
 **Milestone Goal:** Fix the broken invite/pending member system with proper consent-based invites, and add manual settle-up so users can record payments.
 
 - [x] **Phase 7: Invite Infrastructure** - Fix phone lookup, add invite schema, enforce creator-only permissions
-- [ ] **Phase 8: Invite UX** - Invite inbox, accept/decline flows, decline cleanup
+- [x] **Phase 8: Invite UX** - Invite inbox, accept/decline flows, decline cleanup
 - [ ] **Phase 9: Settle Up** - Record settlements, update balances, view history
 
 ## Phase Details
@@ -150,7 +150,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — Invite RPCs (accept, decline, get_my_pending_invites), RLS policy for invite inbox, database types update
-- [ ] 08-02-PLAN.md — Home screen SectionList with Pending Invites section, invite cards with accept/decline, toast + navigation flows
+- [x] 08-02-PLAN.md — Home screen SectionList with Pending Invites section, invite cards with accept/decline, toast + navigation flows
 
 ### Phase 9: Settle Up
 
@@ -183,5 +183,5 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 5. Balances | v1.0 | 3/3 | Complete | 2026-02-18 |
 | 6. Polish & Distribution | v1.0 | 6/6 | Complete | 2026-02-19 |
 | 7. Invite Infrastructure | v1.1 | 2/2 | Complete | 2026-02-19 |
-| 8. Invite UX | v1.1 | 1/2 | In progress | - |
+| 8. Invite UX | v1.1 | 2/2 | Complete | 2026-02-20 |
 | 9. Settle Up | v1.1 | 0/2 | Not started | - |
