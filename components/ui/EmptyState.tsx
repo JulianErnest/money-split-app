@@ -1,7 +1,7 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
 import { Text } from "@/components/ui/Text";
 import { spacing } from "@/theme";
+import React from "react";
+import { Text as RNText, StyleSheet, View } from "react-native";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,7 +20,7 @@ interface EmptyStateProps {
 function EmptyState({ emoji, headline, subtext }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.emoji}>{emoji}</Text>
+      <RNText style={styles.emoji}>{emoji}</RNText>
       <Text variant="bodyMedium" color="textPrimary" style={styles.headline}>
         {headline}
       </Text>

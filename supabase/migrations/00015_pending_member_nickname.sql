@@ -1,20 +1,15 @@
--- Fix: add_pending_member phone lookup bypasses RLS
---
--- Bug: When user A adds user B by phone number, if B is already signed up
--- but not in any shared group with A, the RLS policy on public.users hides
--- B's row. The lookup returns NULL and a pending member is created instead
--- of adding B directly to the group.
---
--- Fix: Use `set row_security = off` so the function's query to public.users
--- ignores RLS. The function already runs as security definer (postgres owner
--- with BYPASSRLS), and performs its own auth checks.
---
--- Also: One-time data fix to claim any existing pending members whose phone
--- matches a signed-up user.
+-- Add optional nickname column to pending_members
+-- When a user adds someone by phone who hasn't signed up yet,
+-- they can give them a temporary display name instead of just showing the number.
 
+alter table public.pending_members
+  add column nickname text;
+
+-- Update add_pending_member to accept an optional nickname
 create or replace function public.add_pending_member(
   p_group_id uuid,
-  p_phone_number text  -- Expected E.164 format: +639XXXXXXXXX
+  p_phone_number text,  -- Expected E.164 format: +639XXXXXXXXX
+  p_nickname text default null
 )
 returns uuid
 language plpgsql
@@ -41,8 +36,6 @@ begin
   end if;
 
   -- Check if a user with this phone already exists
-  -- RLS is disabled for this function (set row_security = off above)
-  -- so this query sees ALL users, not just co-members
   select u.id into existing_user_id
   from users u
   where u.phone_number = p_phone_number;
@@ -83,45 +76,11 @@ begin
     raise exception 'This phone number is already pending in this group';
   end if;
 
-  -- Create pending member
-  insert into pending_members (group_id, phone_number, added_by)
-  values (p_group_id, p_phone_number, current_user_id)
+  -- Create pending member with optional nickname
+  insert into pending_members (group_id, phone_number, added_by, nickname)
+  values (p_group_id, p_phone_number, current_user_id, nullif(trim(p_nickname), ''))
   returning id into new_pending_id;
 
   return new_pending_id;
-end;
-$$;
-
--- One-time data fix: claim any existing pending members whose phone
--- matches a signed-up user. This fixes data from before the RLS bug fix.
-do $$
-declare
-  pending record;
-  real_user_id uuid;
-begin
-  for pending in
-    select pm.id, pm.group_id, pm.phone_number
-    from pending_members pm
-  loop
-    -- Look up real user by phone (no RLS in DO blocks run as migration owner)
-    select u.id into real_user_id
-    from public.users u
-    where u.phone_number = pending.phone_number;
-
-    if real_user_id is not null then
-      -- Add to group (skip if already member)
-      insert into group_members (group_id, user_id)
-      values (pending.group_id, real_user_id)
-      on conflict (group_id, user_id) do nothing;
-
-      -- Transfer expense splits
-      update expense_splits
-      set user_id = real_user_id, pending_member_id = null
-      where pending_member_id = pending.id;
-
-      -- Remove pending entry
-      delete from pending_members where id = pending.id;
-    end if;
-  end loop;
 end;
 $$;

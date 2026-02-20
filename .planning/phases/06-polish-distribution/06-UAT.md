@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 06-polish-distribution
 source: 06-01-SUMMARY.md, 06-02-SUMMARY.md, 06-03-SUMMARY.md, 06-04-SUMMARY.md, 06-05-SUMMARY.md
 started: 2026-02-19T11:00:00Z
@@ -79,17 +79,26 @@ skipped: 0
   reason: "User reported: On the simulator even though I'm not offline it's showing the baner"
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "netInfo.isConnected is transiently false (not null) during iOS simulator startup, which passes through the !== false guard and triggers the banner"
+  artifacts:
+    - path: "lib/network-context.tsx"
+      issue: "isOnline check does not guard against transient false during unknown network type at startup"
+  missing:
+    - "Treat netInfo.type === unknown as online regardless of isConnected value"
+  debug_session: ".planning/debug/offline-banner-false-positive.md"
 
 - truth: "Pull-to-refresh triggers data reload on groups list and group detail"
   status: failed
   reason: "User reported: it doesnt refresh even when i pull"
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "ScrollView and FlatList missing alwaysBounceVertical={true} — when content is shorter than screen, iOS does not bounce and RefreshControl never triggers"
+  artifacts:
+    - path: "app/group/[id].tsx"
+      issue: "ScrollView missing alwaysBounceVertical={true}"
+    - path: "app/(tabs)/index.tsx"
+      issue: "FlatList missing alwaysBounceVertical={true}"
+  missing:
+    - "Add alwaysBounceVertical={true} to ScrollView in group detail"
+    - "Add alwaysBounceVertical={true} to FlatList in groups list"
+  debug_session: ".planning/debug/pull-to-refresh-not-working.md"

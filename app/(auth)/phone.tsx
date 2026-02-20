@@ -1,20 +1,19 @@
-import React, { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/Button";
+import { Text } from "@/components/ui/Text";
+import { supabase } from "@/lib/supabase";
+import { colors, fontFamily, fontSize, spacing } from "@/theme";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  TextInput,
-  StyleSheet,
-  SafeAreaView,
+  Animated,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
-  ImageBackground,
-  Animated,
-  Dimensions,
+  SafeAreaView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { Text } from "@/components/ui/Text";
-import { Button } from "@/components/ui/Button";
-import { supabase } from "@/lib/supabase";
-import { colors, fontFamily, fontSize, spacing, radius } from "@/theme";
 
 const CAROUSEL_IMAGES = [
   require("@/assets/images/auth/friends-1.jpg"),
@@ -118,7 +117,7 @@ export default function PhoneScreen() {
           <View style={styles.container}>
             <View style={styles.header}>
               <Text variant="h1" color="accent" style={styles.appName}>
-                Hatian
+                MoneySplitApp
               </Text>
               <Text variant="body" color="textSecondary">
                 Split expenses with your barkada
