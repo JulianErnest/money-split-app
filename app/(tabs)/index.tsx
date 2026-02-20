@@ -1,4 +1,5 @@
 import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
+import { AvatarStack } from "@/components/ui/AvatarStack";
 import {
   AppBottomSheet,
   BottomSheetTextInput,
@@ -7,6 +8,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { AnimatedRefreshControl } from "@/components/ui/PullToRefresh";
 import {
   ActivitySectionSkeleton,
@@ -23,6 +25,10 @@ import { useAuth } from "@/lib/auth-context";
 import { formatBalanceColor, formatBalanceSummary } from "@/lib/balance-utils";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
 import { formatPeso } from "@/lib/expense-utils";
+import {
+  GroupCardData,
+  fetchGroupCardData,
+} from "@/lib/group-card-data";
 import { fetchPendingInvites, InviteRow } from "@/lib/group-members";
 import { useNetwork } from "@/lib/network-context";
 import { enqueue } from "@/lib/offline-queue";
@@ -31,7 +37,9 @@ import { syncCompleteListeners } from "@/lib/sync-manager";
 import { colors, radius, spacing } from "@/theme";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { MotiPressable } from "moti/interactions";
 import { MotiView } from "moti";
 import React, {
   useCallback,
@@ -56,6 +64,22 @@ function getGroupEmoji(groupName: string): string {
   return EMOJI_LIST[index];
 }
 
+/** Returns gradient colors based on balance direction. */
+function getBalanceGradientColors(
+  netBalance: number,
+): [string, string, string] {
+  if (netBalance > 0) {
+    // Positive (owed to user) -> green glow
+    return ["#0D0D0D", "rgba(159, 232, 112, 0.12)", "#0D0D0D"];
+  }
+  if (netBalance < 0) {
+    // Negative (user owes) -> red glow
+    return ["#0D0D0D", "rgba(232, 84, 84, 0.12)", "#0D0D0D"];
+  }
+  // Zero / settled -> neutral amber glow
+  return ["#0D0D0D", "rgba(245, 166, 35, 0.08)", "#0D0D0D"];
+}
+
 // ---------------------------------------------------------------------------
 // Balance Summary Header
 // ---------------------------------------------------------------------------
@@ -70,7 +94,12 @@ function BalanceSummaryHeader({
   if (!hasGroups) return null;
 
   return (
-    <View style={balanceSummaryStyles.container}>
+    <LinearGradient
+      colors={getBalanceGradientColors(netBalance)}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={balanceSummaryStyles.container}
+    >
       <Text variant="caption" color="textSecondary">
         Overall Balance
       </Text>
@@ -80,7 +109,7 @@ function BalanceSummaryHeader({
       <Text variant="body" color="textSecondary">
         {formatBalanceSummary(netBalance, formatPeso)}
       </Text>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -135,10 +164,12 @@ export default function GroupsScreen() {
   const { showToast } = useToast();
 
   const [groups, setGroups] = useState<GroupRow[]>([]);
-  const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
   const [groupBalances, setGroupBalances] = useState<Map<string, number>>(
     new Map(),
   );
+  const [groupCardData, setGroupCardData] = useState<
+    Map<string, GroupCardData>
+  >(new Map());
 
   const netBalance = useMemo(() => {
     let total = 0;
@@ -150,7 +181,6 @@ export default function GroupsScreen() {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const initialLoadDone = useRef(false);
 
   // Activity feed state
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -175,12 +205,6 @@ export default function GroupsScreen() {
     const cached = getCachedData<GroupRow[]>(`${user.id}:groups`);
     if (cached && cached.length > 0) {
       setGroups(cached);
-    }
-    const cachedCounts = getCachedData<Record<string, number>>(
-      `${user.id}:group_counts`,
-    );
-    if (cachedCounts) {
-      setMemberCounts(cachedCounts);
     }
     const cachedActivities = getCachedData<ActivityItem[]>(
       `${user.id}:recent_activity`,
@@ -210,27 +234,6 @@ export default function GroupsScreen() {
       const rows = (data as unknown as GroupRow[]) ?? [];
       setGroups(rows);
       setCachedData(`${user.id}:groups`, rows);
-
-      // Fetch member counts for all groups in a single query
-      if (rows.length > 0) {
-        const groupIds = rows.map((r) => r.groups.id);
-        const { data: countData } = await supabase
-          .from("group_members")
-          .select("group_id")
-          .in("group_id", groupIds);
-
-        if (countData) {
-          const counts = countData.reduce(
-            (acc: Record<string, number>, row: { group_id: string }) => {
-              acc[row.group_id] = (acc[row.group_id] || 0) + 1;
-              return acc;
-            },
-            {} as Record<string, number>,
-          );
-          setMemberCounts(counts);
-          setCachedData(`${user.id}:group_counts`, counts);
-        }
-      }
     } catch (err) {
       console.error("Unexpected error fetching groups:", err);
     }
@@ -258,6 +261,21 @@ export default function GroupsScreen() {
     }
   }, [user]);
 
+  // ------- Fetch group card data (members, last activity) -------
+  const fetchCardData = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await fetchGroupCardData();
+      const map = new Map<string, GroupCardData>();
+      for (const item of data) {
+        map.set(item.group_id, item);
+      }
+      setGroupCardData(map);
+    } catch {
+      // Silently skip
+    }
+  }, [user]);
+
   // ------- Fetch recent activity -------
   const fetchActivities = useCallback(async () => {
     if (!user) return;
@@ -280,13 +298,15 @@ export default function GroupsScreen() {
   }, [user]);
 
   useEffect(() => {
-    Promise.all([fetchGroups(), fetchInvites(), fetchActivities()]).finally(
-      () => {
-        setLoading(false);
-        initialLoadDone.current = true;
-      },
-    );
-  }, [fetchGroups, fetchInvites, fetchActivities]);
+    Promise.all([
+      fetchGroups(),
+      fetchInvites(),
+      fetchActivities(),
+      fetchCardData(),
+    ]).finally(() => {
+      setLoading(false);
+    });
+  }, [fetchGroups, fetchInvites, fetchActivities, fetchCardData]);
 
   // ------- Subscribe to sync-complete to re-fetch after offline flush -------
   useEffect(() => {
@@ -297,21 +317,29 @@ export default function GroupsScreen() {
       fetchBalances();
       fetchInvites();
       fetchActivities();
+      fetchCardData();
     };
     syncCompleteListeners.add(listener);
     return () => {
       syncCompleteListeners.delete(listener);
     };
-  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities]);
+  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities, fetchCardData]);
 
-  // Refresh balances, groups, invites, and activities on every focus
+  // Refresh balances, groups, invites, activities, and card data on every focus
   useFocusEffect(
     useCallback(() => {
       fetchBalances();
       fetchGroups();
       fetchInvites();
       fetchActivities();
-    }, [fetchBalances, fetchGroups, fetchInvites, fetchActivities]),
+      fetchCardData();
+    }, [
+      fetchBalances,
+      fetchGroups,
+      fetchInvites,
+      fetchActivities,
+      fetchCardData,
+    ]),
   );
 
   const handleRefresh = useCallback(async () => {
@@ -321,9 +349,10 @@ export default function GroupsScreen() {
       fetchBalances(),
       fetchInvites(),
       fetchActivities(),
+      fetchCardData(),
     ]);
     setRefreshing(false);
-  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities]);
+  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities, fetchCardData]);
 
   // ------- Accept invite handler -------
   const handleAcceptInvite = useCallback(
@@ -539,69 +568,82 @@ export default function GroupsScreen() {
     (item: GroupRow) => {
       const group = item.groups;
       const isPending = item.pending === true;
-      const count = memberCounts[group.id] || 0;
-      const countLabel = count === 1 ? "1 member" : `${count} members`;
+      const cardInfo = groupCardData.get(group.id);
       const netCentavos = groupBalances.get(group.id);
 
-      const content = (
-        <Pressable
-          onPress={() => {
-            if (!isPending) router.push(`/group/${group.id}` as any);
+      // Pending (offline) groups: simple rendering without MotiPressable
+      if (isPending) {
+        return (
+          <View style={styles.pendingCard}>
+            <GlassCard>
+              <View style={styles.cardTopRow}>
+                <Avatar emoji={getGroupEmoji(group.name)} size="md" />
+                <View style={styles.info}>
+                  <Text variant="bodyMedium" color="textPrimary">
+                    {group.name}
+                  </Text>
+                  <Text variant="caption" color="warning">
+                    Pending sync...
+                  </Text>
+                </View>
+              </View>
+            </GlassCard>
+          </View>
+        );
+      }
+
+      return (
+        <MotiPressable
+          onPress={() => router.push(`/group/${group.id}` as any)}
+          animate={({ pressed }) => {
+            "worklet";
+            return {
+              scale: pressed ? 0.97 : 1,
+              opacity: pressed ? 0.9 : 1,
+            };
           }}
-          style={[styles.cardWrapper, isPending && styles.pendingCard]}
+          transition={{
+            type: "timing",
+            duration: 150,
+          }}
         >
-          <Card style={styles.card}>
-            <View style={styles.row}>
+          <GlassCard>
+            <View style={styles.cardTopRow}>
               <Avatar emoji={getGroupEmoji(group.name)} size="md" />
               <View style={styles.info}>
                 <Text variant="bodyMedium" color="textPrimary">
                   {group.name}
                 </Text>
-                {isPending ? (
-                  <Text variant="caption" color="warning">
-                    Pending sync...
-                  </Text>
-                ) : (
-                  <Text variant="caption" color="textSecondary">
-                    {countLabel}
-                  </Text>
-                )}
-                {netCentavos != null && !isPending && (
-                  <Text
-                    variant="caption"
-                    color={formatBalanceColor(netCentavos)}
-                    style={styles.balanceText}
-                  >
-                    {formatBalanceSummary(netCentavos, formatPeso)}
-                  </Text>
-                )}
-              </View>
-              {!isPending && (
-                <Text variant="body" color="textSecondary">
-                  {">"}
+                <Text variant="caption" color="textTertiary">
+                  {cardInfo?.last_activity_at
+                    ? formatRelativeTime(cardInfo.last_activity_at)
+                    : "No activity yet"}
                 </Text>
+              </View>
+              {netCentavos != null && netCentavos !== 0 && (
+                <View style={styles.cardBalanceCol}>
+                  <Text
+                    variant="bodyMedium"
+                    color={formatBalanceColor(netCentavos)}
+                  >
+                    P{formatPeso(Math.abs(netCentavos))}
+                  </Text>
+                  <Text variant="caption" color="textSecondary">
+                    {netCentavos > 0 ? "owed to you" : "you owe"}
+                  </Text>
+                </View>
               )}
             </View>
-          </Card>
-        </Pressable>
+            {cardInfo && cardInfo.members.length > 0 && (
+              <View style={styles.cardAvatarRow}>
+                <AvatarStack members={cardInfo.members} max={4} />
+              </View>
+            )}
+          </GlassCard>
+        </MotiPressable>
       );
-
-      // Fade-in animation only on data refresh (not initial load)
-      if (initialLoadDone.current) {
-        return (
-          <MotiView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ type: "timing", duration: 300 }}
-          >
-            {content}
-          </MotiView>
-        );
-      }
-
-      return content;
     },
-    [router, memberCounts, groupBalances],
+    [router, groupBalances, groupCardData],
   );
 
   const renderInviteCard = useCallback(
@@ -682,8 +724,8 @@ export default function GroupsScreen() {
         return (
           <EmptyState
             emoji="👥"
-            headline="Wala pa kay group!"
-            subtext="Tap + to create one, or ask a friend for an invite code"
+            headline="No groups yet"
+            subtext="Create a group to start splitting expenses with friends"
           />
         );
       }
@@ -915,14 +957,19 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  cardWrapper: {
-    // Pressable wrapper for the Card
-  },
   pendingCard: {
     opacity: 0.6,
   },
-  card: {
-    // inherits Card defaults
+  cardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+  },
+  cardBalanceCol: {
+    alignItems: "flex-end",
+  },
+  cardAvatarRow: {
+    marginTop: spacing[3],
   },
   row: {
     flexDirection: "row",
@@ -932,9 +979,6 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     gap: 2,
-  },
-  balanceText: {
-    marginTop: 2,
   },
   // Invite card styles
   inviteCard: {

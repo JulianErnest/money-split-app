@@ -23,7 +23,7 @@ const COLOR_MODE = "dark" as const;
 
 export function GroupCardSkeleton() {
   return (
-    <Card>
+    <View style={skStyles.glassCard}>
       <View style={skStyles.groupCardRow}>
         <Skeleton
           colorMode={COLOR_MODE}
@@ -49,7 +49,7 @@ export function GroupCardSkeleton() {
           />
         </View>
       </View>
-    </Card>
+    </View>
   );
 }
 
@@ -357,6 +357,14 @@ export function ActivitySectionSkeleton() {
 // ---------------------------------------------------------------------------
 
 const skStyles = StyleSheet.create({
+  // Glassmorphism skeleton card (matches GlassCard appearance)
+  glassCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: radius.lg,
+    padding: spacing[4],
+  },
   // GroupCardSkeleton
   groupCardRow: {
     flexDirection: "row",
