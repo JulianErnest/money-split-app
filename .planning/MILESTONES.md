@@ -2,6 +2,33 @@
 
 ## Completed
 
+### v1.1 — Invites & Settle Up (2026-02-19 → 2026-02-20)
+
+**Goal:** Fix the broken invite/pending member system with proper consent-based invites, and add manual settle-up so users can record payments.
+
+**Phases:** 3 (7 through 9)
+**Plans:** 6 total
+**Requirements:** 12/12 complete
+
+**What shipped:**
+- Phone normalization fix and creator-only guards for adding members
+- Consent-aware invite system (pending invites, not auto-add)
+- Invite inbox on home screen with accept/decline flows
+- Decline cleanup (hard delete splits for re-invite capability)
+- Settlements table with record/delete RPCs and balance math integration
+- Settle-up UI with confirmation bottom sheet, history section, and delete
+
+**Key decisions:**
+- Invite inbox (not push notifications)
+- Creator-only phone invites for security
+- Whole-balance settlement only
+- Hard delete on decline for re-invite capability
+- No server-side amount validation (race condition tolerance)
+
+**Last phase number:** 9
+
+---
+
 ### v1.0 — Core Expense Splitting (2026-02-18 → 2026-02-19)
 
 **Goal:** Ship a testable private build with the core expense-splitting loop — groups, expenses, balances, offline support.

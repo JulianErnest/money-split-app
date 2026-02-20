@@ -110,68 +110,16 @@ Plans:
 
 </details>
 
-### v1.1 Invites & Settle Up (Complete)
+<details>
+<summary>v1.1 Invites & Settle Up (Phases 7-9) - SHIPPED 2026-02-20</summary>
 
-**Milestone Goal:** Fix the broken invite/pending member system with proper consent-based invites, and add manual settle-up so users can record payments.
+- [x] Phase 7: Invite Infrastructure (2/2 plans) — completed 2026-02-19
+- [x] Phase 8: Invite UX (2/2 plans) — completed 2026-02-20
+- [x] Phase 9: Settle Up (2/2 plans) — completed 2026-02-20
 
-- [x] **Phase 7: Invite Infrastructure** - Fix phone lookup, add invite schema, enforce creator-only permissions
-- [x] **Phase 8: Invite UX** - Invite inbox, accept/decline flows, decline cleanup
-- [x] **Phase 9: Settle Up** - Record settlements, update balances, view history
-
-## Phase Details
-
-### Phase 7: Invite Infrastructure
-
-**Goal**: The database correctly handles phone lookups and models invites as a consent-based flow, with only group creators allowed to send phone invites
-**Depends on**: Phase 6 (v1.0 complete)
-**Requirements**: INV-01, INV-02, INV-03, INV-08
-**Success Criteria** (what must be TRUE):
-  1. Looking up a user by phone number succeeds regardless of whether the number includes a `+` prefix or not (the format mismatch bug is resolved)
-  2. Only the group creator can add members by phone number; other members see the option disabled or hidden
-  3. When the creator adds someone by phone, that person appears as a pending invite (not as a full group member) until they accept
-  4. Joining a group via invite link (share sheet deep link) continues to work as an instant auto-join with no accept/decline step
-**Plans**: 2 plans
-
-Plans:
-- [x] 07-01-PLAN.md — Phone normalization fix + creator-only guard in add_pending_member RPC, client-side Add Member button gating
-- [x] 07-02-PLAN.md — Invite status/user_id schema on pending_members, consent-aware add_pending_member and auto-link trigger, client member fetching update
-
-### Phase 8: Invite UX
-
-**Goal**: Users who have been invited to a group by phone can see, accept, or decline those invites from within the app
-**Depends on**: Phase 7
-**Requirements**: INV-04, INV-05, INV-06, INV-07
-**Success Criteria** (what must be TRUE):
-  1. User sees a list of pending group invites on the home screen (or a visible inbox section) showing which group invited them and who sent the invite
-  2. User can accept an invite and immediately becomes a full group member with access to the group's expenses and balances
-  3. User can decline an invite, which removes the invite from their inbox
-  4. When a user declines an invite, all expense splits that referenced their pending member record are deleted so balances recalculate correctly
-**Plans**: 2 plans
-
-Plans:
-- [x] 08-01-PLAN.md — Invite RPCs (accept, decline, get_my_pending_invites), RLS policy for invite inbox, database types update
-- [x] 08-02-PLAN.md — Home screen SectionList with Pending Invites section, invite cards with accept/decline, toast + navigation flows
-
-### Phase 9: Settle Up
-
-**Goal**: Users can record that a debt between two people has been settled, and the app reflects this in all balance views
-**Depends on**: Phase 7 (needs working balances from v1.0; independent of Phase 8 invite UX)
-**Requirements**: SETL-01, SETL-02, SETL-03, SETL-04
-**Success Criteria** (what must be TRUE):
-  1. User can tap "Settle up" on a balance entry and confirm settling the full net amount owed between themselves and another member
-  2. The settlement is recorded with the amount, who paid, who received, and the timestamp
-  3. After settling, the balance between those two people in the group updates to reflect the payment (reducing or zeroing the displayed debt)
-  4. User can view a history of settlements within a group showing who paid who, how much, and when
-**Plans**: 2 plans
-
-Plans:
-- [x] 09-01-PLAN.md -- Settlements table, record_settlement/delete_settlement RPCs, balance RPC updates to incorporate settlements, database types
-- [x] 09-02-PLAN.md -- SettleConfirmSheet component, settle button on balance rows, settlement history section, delete settlement flow
+</details>
 
 ## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 7 -> 8 -> 9
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
