@@ -8,9 +8,17 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AnimatedRefreshControl } from "@/components/ui/PullToRefresh";
-import { GroupsListSkeleton } from "@/components/ui/Skeleton";
+import {
+  ActivitySectionSkeleton,
+  GroupsListSkeleton,
+} from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/ui/Toast";
+import {
+  ActivityItem,
+  fetchRecentActivity,
+  formatRelativeTime,
+} from "@/lib/activity";
 import { useAuth } from "@/lib/auth-context";
 import { formatBalanceColor, formatBalanceSummary } from "@/lib/balance-utils";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
@@ -144,6 +152,10 @@ export default function GroupsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const initialLoadDone = useRef(false);
 
+  // Activity feed state
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+
   // Invite inbox state
   const [pendingInvites, setPendingInvites] = useState<InviteRow[]>([]);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -169,6 +181,12 @@ export default function GroupsScreen() {
     );
     if (cachedCounts) {
       setMemberCounts(cachedCounts);
+    }
+    const cachedActivities = getCachedData<ActivityItem[]>(
+      `${user.id}:recent_activity`,
+    );
+    if (cachedActivities && cachedActivities.length > 0) {
+      setActivities(cachedActivities);
     }
   }, [user]);
 
@@ -240,6 +258,20 @@ export default function GroupsScreen() {
     }
   }, [user]);
 
+  // ------- Fetch recent activity -------
+  const fetchActivities = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await fetchRecentActivity(5);
+      setActivities(data);
+      setCachedData(`${user.id}:recent_activity`, data);
+    } catch {
+      // Silently skip -- don't break the dashboard
+    } finally {
+      setActivitiesLoading(false);
+    }
+  }, [user]);
+
   // ------- Fetch pending invites -------
   const fetchInvites = useCallback(async () => {
     if (!user) return;
@@ -248,11 +280,13 @@ export default function GroupsScreen() {
   }, [user]);
 
   useEffect(() => {
-    Promise.all([fetchGroups(), fetchInvites()]).finally(() => {
-      setLoading(false);
-      initialLoadDone.current = true;
-    });
-  }, [fetchGroups, fetchInvites]);
+    Promise.all([fetchGroups(), fetchInvites(), fetchActivities()]).finally(
+      () => {
+        setLoading(false);
+        initialLoadDone.current = true;
+      },
+    );
+  }, [fetchGroups, fetchInvites, fetchActivities]);
 
   // ------- Subscribe to sync-complete to re-fetch after offline flush -------
   useEffect(() => {
@@ -262,27 +296,34 @@ export default function GroupsScreen() {
       fetchGroups();
       fetchBalances();
       fetchInvites();
+      fetchActivities();
     };
     syncCompleteListeners.add(listener);
     return () => {
       syncCompleteListeners.delete(listener);
     };
-  }, [fetchGroups, fetchBalances, fetchInvites]);
+  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities]);
 
-  // Refresh balances, groups, and invites on every focus
+  // Refresh balances, groups, invites, and activities on every focus
   useFocusEffect(
     useCallback(() => {
       fetchBalances();
       fetchGroups();
       fetchInvites();
-    }, [fetchBalances, fetchGroups, fetchInvites]),
+      fetchActivities();
+    }, [fetchBalances, fetchGroups, fetchInvites, fetchActivities]),
   );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchGroups(), fetchBalances(), fetchInvites()]);
+    await Promise.all([
+      fetchGroups(),
+      fetchBalances(),
+      fetchInvites(),
+      fetchActivities(),
+    ]);
     setRefreshing(false);
-  }, [fetchGroups, fetchBalances, fetchInvites]);
+  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities]);
 
   // ------- Accept invite handler -------
   const handleAcceptInvite = useCallback(
@@ -424,19 +465,75 @@ export default function GroupsScreen() {
   }, [newGroupName, fetchGroups, isOnline, user]);
 
   // ------- SectionList data -------
-  const sections: HomeSection[] = useMemo(
-    () => [
-      {
+  const sections: HomeSection[] = useMemo(() => {
+    const result: HomeSection[] = [
+      { title: "My Groups", data: groups, type: "group" as const },
+    ];
+    if (pendingInvites.length > 0) {
+      result.push({
         title: "Pending Invites",
         data: pendingInvites,
         type: "invite" as const,
-      },
-      { title: "My Groups", data: groups, type: "group" as const },
-    ],
-    [pendingInvites, groups],
-  );
+      });
+    }
+    return result;
+  }, [pendingInvites, groups]);
 
   // ------- Render helpers -------
+
+  const renderActivityItem = useCallback(
+    (item: ActivityItem) => {
+      const isExpense = item.type === "expense";
+      return (
+        <Pressable
+          key={item.id}
+          onPress={() => {
+            if (isExpense && item.expense_id) {
+              router.push(
+                `/group/${item.group_id}/expense/${item.expense_id}` as any,
+              );
+            } else {
+              router.push(`/group/${item.group_id}` as any);
+            }
+          }}
+          style={styles.activityItem}
+        >
+          <View
+            style={[
+              styles.activityIcon,
+              {
+                backgroundColor: isExpense
+                  ? colors.accentSubtle
+                  : colors.surface,
+              },
+            ]}
+          >
+            <Text
+              variant="caption"
+              color={isExpense ? "accent" : "textSecondary"}
+            >
+              {isExpense ? "E" : "S"}
+            </Text>
+          </View>
+          <View style={styles.activityInfo}>
+            <Text variant="bodyMedium" color="textPrimary" numberOfLines={1}>
+              {item.description}
+            </Text>
+            <Text variant="caption" color="textSecondary" numberOfLines={1}>
+              {item.group_name} · {formatRelativeTime(item.created_at)}
+            </Text>
+          </View>
+          <Text
+            variant="bodyMedium"
+            color={isExpense ? "textPrimary" : "accent"}
+          >
+            P{formatPeso(Math.round(item.amount * 100))}
+          </Text>
+        </Pressable>
+      );
+    },
+    [router],
+  );
 
   const renderGroupCard = useCallback(
     (item: GroupRow) => {
@@ -581,15 +678,6 @@ export default function GroupsScreen() {
 
   const renderSectionFooter = useCallback(
     ({ section }: { section: HomeSection }) => {
-      if (section.type === "invite" && pendingInvites.length === 0) {
-        return (
-          <EmptyState
-            emoji="✉️"
-            headline="No pending invites"
-            subtext="When someone adds you to a group, it will show up here."
-          />
-        );
-      }
       if (section.type === "group" && groups.length === 0 && !loading) {
         return (
           <EmptyState
@@ -601,7 +689,7 @@ export default function GroupsScreen() {
       }
       return null;
     },
-    [pendingInvites.length, groups.length, loading],
+    [groups.length, loading],
   );
 
   const keyExtractor = useCallback((item: any, index: number) => {
@@ -623,16 +711,30 @@ export default function GroupsScreen() {
             <View style={styles.sectionDivider} />
 
             <View style={styles.activitySection}>
-              <Text variant="label" color="textSecondary">
-                Recent Activity
-              </Text>
-              <Text
-                variant="caption"
-                color="textTertiary"
-                style={styles.activityPlaceholder}
-              >
-                Coming soon
-              </Text>
+              <View style={styles.activityHeaderRow}>
+                <Text variant="label" color="textSecondary">
+                  Recent Activity
+                </Text>
+                {activities.length > 0 && (
+                  <Pressable
+                    onPress={() => router.push("/activity" as any)}
+                    hitSlop={8}
+                  >
+                    <Text variant="caption" color="accent">
+                      See all
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+              {activitiesLoading ? (
+                <ActivitySectionSkeleton />
+              ) : activities.length === 0 ? (
+                <Text variant="caption" color="textTertiary">
+                  No recent activity
+                </Text>
+              ) : (
+                activities.map((item) => renderActivityItem(item))
+              )}
             </View>
 
             <View style={styles.sectionDivider} />
@@ -640,7 +742,14 @@ export default function GroupsScreen() {
         )}
       </View>
     ),
-    [netBalance, groups.length],
+    [
+      netBalance,
+      groups.length,
+      activities,
+      activitiesLoading,
+      renderActivityItem,
+      router,
+    ],
   );
 
   // ------- Main render -------
@@ -784,8 +893,27 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[5],
     gap: spacing[2],
   },
-  activityPlaceholder: {
-    fontStyle: "italic" as const,
+  activityHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  activityItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+    paddingVertical: spacing[2],
+  },
+  activityIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activityInfo: {
+    flex: 1,
+    gap: 2,
   },
   cardWrapper: {
     // Pressable wrapper for the Card

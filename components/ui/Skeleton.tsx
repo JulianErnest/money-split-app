@@ -296,6 +296,63 @@ export function BalanceDetailSkeleton() {
 }
 
 // ---------------------------------------------------------------------------
+// ActivityItemSkeleton - matches activity row layout on dashboard
+// ---------------------------------------------------------------------------
+
+export function ActivityItemSkeleton() {
+  return (
+    <View style={skStyles.activityRow}>
+      <Skeleton
+        colorMode={COLOR_MODE}
+        colors={[...SKELETON_COLORS]}
+        radius="round"
+        width={32}
+        height={32}
+      />
+      <View style={skStyles.activityInfo}>
+        <Skeleton
+          colorMode={COLOR_MODE}
+          colors={[...SKELETON_COLORS]}
+          radius={radius.md}
+          width="65%"
+          height={14}
+        />
+        <Skeleton
+          colorMode={COLOR_MODE}
+          colors={[...SKELETON_COLORS]}
+          radius={radius.md}
+          width="40%"
+          height={12}
+        />
+      </View>
+      <Skeleton
+        colorMode={COLOR_MODE}
+        colors={[...SKELETON_COLORS]}
+        radius={radius.md}
+        width={60}
+        height={14}
+      />
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ActivitySectionSkeleton - 3x ActivityItemSkeleton in a Skeleton.Group
+// ---------------------------------------------------------------------------
+
+export function ActivitySectionSkeleton() {
+  return (
+    <Skeleton.Group show>
+      <View style={skStyles.activitySection}>
+        <ActivityItemSkeleton />
+        <ActivityItemSkeleton />
+        <ActivityItemSkeleton />
+      </View>
+    </Skeleton.Group>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
 
@@ -389,5 +446,22 @@ const skStyles = StyleSheet.create({
   balanceDetailAmount: {
     alignItems: "center",
     paddingBottom: spacing[4],
+  },
+
+  // ActivityItemSkeleton
+  activityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+    paddingVertical: spacing[2],
+  },
+  activityInfo: {
+    flex: 1,
+    gap: spacing[1],
+  },
+
+  // ActivitySectionSkeleton
+  activitySection: {
+    gap: spacing[1],
   },
 });
