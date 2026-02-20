@@ -25,7 +25,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Alert, Pressable, SectionList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -248,9 +254,7 @@ export default function GroupsScreen() {
         }
         // Remove from local state immediately
         setPendingInvites((prev) =>
-          prev.filter(
-            (i) => i.pending_member_id !== invite.pending_member_id,
-          ),
+          prev.filter((i) => i.pending_member_id !== invite.pending_member_id),
         );
         // Toast and navigate
         showToast({
@@ -298,8 +302,7 @@ export default function GroupsScreen() {
                 // Silently remove (no toast per user decision)
                 setPendingInvites((prev) =>
                   prev.filter(
-                    (i) =>
-                      i.pending_member_id !== invite.pending_member_id,
+                    (i) => i.pending_member_id !== invite.pending_member_id,
                   ),
                 );
                 Haptics.notificationAsync(
@@ -378,7 +381,11 @@ export default function GroupsScreen() {
   // ------- SectionList data -------
   const sections: HomeSection[] = useMemo(
     () => [
-      { title: "Pending Invites", data: pendingInvites, type: "invite" as const },
+      {
+        title: "Pending Invites",
+        data: pendingInvites,
+        type: "invite" as const,
+      },
       { title: "My Groups", data: groups, type: "group" as const },
     ],
     [pendingInvites, groups],
@@ -532,7 +539,7 @@ export default function GroupsScreen() {
       if (section.type === "invite" && pendingInvites.length === 0) {
         return (
           <EmptyState
-            emoji="\u2709\uFE0F"
+            emoji="✉️"
             headline="No pending invites"
             subtext="When someone adds you to a group, it will show up here."
           />
@@ -541,7 +548,7 @@ export default function GroupsScreen() {
       if (section.type === "group" && groups.length === 0 && !loading) {
         return (
           <EmptyState
-            emoji="\uD83E\uDE99"
+            emoji="👥"
             headline="Wala pa kay group!"
             subtext="Tap + to create one, or ask a friend for an invite code"
           />
@@ -552,14 +559,11 @@ export default function GroupsScreen() {
     [pendingInvites.length, groups.length, loading],
   );
 
-  const keyExtractor = useCallback(
-    (item: any, index: number) => {
-      if (item.pending_member_id) return item.pending_member_id;
-      if (item.group_id) return item.group_id;
-      return String(index);
-    },
-    [],
-  );
+  const keyExtractor = useCallback((item: any, index: number) => {
+    if (item.pending_member_id) return item.pending_member_id;
+    if (item.group_id) return item.group_id;
+    return String(index);
+  }, []);
 
   // ------- Main render -------
   return (
@@ -587,7 +591,7 @@ export default function GroupsScreen() {
         <GroupsListSkeleton />
       ) : (
         <SectionList
-          sections={sections}
+          sections={sections as any}
           renderItem={renderItem}
           renderSectionHeader={renderSectionHeader}
           renderSectionFooter={renderSectionFooter}
