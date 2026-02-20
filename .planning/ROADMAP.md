@@ -165,10 +165,11 @@ Plans:
   1. Group cards show last activity date, member avatar stack, and per-group balance at a glance
   2. Dashboard has accent/brand touches: colored balance area, subtle card treatments, and warm empty states
   3. Empty states (no groups, no activity) feel friendly and guide the user toward action
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: TBD
+- [ ] 12-01-PLAN.md — Data layer (group card RPC, warm accent palette, GlassCard and AvatarStack components)
+- [ ] 12-02-PLAN.md — Dashboard visual polish (gradient header, glassmorphism cards, enriched group info, MotiPressable, empty states)
 
 ## Progress
 
@@ -186,4 +187,4 @@ Plans:
 | 9. Settle Up | v1.1 | 2/2 | Complete | 2026-02-20 |
 | 10. Balance Summary & Dashboard Layout | v1.2 | 1/1 | Complete | 2026-02-21 |
 | 11. Activity Feed | v1.2 | 2/2 | Complete | 2026-02-21 |
-| 12. Group Cards & Visual Polish | v1.2 | 0/1 | Not started | - |
+| 12. Group Cards & Visual Polish | v1.2 | 0/2 | Not started | - |
