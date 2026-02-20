@@ -263,6 +263,65 @@ export interface Database {
           },
         ];
       };
+      settlements: {
+        Row: {
+          id: string;
+          group_id: string;
+          paid_by: string;
+          paid_to: string;
+          amount: number;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          paid_by: string;
+          paid_to: string;
+          amount: number;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          paid_by?: string;
+          paid_to?: string;
+          amount?: number;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "settlements_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "settlements_paid_by_fkey";
+            columns: ["paid_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "settlements_paid_to_fkey";
+            columns: ["paid_to"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "settlements_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -339,6 +398,21 @@ export interface Database {
       };
       decline_invite: {
         Args: { p_pending_member_id: string };
+        Returns: undefined;
+      };
+      record_settlement: {
+        Args: {
+          p_group_id: string;
+          p_paid_by: string;
+          p_paid_to: string;
+          p_amount: number;
+        };
+        Returns: string;
+      };
+      delete_settlement: {
+        Args: {
+          p_settlement_id: string;
+        };
         Returns: undefined;
       };
     };
