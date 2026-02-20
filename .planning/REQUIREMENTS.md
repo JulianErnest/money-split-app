@@ -25,8 +25,8 @@ Requirements for Home Screen Dashboard milestone.
 
 - [x] **VIS-01**: Home screen uses a sectioned dashboard layout: balance → activity → groups with clear visual separation
 - [x] **VIS-02**: Typography hierarchy with varied sizes and weights guides the eye through sections
-- [ ] **VIS-03**: Accent/brand touches — colored balance area, subtle card treatments, warm empty states
-- [ ] **VIS-04**: Group cards show richer info: last activity date, member avatar stack, per-group balance
+- [x] **VIS-03**: Accent/brand touches — colored balance area, subtle card treatments, warm empty states
+- [x] **VIS-04**: Group cards show richer info: last activity date, member avatar stack, per-group balance
 
 ### Quick Actions
 
@@ -72,8 +72,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACT-05 | Phase 11 | Complete |
 | VIS-01 | Phase 10 | Complete |
 | VIS-02 | Phase 10 | Complete |
-| VIS-03 | Phase 12 | Pending |
-| VIS-04 | Phase 12 | Pending |
+| VIS-03 | Phase 12 | Complete |
+| VIS-04 | Phase 12 | Complete |
 | QAC-01 | Phase 10 | Complete |
 
 **Coverage:**
@@ -83,4 +83,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-21 after phase 11 completion*
+*Last updated: 2026-02-21 after phase 12 completion*

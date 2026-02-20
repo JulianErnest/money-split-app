@@ -4,7 +4,7 @@
 
 - v1.0 MVP - Phases 1-6 (shipped 2026-02-19)
 - v1.1 Invites & Settle Up - Phases 7-9 (shipped 2026-02-20)
-- v1.2 Home Screen Dashboard - Phases 10-12 (in progress)
+- v1.2 Home Screen Dashboard - Phases 10-12 (shipped 2026-02-21)
 
 ## Phases
 
@@ -120,7 +120,7 @@ Plans:
 
 </details>
 
-### v1.2 Home Screen Dashboard (In Progress)
+### v1.2 Home Screen Dashboard (SHIPPED 2026-02-21)
 
 **Milestone Goal:** Transform the home screen from a plain groups list into a proper dashboard with balance summary, activity feed, enriched group cards, and polished visual design.
 
@@ -168,8 +168,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — Data layer (group card RPC, warm accent palette, GlassCard and AvatarStack components)
-- [ ] 12-02-PLAN.md — Dashboard visual polish (gradient header, glassmorphism cards, enriched group info, MotiPressable, empty states)
+- [x] 12-01-PLAN.md — Data layer (group card RPC, warm accent palette, GlassCard and AvatarStack components)
+- [x] 12-02-PLAN.md — Dashboard visual polish (glassmorphism cards, enriched group info, MotiPressable, empty states)
 
 ## Progress
 
@@ -187,4 +187,4 @@ Plans:
 | 9. Settle Up | v1.1 | 2/2 | Complete | 2026-02-20 |
 | 10. Balance Summary & Dashboard Layout | v1.2 | 1/1 | Complete | 2026-02-21 |
 | 11. Activity Feed | v1.2 | 2/2 | Complete | 2026-02-21 |
-| 12. Group Cards & Visual Polish | v1.2 | 0/2 | Not started | - |
+| 12. Group Cards & Visual Polish | v1.2 | 2/2 | Complete | 2026-02-21 |
