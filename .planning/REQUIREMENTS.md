@@ -10,10 +10,10 @@
 - [x] **INV-01**: Phone lookup correctly identifies existing users regardless of phone format (fix +/no-+ mismatch)
 - [x] **INV-02**: Only the group creator can add members by phone number
 - [x] **INV-03**: When a user is added by phone, they receive an invite (not auto-added to the group)
-- [ ] **INV-04**: User can see pending group invites on the home screen (invite inbox)
-- [ ] **INV-05**: User can accept a group invite and be added as a full member
-- [ ] **INV-06**: User can decline a group invite
-- [ ] **INV-07**: Declining an invite removes all associated expense splits for that pending member
+- [x] **INV-04**: User can see pending group invites on the home screen (invite inbox)
+- [x] **INV-05**: User can accept a group invite and be added as a full member
+- [x] **INV-06**: User can decline a group invite
+- [x] **INV-07**: Declining an invite removes all associated expense splits for that pending member
 - [x] **INV-08**: Invite link flow (share sheet → deep link) continues to auto-join without accept/decline
 
 ### Settle Up
@@ -75,10 +75,10 @@
 | INV-01 | Phase 7 | Complete |
 | INV-02 | Phase 7 | Complete |
 | INV-03 | Phase 7 | Complete |
-| INV-04 | Phase 8 | Pending |
-| INV-05 | Phase 8 | Pending |
-| INV-06 | Phase 8 | Pending |
-| INV-07 | Phase 8 | Pending |
+| INV-04 | Phase 8 | Complete |
+| INV-05 | Phase 8 | Complete |
+| INV-06 | Phase 8 | Complete |
+| INV-07 | Phase 8 | Complete |
 | INV-08 | Phase 7 | Complete |
 | SETL-01 | Phase 9 | Pending |
 | SETL-02 | Phase 9 | Pending |
