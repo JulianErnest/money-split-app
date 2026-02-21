@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { colors, spacing, radius } from "@/theme";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -51,7 +51,6 @@ export default function AddExpenseScreen() {
   const router = useRouter();
   const [groups, setGroups] = useState<GroupRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const didAutoNavigate = useRef(false);
 
   const fetchGroups = useCallback(async () => {
     if (!user) return;
@@ -67,24 +66,16 @@ export default function AddExpenseScreen() {
         return;
       }
 
-      const rows = (data as unknown as GroupRow[]) ?? [];
-      setGroups(rows);
-
-      // Auto-navigate if only one group
-      if (rows.length === 1 && !didAutoNavigate.current) {
-        didAutoNavigate.current = true;
-        router.replace(`/group/${rows[0].groups.id}/add-expense` as any);
-      }
+      setGroups((data as unknown as GroupRow[]) ?? []);
     } catch (err) {
       console.error("Unexpected error fetching groups:", err);
     } finally {
       setLoading(false);
     }
-  }, [user, router]);
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
-      didAutoNavigate.current = false;
       setLoading(true);
       fetchGroups();
     }, [fetchGroups]),
@@ -117,6 +108,8 @@ export default function AddExpenseScreen() {
           emoji="👥"
           headline="No groups yet"
           subtext="Create or join a group first, then you can add expenses here."
+          actionLabel="Create Group"
+          onAction={() => router.navigate("/(tabs)")}
         />
       </SafeAreaView>
     );

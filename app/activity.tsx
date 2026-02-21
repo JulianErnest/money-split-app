@@ -45,7 +45,9 @@ export default function ActivityHistoryScreen() {
     async function loadInitial() {
       try {
         const data = await fetchRecentActivity(PAGE_SIZE, 0);
-        setActivities(data);
+        // Deduplicate in case RPC returns duplicate IDs
+        const unique = [...new Map(data.map((a) => [a.id, a])).values()];
+        setActivities(unique);
         setOffset(data.length);
         setHasMore(data.length === PAGE_SIZE);
       } catch {
@@ -63,7 +65,11 @@ export default function ActivityHistoryScreen() {
     setLoadingMore(true);
     try {
       const data = await fetchRecentActivity(PAGE_SIZE, offset);
-      setActivities((prev) => [...prev, ...data]);
+      setActivities((prev) => {
+        const existingIds = new Set(prev.map((a) => a.id));
+        const unique = data.filter((a) => !existingIds.has(a.id));
+        return [...prev, ...unique];
+      });
       setOffset((prev) => prev + data.length);
       if (data.length < PAGE_SIZE) setHasMore(false);
     } catch {

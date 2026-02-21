@@ -84,7 +84,7 @@ const AddMemberSheet = forwardRef<BottomSheetModal, AddMemberSheetProps>(
     return (
       <AppBottomSheet
         ref={ref}
-        snapPoints={["55%"]}
+        snapPoints={["60%"]}
         onDismiss={handleDismiss}
       >
         <View style={styles.sheet}>
