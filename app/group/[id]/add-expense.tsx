@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   Pressable,
   StyleSheet,
   TextInput,
@@ -300,7 +301,11 @@ export default function AddExpenseScreen() {
         onPageSelected={(e) => setCurrentPage(e.nativeEvent.position)}
       >
         {/* Step 1: Amount + Description */}
-        <View key="1" style={styles.page}>
+        <Pressable
+          key="1"
+          style={styles.page}
+          onPress={Keyboard.dismiss}
+        >
           <AmountDisplay display={display} isEmpty={centavos === 0} />
           <View style={styles.descriptionContainer}>
             <TextInput
@@ -320,7 +325,7 @@ export default function AddExpenseScreen() {
               onBackspace={onBackspace}
             />
           </View>
-        </View>
+        </Pressable>
 
         {/* Step 2: Payer Selection */}
         <View key="2" style={styles.page}>
