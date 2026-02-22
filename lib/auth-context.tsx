@@ -56,11 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from("users")
-        .select("display_name")
+        .select("display_name, phone_number")
         .eq("id", userId)
         .single();
 
-      if (error || !data || !data.display_name) {
+      if (error || !data || !data.display_name || !data.phone_number) {
         setIsNewUser(true);
       } else {
         setIsNewUser(false);
