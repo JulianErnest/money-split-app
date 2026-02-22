@@ -5,7 +5,7 @@
 - v1.0 MVP - Phases 1-6 (shipped 2026-02-19)
 - v1.1 Invites & Settle Up - Phases 7-9 (shipped 2026-02-20)
 - v1.2 Home Screen Dashboard - Phases 10-12 (shipped 2026-02-21)
-- v1.3 Apple Sign-In - Phases 13-15 (in progress)
+- v1.3 Apple Sign-In - Phases 13-15 (shipped 2026-02-22)
 
 ## Phases
 
@@ -130,7 +130,7 @@ Plans:
 
 </details>
 
-### v1.3 Apple Sign-In (In Progress)
+### v1.3 Apple Sign-In - SHIPPED 2026-02-22
 
 **Milestone Goal:** Replace phone number OTP authentication with Apple Sign-In while still requiring phone number collection for the invite system.
 
