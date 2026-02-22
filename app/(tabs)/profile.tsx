@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth-context";
 interface UserProfile {
   display_name: string | null;
   avatar_url: string | null;
-  phone_number: string;
+  phone_number: string | null;
   created_at: string;
 }
 
