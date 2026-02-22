@@ -25,10 +25,7 @@ import { useAuth } from "@/lib/auth-context";
 import { formatBalanceColor, formatBalanceSummary } from "@/lib/balance-utils";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
 import { formatPeso } from "@/lib/expense-utils";
-import {
-  GroupCardData,
-  fetchGroupCardData,
-} from "@/lib/group-card-data";
+import { fetchGroupCardData, GroupCardData } from "@/lib/group-card-data";
 import { fetchPendingInvites, InviteRow } from "@/lib/group-members";
 import { useNetwork } from "@/lib/network-context";
 import { enqueue } from "@/lib/offline-queue";
@@ -38,14 +35,9 @@ import { colors, radius, spacing } from "@/theme";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { MotiPressable } from "moti/interactions";
 import { MotiView } from "moti";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { MotiPressable } from "moti/interactions";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, SectionList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -298,7 +290,13 @@ export default function GroupsScreen() {
     return () => {
       syncCompleteListeners.delete(listener);
     };
-  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities, fetchCardData]);
+  }, [
+    fetchGroups,
+    fetchBalances,
+    fetchInvites,
+    fetchActivities,
+    fetchCardData,
+  ]);
 
   // Refresh balances, groups, invites, activities, and card data on every focus
   useFocusEffect(
@@ -327,7 +325,13 @@ export default function GroupsScreen() {
       fetchCardData(),
     ]);
     setRefreshing(false);
-  }, [fetchGroups, fetchBalances, fetchInvites, fetchActivities, fetchCardData]);
+  }, [
+    fetchGroups,
+    fetchBalances,
+    fetchInvites,
+    fetchActivities,
+    fetchCardData,
+  ]);
 
   // ------- Accept invite handler -------
   const handleAcceptInvite = useCallback(
@@ -700,7 +704,7 @@ export default function GroupsScreen() {
           <EmptyState
             emoji="👥"
             headline="No groups yet"
-            subtext="Create a group to start splitting expenses with friends"
+            subtext="Make groups na sa imong mga friends diri bro"
           />
         );
       }

@@ -162,7 +162,7 @@ export default function AddExpenseScreen() {
   // Validation
   // -----------------------------------------------------------------------
 
-  const canProceedStep1 = centavos > 0;
+  const canProceedStep1 = centavos > 0 && description.trim().length > 0;
   const canProceedStep2 = payerId !== "";
 
   const canSubmit =
