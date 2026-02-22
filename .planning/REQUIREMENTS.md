@@ -15,12 +15,12 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can sign in with Apple via native iOS dialog (Face ID / Touch ID)
-- [ ] **AUTH-02**: Apple identity token exchanged for Supabase session via `signInWithIdToken`
-- [ ] **AUTH-03**: User cancellation of Apple dialog handled gracefully (no error shown)
-- [ ] **AUTH-04**: Apple credential availability checked before rendering sign-in button
-- [ ] **AUTH-05**: Phone OTP auth screens removed (phone.tsx, otp.tsx deleted)
-- [ ] **AUTH-06**: All auth routing updated to point to Apple Sign-In screen (root layout, join flow, auth layout)
+- [x] **AUTH-01**: User can sign in with Apple via native iOS dialog (Face ID / Touch ID)
+- [x] **AUTH-02**: Apple identity token exchanged for Supabase session via `signInWithIdToken`
+- [x] **AUTH-03**: User cancellation of Apple dialog handled gracefully (no error shown)
+- [x] **AUTH-04**: Apple credential availability checked before rendering sign-in button
+- [x] **AUTH-05**: Phone OTP auth screens removed (phone.tsx, otp.tsx deleted)
+- [x] **AUTH-06**: All auth routing updated to point to Apple Sign-In screen (root layout, join flow, auth layout)
 
 ### Profile Setup
 
@@ -68,12 +68,12 @@
 | DB-03 | Phase 13 | Complete |
 | DB-04 | Phase 13 | Complete |
 | DB-05 | Phase 13 | Complete |
-| AUTH-01 | Phase 14 | Pending |
-| AUTH-02 | Phase 14 | Pending |
-| AUTH-03 | Phase 14 | Pending |
-| AUTH-04 | Phase 14 | Pending |
-| AUTH-05 | Phase 14 | Pending |
-| AUTH-06 | Phase 14 | Pending |
+| AUTH-01 | Phase 14 | Complete |
+| AUTH-02 | Phase 14 | Complete |
+| AUTH-03 | Phase 14 | Complete |
+| AUTH-04 | Phase 14 | Complete |
+| AUTH-05 | Phase 14 | Complete |
+| AUTH-06 | Phase 14 | Complete |
 | PROF-01 | Phase 15 | Pending |
 | PROF-02 | Phase 15 | Pending |
 | PROF-03 | Phase 15 | Pending |

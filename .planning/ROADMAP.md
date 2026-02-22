@@ -165,8 +165,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 14-01-PLAN.md — Install expo-crypto, create Apple Sign-In screen with nonce-based signInWithIdToken flow
-- [ ] 14-02-PLAN.md — Delete phone OTP screens, update all routing references, fix profile-setup phone bug, update sign-out message
+- [x] 14-01-PLAN.md — Install expo-crypto, create Apple Sign-In screen with nonce-based signInWithIdToken flow
+- [x] 14-02-PLAN.md — Delete phone OTP screens, update all routing references, fix profile-setup phone bug, update sign-out message
 
 #### Phase 15: Profile Setup & Invite Linking
 
@@ -205,5 +205,5 @@ Phases execute in numeric order: 13 -> 14 -> 15
 | 11. Activity Feed | v1.2 | 2/2 | Complete | 2026-02-21 |
 | 12. Group Cards & Visual Polish | v1.2 | 2/2 | Complete | 2026-02-21 |
 | 13. Database & Infrastructure Prep | v1.3 | 2/2 | Complete | 2026-02-22 |
-| 14. Core Auth Replacement | v1.3 | 0/2 | Not started | - |
+| 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 15. Profile Setup & Invite Linking | v1.3 | 0/TBD | Not started | - |
