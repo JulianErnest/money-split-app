@@ -2,19 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-20)
+See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.2 Home Screen Dashboard — COMPLETE
+**Current focus:** v1.3 Apple Sign-In — Defining requirements
 
 ## Current Position
 
-Phase: 12 of 12 (Group Cards & Visual Polish)
-Plan: 2 of 2 in current phase
-Status: Milestone complete
-Last activity: 2026-02-21 — Completed 12-02-PLAN.md
-
-Progress: ██████████ 100% (5/5 plans across v1.2)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-22 — Milestone v1.3 started
 
 ## Performance Metrics
 
@@ -71,6 +69,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-21
-Stopped at: v1.2 milestone complete — all 12 phases done
+Last session: 2026-02-22
+Stopped at: Defining v1.3 milestone requirements
 Resume file: None

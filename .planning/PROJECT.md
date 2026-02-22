@@ -8,17 +8,15 @@ A mobile expense-splitting app built for Filipino users — peso-first, designed
 
 A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
 
-## Current Milestone: v1.2 Home Screen Dashboard
+## Current Milestone: v1.3 Apple Sign-In
 
-**Goal:** Transform the home screen from a plain groups list into a proper dashboard with balance summary, activity feed, and polished visual design.
+**Goal:** Replace phone number OTP authentication with Apple Sign-In while still requiring phone number collection for the invite system.
 
 **Target features:**
-- Net balance summary header across all groups
-- Recent activity feed (expenses + settlements across groups)
-- Redesigned group cards with richer visual weight
-- Visual hierarchy and dashboard layout
-- Branded personality and warmth in the UI
-- Quick add expense via FAB with group picker
+- Apple Sign-In as the sole authentication method
+- Phone number collection (unverified) required during profile setup
+- Remove phone OTP flow entirely
+- Phone numbers still power pending member invites and auto-linking
 
 ## Requirements
 
@@ -52,11 +50,9 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 
 ### Active
 
-- [ ] Dashboard-style home screen with visual hierarchy and branded personality
-- [ ] Net balance summary header (single total across all groups)
-- [ ] Cross-group activity feed (recent expenses and settlements)
-- [ ] Redesigned group cards with richer info and visual weight
-- [ ] Quick add expense via FAB with group picker
+- [ ] Apple Sign-In as sole authentication method (replacing phone OTP)
+- [ ] Phone number required during profile setup (unverified, for invite system)
+- [ ] Remove phone OTP authentication flow
 
 ### Out of Scope
 
@@ -69,7 +65,7 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 - Expense categories or tags — Stage 3
 - Data export — Stage 3
 - Multi-currency support — Stage 3
-- OAuth / email login — phone only
+- Email login — Apple Sign-In only for now
 - Edit/delete expenses — keep data immutable
 - Leaving groups — simplifies balance integrity
 - Realtime subscriptions — pull-to-refresh is acceptable
@@ -98,7 +94,7 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 ## Constraints
 
 - **Tech Stack**: React Native + Expo (managed workflow), TypeScript, Expo Router, Supabase — non-negotiable
-- **Auth**: Phone number OTP only via Supabase Auth — no email, no OAuth
+- **Auth**: Apple Sign-In via Supabase Auth — phone number collected (unverified) for invites
 - **Currency**: Philippine Peso only — no multi-currency
 - **Distribution**: EAS Build + internal distribution / TestFlight — not app store
 - **Data Integrity**: Expenses are immutable once created
@@ -109,7 +105,8 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Phone OTP only (no email/OAuth) | Filipino users primarily use phone numbers | ✓ Good |
+| Phone OTP only (no email/OAuth) | Filipino users primarily use phone numbers | ✓ Superseded by Apple Sign-In |
+| Apple Sign-In replaces phone OTP | Simpler auth UX; phone still collected for invites | Pending |
 | Expenses immutable | Simplifies data integrity and balance calculations | ✓ Good |
 | No leaving groups | Prevents balance inconsistencies with outstanding debts | ✓ Good |
 | Optimistic offline with simple queue | PH internet unreliable; balanced complexity | ✓ Good |
@@ -124,4 +121,4 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 | Separate settlements table (not expense type) | Clean separation of concerns, no expense query pollution | ✓ Good |
 
 ---
-*Last updated: 2026-02-20 after v1.2 milestone started*
+*Last updated: 2026-02-22 after v1.3 milestone started*
