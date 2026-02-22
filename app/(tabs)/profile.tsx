@@ -109,9 +109,7 @@ export default function ProfileScreen() {
   const avatarEmoji = profile?.avatar_url ?? undefined;
   const phoneNumber = profile?.phone_number
     ? formatPhone(profile.phone_number)
-    : user?.phone
-      ? formatPhone(user.phone)
-      : "";
+    : "";
   const memberSince = profile?.created_at
     ? formatMemberSince(profile.created_at)
     : "";
