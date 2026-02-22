@@ -7,11 +7,11 @@
 
 ### Database & Infrastructure
 
-- [ ] **DB-01**: `users.phone_number` column is nullable (allows Apple Sign-In users without phone at auth time)
-- [ ] **DB-02**: Auth trigger handles NULL phone gracefully (NULLIF guard, skip pending_member linking when no phone)
-- [ ] **DB-03**: New RPC `link_phone_to_pending_invites` links pending members when phone is saved during profile setup
-- [ ] **DB-04**: Apple provider enabled in Supabase dashboard with bundle ID
-- [ ] **DB-05**: `app.json` configured with `usesAppleSignIn: true` and `expo-apple-authentication` plugin
+- [x] **DB-01**: `users.phone_number` column is nullable (allows Apple Sign-In users without phone at auth time)
+- [x] **DB-02**: Auth trigger handles NULL phone gracefully (NULLIF guard, skip pending_member linking when no phone)
+- [x] **DB-03**: New RPC `link_phone_to_pending_invites` links pending members when phone is saved during profile setup
+- [x] **DB-04**: Apple provider enabled in Supabase dashboard with bundle ID
+- [x] **DB-05**: `app.json` configured with `usesAppleSignIn: true` and `expo-apple-authentication` plugin
 
 ### Authentication
 
@@ -63,11 +63,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DB-01 | Phase 13 | Pending |
-| DB-02 | Phase 13 | Pending |
-| DB-03 | Phase 13 | Pending |
-| DB-04 | Phase 13 | Pending |
-| DB-05 | Phase 13 | Pending |
+| DB-01 | Phase 13 | Complete |
+| DB-02 | Phase 13 | Complete |
+| DB-03 | Phase 13 | Complete |
+| DB-04 | Phase 13 | Complete |
+| DB-05 | Phase 13 | Complete |
 | AUTH-01 | Phase 14 | Pending |
 | AUTH-02 | Phase 14 | Pending |
 | AUTH-03 | Phase 14 | Pending |
