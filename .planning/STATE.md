@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 13 of 15 (Database & Infrastructure Prep)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-22 — Roadmap created for v1.3
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-22 — Completed 13-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] ~17% (1/~6 v1.3 plans)
 
 ## Performance Metrics
 
@@ -31,6 +31,10 @@ Progress: [░░░░░░░░░░] 0%
 - Plans completed: 5
 - Total: ~21min
 
+**v1.3 Milestone (in progress):**
+- Plans completed: 1
+- Total: ~12min
+
 ## Accumulated Context
 
 ### Decisions
@@ -41,6 +45,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Native signInWithIdToken approach (no OAuth browser redirect, no 6-month key rotation)
 - Phone number collected unverified during profile setup (not at auth time)
 - 3-phase sequential deployment: DB prep -> auth swap -> profile enhancement
+- Single atomic migration for ALTER TABLE + trigger rewrite + new RPC (interdependent changes)
+- NULLIF(new.phone, '') converts empty strings to NULL at database level
+- UserProfile interface updated to accept nullable phone_number
 
 ### Known Issues
 
@@ -59,5 +66,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Roadmap created for v1.3 milestone, ready to plan Phase 13
+Stopped at: Completed 13-01-PLAN.md
 Resume file: None
