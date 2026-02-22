@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.3 Apple Sign-In — Phase 14 complete, ready for Phase 15
+**Current focus:** v1.3 Apple Sign-In -- Phase 15 complete, milestone code-complete
 
 ## Current Position
 
-Phase: 14 of 15 (Core Auth Replacement)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-22 — Completed 14-02-PLAN.md
+Phase: 15 of 15 (Profile Setup & Invite Linking)
+Plan: 1 of 1 in current phase
+Status: Phase complete, milestone complete
+Last activity: 2026-02-22 — Completed 15-01-PLAN.md
 
-Progress: [████░░░░░░] ~67% (4/~6 v1.3 plans)
+Progress: [██████████] 100% (6/6 v1.3 plans)
 
 ## Performance Metrics
 
@@ -31,9 +31,9 @@ Progress: [████░░░░░░] ~67% (4/~6 v1.3 plans)
 - Plans completed: 5
 - Total: ~21min
 
-**v1.3 Milestone (in progress):**
-- Plans completed: 4
-- Total: ~30min
+**v1.3 Milestone (complete):**
+- Plans completed: 6
+- Total: ~32min
 
 ## Accumulated Context
 
@@ -56,6 +56,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Reused carousel pattern from phone.tsx for visual consistency
 - phone_number sends null (not empty string) to prevent UNIQUE constraint violation for Apple auth users
 - Sign-out message references Apple Sign-In specifically
+- isNewUser gates on both display_name AND phone_number presence (PROF-GATE)
+- Phone stored as +63XXXXXXXXXX E.164 in users table (PROF-PHONE-FORMAT)
+- link_phone_to_pending_invites RPC failure is non-fatal, warn only (PROF-LINK-NONFATAL)
 
 ### Known Issues
 
@@ -68,11 +71,12 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 14 MUST be tested on real iOS device (Apple Sign-In does not work on Simulator)
+- v1.3 MUST be tested on real iOS device (Apple Sign-In does not work on Simulator)
 - Apple provides fullName only on first authorization -- must capture immediately or data is lost forever
+- End-to-end invite linking test needed: create pending invite -> Apple sign-up -> enter phone -> verify invite appears
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 14-02-PLAN.md (Phase 14 complete)
+Stopped at: Completed 15-01-PLAN.md (Phase 15 complete, v1.3 milestone code-complete)
 Resume file: None
