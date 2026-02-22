@@ -179,10 +179,10 @@ Plans:
   3. After saving phone in profile setup, any pending invites for that phone number are automatically linked
   4. User cannot complete onboarding without both display name and phone number being present
   5. No phone OTP language appears anywhere in the UI (sign-out message shows auth-agnostic text, Apple relay email is never displayed)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 15-01: TBD
+- [ ] 15-01-PLAN.md — Phone input with validation, Apple name pre-fill, invite linking RPC, isNewUser dual-field gate, profile cleanup
 
 ## Progress
 
@@ -206,4 +206,4 @@ Phases execute in numeric order: 13 -> 14 -> 15
 | 12. Group Cards & Visual Polish | v1.2 | 2/2 | Complete | 2026-02-21 |
 | 13. Database & Infrastructure Prep | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
-| 15. Profile Setup & Invite Linking | v1.3 | 0/TBD | Not started | - |
+| 15. Profile Setup & Invite Linking | v1.3 | 0/1 | Not started | - |
