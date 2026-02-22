@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.3 Apple Sign-In — Phase 14 (Core Auth Replacement)
+**Current focus:** v1.3 Apple Sign-In — Phase 14 complete, ready for Phase 15
 
 ## Current Position
 
 Phase: 14 of 15 (Core Auth Replacement)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-22 — Completed 14-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-22 — Completed 14-02-PLAN.md
 
-Progress: [███░░░░░░░] ~50% (3/~6 v1.3 plans)
+Progress: [████░░░░░░] ~67% (4/~6 v1.3 plans)
 
 ## Performance Metrics
 
@@ -32,8 +32,8 @@ Progress: [███░░░░░░░] ~50% (3/~6 v1.3 plans)
 - Total: ~21min
 
 **v1.3 Milestone (in progress):**
-- Plans completed: 3
-- Total: ~29min
+- Plans completed: 4
+- Total: ~30min
 
 ## Accumulated Context
 
@@ -54,6 +54,8 @@ Full decision log in PROJECT.md Key Decisions table.
 - Crypto.randomUUID() for nonce generation (122 bits cryptographic randomness)
 - fullName captured immediately after signInWithIdToken before navigation
 - Reused carousel pattern from phone.tsx for visual consistency
+- phone_number sends null (not empty string) to prevent UNIQUE constraint violation for Apple auth users
+- Sign-out message references Apple Sign-In specifically
 
 ### Known Issues
 
@@ -72,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 14-01-PLAN.md
+Stopped at: Completed 14-02-PLAN.md (Phase 14 complete)
 Resume file: None
