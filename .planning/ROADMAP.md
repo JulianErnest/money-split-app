@@ -5,6 +5,7 @@
 - v1.0 MVP - Phases 1-6 (shipped 2026-02-19)
 - v1.1 Invites & Settle Up - Phases 7-9 (shipped 2026-02-20)
 - v1.2 Home Screen Dashboard - Phases 10-12 (shipped 2026-02-21)
+- v1.3 Apple Sign-In - Phases 13-15 (in progress)
 
 ## Phases
 
@@ -120,58 +121,71 @@ Plans:
 
 </details>
 
-### v1.2 Home Screen Dashboard (SHIPPED 2026-02-21)
+<details>
+<summary>v1.2 Home Screen Dashboard (Phases 10-12) - SHIPPED 2026-02-21</summary>
 
-**Milestone Goal:** Transform the home screen from a plain groups list into a proper dashboard with balance summary, activity feed, enriched group cards, and polished visual design.
+- [x] Phase 10: Balance Summary & Dashboard Layout (1/1 plans) — completed 2026-02-21
+- [x] Phase 11: Activity Feed (2/2 plans) — completed 2026-02-21
+- [x] Phase 12: Group Cards & Visual Polish (2/2 plans) — completed 2026-02-21
 
-#### Phase 10: Balance Summary & Dashboard Layout
+</details>
 
-**Goal**: User opens the app and immediately sees their financial position across all groups in a clear, sectioned dashboard layout
-**Depends on**: Phase 9 (existing home screen, existing `get_my_group_balances` RPC)
-**Requirements**: BAL-01, BAL-02, BAL-03, VIS-01, VIS-02, QAC-01
+### v1.3 Apple Sign-In (In Progress)
+
+**Milestone Goal:** Replace phone number OTP authentication with Apple Sign-In while still requiring phone number collection for the invite system.
+
+#### Phase 13: Database & Infrastructure Prep
+
+**Goal**: The database and Supabase configuration can safely handle Apple Sign-In users without breaking existing phone OTP users
+**Depends on**: Phase 12 (existing auth system, users table, pending_members trigger)
+**Requirements**: DB-01, DB-02, DB-03, DB-04, DB-05
 **Success Criteria** (what must be TRUE):
-  1. User sees a single net balance number at the top of the home screen that sums across all groups
-  2. Balance is color-coded: green when others owe the user, red when the user owes others, neutral when settled up
-  3. Balance header has large, prominent typography that is visually distinct from the rest of the screen
-  4. Home screen is clearly divided into visual sections (balance, activity placeholder, groups) with distinct separation
-  5. FAB for quick-add expense continues to work (pre-completed)
-**Plans**: 1 plan
+  1. A user row can exist with NULL phone_number (column is nullable, existing rows with values are unaffected)
+  2. The auth trigger creates a users row for Apple Sign-In users without crashing on NULL phone
+  3. An RPC exists that links pending member invites when a phone number is provided after authentication
+  4. Apple Sign-In provider is enabled in Supabase dashboard with the correct bundle ID
+  5. app.json is configured with expo-apple-authentication plugin and usesAppleSignIn capability flag
+**Plans**: TBD
 
 Plans:
-- [x] 10-01-PLAN.md — Balance summary header with net balance computation, color-coding, dashboard section layout with activity placeholder and visual dividers
+- [ ] 13-01: TBD
 
-#### Phase 11: Activity Feed
+#### Phase 14: Core Auth Replacement
 
-**Goal**: User can see what happened recently across all their groups without navigating into each one
-**Depends on**: Phase 10 (dashboard layout with activity section placeholder)
-**Requirements**: ACT-01, ACT-02, ACT-03, ACT-04, ACT-05
+**Goal**: Users can sign in with Apple and the phone OTP flow is completely removed
+**Depends on**: Phase 13 (database handles NULL phone, Apple provider enabled)
+**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06
 **Success Criteria** (what must be TRUE):
-  1. Home screen shows the 5 most recent activities (expenses and settlements merged chronologically) across all groups
-  2. Each activity item displays description/type, amount, who paid, and which group it belongs to
-  3. Tapping an activity item navigates the user to the relevant group or expense detail
-  4. When more than 5 activities exist, user sees a "See all" option to view full history
-**Plans**: 2 plans
+  1. User sees an Apple Sign-In button and can authenticate via native iOS dialog (Face ID / Touch ID)
+  2. Successful Apple authentication creates a valid Supabase session that persists across app restarts
+  3. User cancelling the Apple dialog returns to the sign-in screen without any error shown
+  4. Phone OTP screens (phone.tsx, otp.tsx) no longer exist in the app
+  5. All navigation routes point to the Apple Sign-In screen with no dead references to phone auth
+**Plans**: TBD
 
 Plans:
-- [x] 11-01-PLAN.md — Supabase RPC (get_recent_activity with UNION ALL), ActivityItem type, fetch functions, timestamp formatters
-- [x] 11-02-PLAN.md — Dashboard activity section wiring, skeleton loading, Activity History screen with infinite scroll and day headers
+- [ ] 14-01: TBD
 
-#### Phase 12: Group Cards & Visual Polish
+#### Phase 15: Profile Setup & Invite Linking
 
-**Goal**: The home screen feels like a polished, branded product with rich group cards and warm visual personality
-**Depends on**: Phase 11 (complete dashboard content)
-**Requirements**: VIS-03, VIS-04
+**Goal**: New users complete profile setup with phone number and the invite system works end-to-end with Apple Sign-In
+**Depends on**: Phase 14 (Apple Sign-In working, users can authenticate)
+**Requirements**: PROF-01, PROF-02, PROF-03, PROF-04, PROF-05, PROF-06, CLEAN-01, CLEAN-02
 **Success Criteria** (what must be TRUE):
-  1. Group cards show last activity date, member avatar stack, and per-group balance at a glance
-  2. Dashboard has accent/brand touches: colored balance area, subtle card treatments, and warm empty states
-  3. Empty states (no groups, no activity) feel friendly and guide the user toward action
-**Plans**: 2 plans
+  1. Profile setup requires phone number input and validates PH format (+63 9XX) before allowing save
+  2. Apple-provided display name is pre-filled on first sign-in so user does not have to retype their name
+  3. After saving phone in profile setup, any pending invites for that phone number are automatically linked
+  4. User cannot complete onboarding without both display name and phone number being present
+  5. No phone OTP language appears anywhere in the UI (sign-out message shows auth-agnostic text, Apple relay email is never displayed)
+**Plans**: TBD
 
 Plans:
-- [x] 12-01-PLAN.md — Data layer (group card RPC, warm accent palette, GlassCard and AvatarStack components)
-- [x] 12-02-PLAN.md — Dashboard visual polish (glassmorphism cards, enriched group info, MotiPressable, empty states)
+- [ ] 15-01: TBD
 
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 13 -> 14 -> 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -188,3 +202,6 @@ Plans:
 | 10. Balance Summary & Dashboard Layout | v1.2 | 1/1 | Complete | 2026-02-21 |
 | 11. Activity Feed | v1.2 | 2/2 | Complete | 2026-02-21 |
 | 12. Group Cards & Visual Polish | v1.2 | 2/2 | Complete | 2026-02-21 |
+| 13. Database & Infrastructure Prep | v1.3 | 0/TBD | Not started | - |
+| 14. Core Auth Replacement | v1.3 | 0/TBD | Not started | - |
+| 15. Profile Setup & Invite Linking | v1.3 | 0/TBD | Not started | - |
