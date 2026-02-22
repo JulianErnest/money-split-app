@@ -290,7 +290,7 @@ export default function GroupDetailScreen() {
     const url = Linking.createURL(`join/${group.invite_code}`);
     try {
       await Share.share({
-        message: `Join "${group.name}" on HatianApp! ${url}`,
+        message: `Join "${group.name}" on KKB! ${url}`,
       });
     } catch {
       // User cancelled or share failed -- no action needed

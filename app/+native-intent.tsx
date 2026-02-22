@@ -6,9 +6,9 @@ export function redirectSystemPath({
   initial: boolean;
 }) {
   try {
-    // Handle hatian://join/CODE deep links
+    // Handle kkb://join/CODE deep links
     if (path.includes("/join/")) {
-      const url = new URL(path, "hatian://");
+      const url = new URL(path, "kkb://");
       if (url.pathname.startsWith("/join/")) {
         return url.pathname; // returns /join/CODE
       }

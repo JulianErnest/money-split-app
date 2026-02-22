@@ -117,7 +117,7 @@ export default function PhoneScreen() {
           <View style={styles.container}>
             <View style={styles.header}>
               <Text variant="h1" color="accent" style={styles.appName}>
-                MoneySplitApp
+                KKB
               </Text>
               <Text variant="body" color="textSecondary">
                 Split expenses with your barkada

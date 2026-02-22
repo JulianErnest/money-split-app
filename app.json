@@ -1,19 +1,22 @@
 {
   "expo": {
-    "name": "HatianApp",
-    "slug": "hatian-app",
+    "name": "KKB",
+    "slug": "kkb-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "hatian",
+    "scheme": "kkb",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hatian.app"
+      "bundleIdentifier": "com.kkbsplit.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.hatian.app",
+      "package": "com.kkbsplit.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -47,6 +50,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "919c6920-8e96-4563-85eb-59ef8c72cefc"
+      }
+    },
+    "owner": "julianernest7"
   }
 }

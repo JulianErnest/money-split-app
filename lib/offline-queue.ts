@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-const db = SQLite.openDatabaseSync("hatian_offline.db");
+const db = SQLite.openDatabaseSync("kkb_offline.db");
 
 // Create table on module load
 db.execSync(`
