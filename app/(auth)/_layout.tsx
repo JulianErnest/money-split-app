@@ -9,8 +9,7 @@ export default function AuthLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="phone" />
-      <Stack.Screen name="otp" />
+      <Stack.Screen name="sign-in" />
       <Stack.Screen name="profile-setup" />
     </Stack>
   );
