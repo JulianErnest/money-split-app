@@ -251,7 +251,7 @@ export default function JoinGroupScreen() {
           <Button
             label="Go to Sign In"
             variant="primary"
-            onPress={() => router.replace("/(auth)/phone")}
+            onPress={() => router.replace("/(auth)/sign-in")}
             style={styles.primaryButton}
           />
         </View>

@@ -55,7 +55,7 @@ export default function ProfileSetupScreen() {
     try {
       const { error: upsertError } = await supabase.from("users").upsert({
         id: user.id,
-        phone_number: user.phone ?? "",
+        phone_number: user.phone ?? null,
         display_name: trimmedName,
         avatar_url: selectedEmoji,
       });

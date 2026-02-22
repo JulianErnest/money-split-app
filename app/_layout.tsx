@@ -36,7 +36,7 @@ function RootNavigator() {
 
     if (!session && !inAuthGroup) {
       // Not signed in — redirect to auth
-      router.replace("/(auth)/phone");
+      router.replace("/(auth)/sign-in");
     } else if (session && isNewUser && !inProfileSetup) {
       // Signed in but needs profile setup — redirect to profile setup
       router.replace("/(auth)/profile-setup");

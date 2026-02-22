@@ -73,7 +73,7 @@ export default function ProfileScreen() {
   function handleSignOut() {
     Alert.alert(
       "Sign out?",
-      "You'll need to verify your phone number again to sign back in.",
+      "You'll need to sign in with Apple again to access your account.",
       [
         { text: "Cancel", style: "cancel" },
         {
