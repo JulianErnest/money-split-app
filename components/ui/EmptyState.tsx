@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { spacing } from "@/theme";
 import React from "react";
@@ -11,13 +12,15 @@ interface EmptyStateProps {
   emoji: string;
   headline: string;
   subtext: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-function EmptyState({ emoji, headline, subtext }: EmptyStateProps) {
+function EmptyState({ emoji, headline, subtext, actionLabel, onAction }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <RNText style={styles.emoji}>{emoji}</RNText>
@@ -27,6 +30,14 @@ function EmptyState({ emoji, headline, subtext }: EmptyStateProps) {
       <Text variant="body" color="textSecondary" style={styles.subtext}>
         {subtext}
       </Text>
+      {actionLabel && onAction && (
+        <Button
+          label={actionLabel}
+          variant="primary"
+          onPress={onAction}
+          style={styles.action}
+        />
+      )}
     </View>
   );
 }
@@ -53,6 +64,9 @@ const styles = StyleSheet.create({
   subtext: {
     textAlign: "center",
     maxWidth: 280,
+  },
+  action: {
+    marginTop: spacing[5],
   },
 });
 
