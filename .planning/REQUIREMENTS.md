@@ -1,86 +1,95 @@
-# Requirements: HatianApp
+# Requirements: KKB v1.3 Apple Sign-In
 
-**Defined:** 2026-02-20
+**Defined:** 2026-02-22
 **Core Value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
 
-## v1.2 Requirements
+## v1.3 Requirements
 
-Requirements for Home Screen Dashboard milestone.
+### Database & Infrastructure
 
-### Balance Summary
+- [ ] **DB-01**: `users.phone_number` column is nullable (allows Apple Sign-In users without phone at auth time)
+- [ ] **DB-02**: Auth trigger handles NULL phone gracefully (NULLIF guard, skip pending_member linking when no phone)
+- [ ] **DB-03**: New RPC `link_phone_to_pending_invites` links pending members when phone is saved during profile setup
+- [ ] **DB-04**: Apple provider enabled in Supabase dashboard with bundle ID
+- [ ] **DB-05**: `app.json` configured with `usesAppleSignIn: true` and `expo-apple-authentication` plugin
 
-- [x] **BAL-01**: User sees their net balance across all groups prominently at the top of the home screen
-- [x] **BAL-02**: Balance is color-coded — green when owed money, red when owing, neutral when settled
-- [x] **BAL-03**: Balance header has visual weight — large typography, distinct from the rest of the page
+### Authentication
 
-### Activity Feed
+- [ ] **AUTH-01**: User can sign in with Apple via native iOS dialog (Face ID / Touch ID)
+- [ ] **AUTH-02**: Apple identity token exchanged for Supabase session via `signInWithIdToken`
+- [ ] **AUTH-03**: User cancellation of Apple dialog handled gracefully (no error shown)
+- [ ] **AUTH-04**: Apple credential availability checked before rendering sign-in button
+- [ ] **AUTH-05**: Phone OTP auth screens removed (phone.tsx, otp.tsx deleted)
+- [ ] **AUTH-06**: All auth routing updated to point to Apple Sign-In screen (root layout, join flow, auth layout)
 
-- [x] **ACT-01**: Home screen shows the 5 most recent expenses across all user's groups
-- [x] **ACT-02**: Home screen shows the 5 most recent settlements across all user's groups, merged chronologically with expenses
-- [x] **ACT-03**: Each activity item shows description/type, amount, who paid, and which group
-- [x] **ACT-04**: Tapping an activity item navigates to the relevant expense detail or group
-- [x] **ACT-05**: A "See all" option is available when there's more activity beyond the 5 shown
+### Profile Setup
 
-### Visual Design
+- [ ] **PROF-01**: Profile setup requires phone number input (PH format, +63 prefix, unverified)
+- [ ] **PROF-02**: Phone number format validated (10 digits starting with 9)
+- [ ] **PROF-03**: Phone uniqueness constraint violation handled with clear error message
+- [ ] **PROF-04**: Apple-provided display name pre-filled on first sign-in (captured from credential.fullName)
+- [ ] **PROF-05**: `isNewUser` check gates on both `display_name` AND `phone_number` presence
+- [ ] **PROF-06**: After phone saved, pending member invites auto-linked via `link_phone_to_pending_invites` RPC
 
-- [x] **VIS-01**: Home screen uses a sectioned dashboard layout: balance → activity → groups with clear visual separation
-- [x] **VIS-02**: Typography hierarchy with varied sizes and weights guides the eye through sections
-- [x] **VIS-03**: Accent/brand touches — colored balance area, subtle card treatments, warm empty states
-- [x] **VIS-04**: Group cards show richer info: last activity date, member avatar stack, per-group balance
+### Cleanup & Polish
 
-### Quick Actions
-
-- [x] **QAC-01**: FAB navigates to add expense with group picker (already built)
+- [ ] **CLEAN-01**: Profile screen sign-out message updated (no phone OTP reference)
+- [ ] **CLEAN-02**: Apple relay email never displayed in UI (show display_name + phone only)
 
 ## Future Requirements
 
-Deferred to later milestones.
+### Account Management (before App Store submission)
 
-### Group Detail Polish
+- **ACCT-01**: User can delete account from profile screen (Apple + Supabase deletion)
+- **ACCT-02**: Apple token revocation on account deletion
 
-- **GRP-01**: Redesigned group detail screen with similar dashboard treatment
-- **GRP-02**: Expense list with richer cards and filtering
+### Auth Expansion
 
-### Other Screens
-
-- **SCR-01**: Profile screen polish and settings
-- **SCR-02**: Add expense wizard visual refresh
+- **AUTHX-01**: Google Sign-In for Android support
+- **AUTHX-02**: Account linking (merge Apple + phone OTP identities)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Push notifications for activity | Notification infra not in scope yet |
-| Real-time activity updates | Pull-to-refresh is acceptable |
-| Activity feed pagination / infinite scroll | 5 items + "see all" is sufficient for v1.2 |
-| Per-person balance breakdown on home | Keep it simple — one net number |
-| Dark/light theme toggle | Dark-first only for now |
+| Phone OTP verification for collected number | Defeats purpose of replacing OTP; format validation sufficient |
+| Multiple auth providers simultaneously | Scope creep for solo dev; Apple-only for iOS TestFlight |
+| OAuth web redirect flow | Native `signInWithIdToken` is strictly better (no key rotation) |
+| Custom Apple Sign-In button styling | Violates Apple HIG; must use official `AppleAuthenticationButton` |
+| Phone number change flow | Complex cascading effects on invite system; defer to later |
+| Automatic account linking | Supabase doesn't natively support cross-provider linking |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
+Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BAL-01 | Phase 10 | Complete |
-| BAL-02 | Phase 10 | Complete |
-| BAL-03 | Phase 10 | Complete |
-| ACT-01 | Phase 11 | Complete |
-| ACT-02 | Phase 11 | Complete |
-| ACT-03 | Phase 11 | Complete |
-| ACT-04 | Phase 11 | Complete |
-| ACT-05 | Phase 11 | Complete |
-| VIS-01 | Phase 10 | Complete |
-| VIS-02 | Phase 10 | Complete |
-| VIS-03 | Phase 12 | Complete |
-| VIS-04 | Phase 12 | Complete |
-| QAC-01 | Phase 10 | Complete |
+| DB-01 | — | Pending |
+| DB-02 | — | Pending |
+| DB-03 | — | Pending |
+| DB-04 | — | Pending |
+| DB-05 | — | Pending |
+| AUTH-01 | — | Pending |
+| AUTH-02 | — | Pending |
+| AUTH-03 | — | Pending |
+| AUTH-04 | — | Pending |
+| AUTH-05 | — | Pending |
+| AUTH-06 | — | Pending |
+| PROF-01 | — | Pending |
+| PROF-02 | — | Pending |
+| PROF-03 | — | Pending |
+| PROF-04 | — | Pending |
+| PROF-05 | — | Pending |
+| PROF-06 | — | Pending |
+| CLEAN-01 | — | Pending |
+| CLEAN-02 | — | Pending |
 
 **Coverage:**
-- v1.2 requirements: 13 total
-- Mapped to phases: 13
-- Unmapped: 0
+- v1.3 requirements: 19 total
+- Mapped to phases: 0 (pending roadmap)
+- Unmapped: 19
 
 ---
-*Requirements defined: 2026-02-20*
-*Last updated: 2026-02-21 after phase 12 completion*
+*Requirements defined: 2026-02-22*
+*Last updated: 2026-02-22 after initial definition*
