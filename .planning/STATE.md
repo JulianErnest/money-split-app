@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 13 of 15 (Database & Infrastructure Prep)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-22 — Completed 13-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-22 — Completed 13-02-PLAN.md
 
-Progress: [█░░░░░░░░░] ~17% (1/~6 v1.3 plans)
+Progress: [██░░░░░░░░] ~33% (2/~6 v1.3 plans)
 
 ## Performance Metrics
 
@@ -32,8 +32,8 @@ Progress: [█░░░░░░░░░] ~17% (1/~6 v1.3 plans)
 - Total: ~21min
 
 **v1.3 Milestone (in progress):**
-- Plans completed: 1
-- Total: ~12min
+- Plans completed: 2
+- Total: ~27min
 
 ## Accumulated Context
 
@@ -48,6 +48,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Single atomic migration for ALTER TABLE + trigger rewrite + new RPC (interdependent changes)
 - NULLIF(new.phone, '') converts empty strings to NULL at database level
 - UserProfile interface updated to accept nullable phone_number
+- Supabase Apple provider configured via dashboard (no Management API available)
+- usesAppleSignIn flag enables capability in Apple Developer Portal during EAS Build
+- expo-apple-authentication plugin handles iOS entitlement file generation
 
 ### Known Issues
 
@@ -66,5 +69,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 13-01-PLAN.md
+Stopped at: Completed 13-02-PLAN.md (Phase 13 complete)
 Resume file: None
