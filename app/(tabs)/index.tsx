@@ -34,10 +34,16 @@ import { syncCompleteListeners } from "@/lib/sync-manager";
 import { colors, radius, spacing } from "@/theme";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
-import { MotiView } from "moti";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { MotiPressable } from "moti/interactions";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { MotiView } from "moti";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Alert, Pressable, SectionList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -165,6 +171,23 @@ export default function GroupsScreen() {
   } = useBottomSheet();
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
+
+  const params = useLocalSearchParams<{ openCreateGroup?: string }>();
+  const openedCreateFromParamRef = useRef(false);
+
+  // Open create-group sheet when navigated from Add tab "Create Group" (no groups)
+  useFocusEffect(
+    useCallback(() => {
+      if (params.openCreateGroup === "1" && !openedCreateFromParamRef.current) {
+        openedCreateFromParamRef.current = true;
+        openCreateSheet();
+        router.setParams({ openCreateGroup: undefined });
+      }
+      return () => {
+        openedCreateFromParamRef.current = false;
+      };
+    }, [params.openCreateGroup, openCreateSheet, router]),
+  );
 
   // ------- Load cached data on mount -------
   useEffect(() => {
@@ -820,7 +843,7 @@ export default function GroupsScreen() {
       {/* Create group bottom sheet */}
       <AppBottomSheet
         ref={createSheetRef}
-        snapPoints={["45%"]}
+        snapPoints={["25%"]}
         onDismiss={() => setNewGroupName("")}
       >
         <View style={styles.sheetContent}>
