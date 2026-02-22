@@ -109,7 +109,9 @@ export default function AddExpenseScreen() {
           headline="No groups yet"
           subtext="Create or join a group first, then you can add expenses here."
           actionLabel="Create Group"
-          onAction={() => router.navigate("/(tabs)")}
+          onAction={() =>
+            router.navigate("/(tabs)?openCreateGroup=1" as any)
+          }
         />
       </SafeAreaView>
     );
