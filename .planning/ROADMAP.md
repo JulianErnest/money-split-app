@@ -145,10 +145,11 @@ Plans:
   3. An RPC exists that links pending member invites when a phone number is provided after authentication
   4. Apple Sign-In provider is enabled in Supabase dashboard with the correct bundle ID
   5. app.json is configured with expo-apple-authentication plugin and usesAppleSignIn capability flag
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: TBD
+- [ ] 13-01-PLAN.md — Database migration: nullable phone_number, trigger rewrite with NULLIF guard, link_phone_to_pending_invites RPC, type regeneration
+- [ ] 13-02-PLAN.md — Install expo-apple-authentication, configure app.json, enable Supabase Apple provider
 
 #### Phase 14: Core Auth Replacement
 
@@ -202,6 +203,6 @@ Phases execute in numeric order: 13 -> 14 -> 15
 | 10. Balance Summary & Dashboard Layout | v1.2 | 1/1 | Complete | 2026-02-21 |
 | 11. Activity Feed | v1.2 | 2/2 | Complete | 2026-02-21 |
 | 12. Group Cards & Visual Polish | v1.2 | 2/2 | Complete | 2026-02-21 |
-| 13. Database & Infrastructure Prep | v1.3 | 0/TBD | Not started | - |
+| 13. Database & Infrastructure Prep | v1.3 | 0/2 | Not started | - |
 | 14. Core Auth Replacement | v1.3 | 0/TBD | Not started | - |
 | 15. Profile Setup & Invite Linking | v1.3 | 0/TBD | Not started | - |
