@@ -1,93 +1,86 @@
-# Requirements: KKB v1.3 Apple Sign-In
+# Requirements: v1.4 PostHog Analytics
 
-**Defined:** 2026-02-22
+**Defined:** 2026-02-24
 **Core Value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
 
-## v1.3 Requirements
+## v1.4 Requirements
 
-### Database & Infrastructure
+### SDK Setup
 
-- [x] **DB-01**: `users.phone_number` column is nullable (allows Apple Sign-In users without phone at auth time)
-- [x] **DB-02**: Auth trigger handles NULL phone gracefully (NULLIF guard, skip pending_member linking when no phone)
-- [x] **DB-03**: New RPC `link_phone_to_pending_invites` links pending members when phone is saved during profile setup
-- [x] **DB-04**: Apple provider enabled in Supabase dashboard with bundle ID
-- [x] **DB-05**: `app.json` configured with `usesAppleSignIn: true` and `expo-apple-authentication` plugin
+- [ ] **SETUP-01**: PostHog standalone client created in `lib/analytics.ts` with API key from environment variable (`EXPO_PUBLIC_POSTHOG_API_KEY`)
+- [ ] **SETUP-02**: PostHogProvider wraps app root in `app/_layout.tsx` via `client` prop with autocapture disabled (`captureScreens: false`, `captureTouches: false`)
+- [ ] **SETUP-03**: Debug mode enabled only in development (`debug: __DEV__`)
 
-### Authentication
+### Screen Tracking
 
-- [x] **AUTH-01**: User can sign in with Apple via native iOS dialog (Face ID / Touch ID)
-- [x] **AUTH-02**: Apple identity token exchanged for Supabase session via `signInWithIdToken`
-- [x] **AUTH-03**: User cancellation of Apple dialog handled gracefully (no error shown)
-- [x] **AUTH-04**: Apple credential availability checked before rendering sign-in button
-- [x] **AUTH-05**: Phone OTP auth screens removed (phone.tsx, otp.tsx deleted)
-- [x] **AUTH-06**: All auth routing updated to point to Apple Sign-In screen (root layout, join flow, auth layout)
+- [ ] **SCREEN-01**: Screen views tracked automatically on every route change via `usePathname()` + `posthog.screen()` in root layout
+- [ ] **SCREEN-02**: Dynamic route segments normalized to template names (e.g., `/group/[id]` not `/group/abc123`, `/group/[id]/add-expense` not `/group/abc123/add-expense`)
 
-### Profile Setup
+### User Identification
 
-- [x] **PROF-01**: Profile setup requires phone number input (PH format, +63 prefix, unverified)
-- [x] **PROF-02**: Phone number format validated (10 digits starting with 9)
-- [x] **PROF-03**: Phone uniqueness constraint violation handled with clear error message
-- [x] **PROF-04**: Apple-provided display name pre-filled on first sign-in (captured from credential.fullName)
-- [x] **PROF-05**: `isNewUser` check gates on both `display_name` AND `phone_number` presence
-- [x] **PROF-06**: After phone saved, pending member invites auto-linked via `link_phone_to_pending_invites` RPC
+- [ ] **IDENT-01**: User identified with Supabase user ID (`posthog.identify(session.user.id)`) after profile setup completes (when `isNewUser` becomes `false`)
+- [ ] **IDENT-02**: Person properties set on identify — `display_name` via `$set`, `signup_method` and `first_sign_in_date` via `$set_once`
+- [ ] **IDENT-03**: `posthog.reset()` called on sign-out to clear identity before `supabase.auth.signOut()`
 
-### Cleanup & Polish
+### Core Events
 
-- [x] **CLEAN-01**: Profile screen sign-out message updated (no phone OTP reference)
-- [x] **CLEAN-02**: Apple relay email never displayed in UI (show display_name + phone only)
+- [ ] **EVENT-01**: `sign_in` event captured after successful Apple Sign-In — properties: `method: "apple"`
+- [ ] **EVENT-02**: `profile_completed` event captured after profile setup save — properties: `has_avatar: boolean`
+- [ ] **EVENT-03**: `group_created` event captured after group creation — properties: `group_id`
+- [ ] **EVENT-04**: `expense_added` event captured after expense submission — properties: `group_id`, `amount`, `split_type`, `member_count`
+- [ ] **EVENT-05**: `settle_up` event captured after settlement recorded — properties: `group_id`, `amount`
+- [ ] **EVENT-06**: `invite_accepted` event captured after accept RPC — properties: `group_id`
+- [ ] **EVENT-07**: `invite_declined` event captured after decline confirm — properties: `group_id`
+- [ ] **EVENT-08**: `group_joined_via_link` event captured after deep-link join — properties: `group_id`
+- [ ] **EVENT-09**: `invite_shared` event captured when share button tapped — properties: `group_id`
 
-## Future Requirements
+## Future Requirements (v1.5+)
 
-### Account Management (before App Store submission)
-
-- **ACCT-01**: User can delete account from profile screen (Apple + Supabase deletion)
-- **ACCT-02**: Apple token revocation on account deletion
-
-### Auth Expansion
-
-- **AUTHX-01**: Google Sign-In for Android support
-- **AUTHX-02**: Account linking (merge Apple + phone OTP identities)
+- Super properties (`app_version`, `platform`) sent with every event
+- Expense wizard step tracking (step-by-step funnel within add-expense flow)
+- Offline sync event tracking (`offline_sync_completed`)
+- Error event tracking (`error_occurred` on RPC failures)
+- PostHog dashboard funnel and cohort configuration
+- Analytics opt-out toggle in profile settings (DPA compliance)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Phone OTP verification for collected number | Defeats purpose of replacing OTP; format validation sufficient |
-| Multiple auth providers simultaneously | Scope creep for solo dev; Apple-only for iOS TestFlight |
-| OAuth web redirect flow | Native `signInWithIdToken` is strictly better (no key rotation) |
-| Custom Apple Sign-In button styling | Violates Apple HIG; must use official `AppleAuthenticationButton` |
-| Phone number change flow | Complex cascading effects on invite system; defer to later |
-| Automatic account linking | Supabase doesn't natively support cross-provider linking |
+| Session replay | Adds native deps, performance overhead, privacy risk with financial data |
+| Feature flags | 5-10 testers, no need for gradual rollout |
+| A/B experiments | Statistically meaningless at current scale |
+| Touch autocapture | Generates noise (numpad taps), wastes event quota |
+| PostHog Group analytics | Paid feature, not needed for beta |
+| Server-side tracking (posthog-node) | All analytics are client-side |
+| User-facing analytics dashboards | Separate product feature, not analytics infrastructure |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DB-01 | Phase 13 | Complete |
-| DB-02 | Phase 13 | Complete |
-| DB-03 | Phase 13 | Complete |
-| DB-04 | Phase 13 | Complete |
-| DB-05 | Phase 13 | Complete |
-| AUTH-01 | Phase 14 | Complete |
-| AUTH-02 | Phase 14 | Complete |
-| AUTH-03 | Phase 14 | Complete |
-| AUTH-04 | Phase 14 | Complete |
-| AUTH-05 | Phase 14 | Complete |
-| AUTH-06 | Phase 14 | Complete |
-| PROF-01 | Phase 15 | Complete |
-| PROF-02 | Phase 15 | Complete |
-| PROF-03 | Phase 15 | Complete |
-| PROF-04 | Phase 15 | Complete |
-| PROF-05 | Phase 15 | Complete |
-| PROF-06 | Phase 15 | Complete |
-| CLEAN-01 | Phase 15 | Complete |
-| CLEAN-02 | Phase 15 | Complete |
+| SETUP-01 | TBD | Pending |
+| SETUP-02 | TBD | Pending |
+| SETUP-03 | TBD | Pending |
+| SCREEN-01 | TBD | Pending |
+| SCREEN-02 | TBD | Pending |
+| IDENT-01 | TBD | Pending |
+| IDENT-02 | TBD | Pending |
+| IDENT-03 | TBD | Pending |
+| EVENT-01 | TBD | Pending |
+| EVENT-02 | TBD | Pending |
+| EVENT-03 | TBD | Pending |
+| EVENT-04 | TBD | Pending |
+| EVENT-05 | TBD | Pending |
+| EVENT-06 | TBD | Pending |
+| EVENT-07 | TBD | Pending |
+| EVENT-08 | TBD | Pending |
+| EVENT-09 | TBD | Pending |
 
 **Coverage:**
-- v1.3 requirements: 19 total
-- Mapped to phases: 19/19
-- Unmapped: 0
+- v1.4 requirements: 17 total
+- Mapped to phases: 0/17 (awaiting roadmap)
+- Unmapped: 17
 
 ---
-*Requirements defined: 2026-02-22*
-*Last updated: 2026-02-22 after roadmap creation*
+*Requirements defined: 2026-02-24*
