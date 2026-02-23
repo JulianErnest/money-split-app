@@ -2,6 +2,7 @@ import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
+import { trackProfileCompleted } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth-context";
 import { isValidPHPhone } from "@/lib/group-members";
 import { supabase } from "@/lib/supabase";
@@ -119,6 +120,7 @@ export default function ProfileSetupScreen() {
       // Root layout will auto-redirect to (tabs)
       setSaving(false);
       await refreshProfile();
+      trackProfileCompleted(selectedEmoji !== '');
     } catch (err) {
       setError("Something went wrong. Please try again.");
       setSaving(false);

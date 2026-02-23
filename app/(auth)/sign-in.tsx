@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Text } from "@/components/ui/Text";
+import { trackSignIn } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 import { colors, spacing } from "@/theme";
 
@@ -89,6 +90,8 @@ export default function SignInScreen() {
         setError(signInError.message);
         return;
       }
+
+      trackSignIn('apple');
 
       // CRITICAL: Capture fullName immediately (Apple only provides it on first auth)
       if (credential.fullName?.givenName) {
