@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 16 of 16 (PostHog Analytics Integration)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-24 — Roadmap created for v1.4
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-24 — Completed 16-01-PLAN.md
 
-Progress: [##################################] 100% (phases 1-15) | Phase 16: Not started
+Progress: [##################################] 100% (phases 1-15) | Phase 16: ████░░░░ 1/2
 
 ## Performance Metrics
 
@@ -46,11 +46,12 @@ Recent for v1.4:
 - Autocapture disabled (crashes with Expo Router -- known PostHog issue #2740)
 - Manual screen tracking via usePathname() hook
 - Standalone PostHog client instance pattern (allows non-React access)
+- posthog.debug() is a method call, not a constructor option (v4.36.0)
+- PostHogProvider placed outside AuthProvider for auth event capture
 
 ### Known Issues
 
-- Pre-existing TypeScript error in app/(tabs)/index.tsx (SectionList type mismatch from phase 08-02) -- cosmetic
-- Pre-existing TypeScript error in app/_layout.tsx (segments tuple index) -- cosmetic
+None (pre-existing TypeScript errors resolved).
 
 ### Pending Todos
 
@@ -63,5 +64,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Roadmap created for v1.4 milestone, ready to plan Phase 16
+Stopped at: Completed 16-01-PLAN.md (PostHog analytics foundation)
 Resume file: None

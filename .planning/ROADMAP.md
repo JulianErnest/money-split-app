@@ -158,7 +158,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — PostHog client, provider wrapper, screen tracking, identity management, sign-out reset
+- [x] 16-01-PLAN.md — PostHog client, provider wrapper, screen tracking, identity management, sign-out reset
 - [ ] 16-02-PLAN.md — Wire all 9 core product events into existing screen handlers
 
 ## Progress
@@ -184,4 +184,4 @@ Phases execute in numeric order: 16
 | 13. Database & Infrastructure Prep | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 15. Profile Setup & Invite Linking | v1.3 | 1/1 | Complete | 2026-02-22 |
-| 16. PostHog Analytics Integration | v1.4 | 0/2 | Not started | - |
+| 16. PostHog Analytics Integration | v1.4 | 1/2 | In progress | - |
