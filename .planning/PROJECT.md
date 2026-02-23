@@ -8,15 +8,16 @@ A mobile expense-splitting app built for Filipino users — peso-first, designed
 
 A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
 
-## Current Milestone: v1.3 Apple Sign-In
+## Current Milestone: v1.4 PostHog Analytics
 
-**Goal:** Replace phone number OTP authentication with Apple Sign-In while still requiring phone number collection for the invite system.
+**Goal:** Add product analytics to understand how testers use the app, track key funnels, and build the analytics infrastructure for growth.
 
 **Target features:**
-- Apple Sign-In as the sole authentication method
-- Phone number collection (unverified) required during profile setup
-- Remove phone OTP flow entirely
-- Phone numbers still power pending member invites and auto-linking
+- PostHog React Native SDK integration with provider wrapper
+- User identification tied to Supabase auth (user ID, display name)
+- Automatic screen view tracking via Expo Router navigation events
+- Key action event tracking (sign-in, create group, add expense, settle up, accept/decline invite, join via link)
+- User properties synced to PostHog (name, group count)
 
 ## Requirements
 
@@ -50,9 +51,11 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 
 ### Active
 
-- [ ] Apple Sign-In as sole authentication method (replacing phone OTP)
-- [ ] Phone number required during profile setup (unverified, for invite system)
-- [ ] Remove phone OTP authentication flow
+- [ ] PostHog SDK integrated with provider wrapper
+- [ ] User identification synced with Supabase auth
+- [ ] Automatic screen view tracking
+- [ ] Key action event tracking across all core flows
+- [ ] User properties synced to PostHog
 
 ### Out of Scope
 
