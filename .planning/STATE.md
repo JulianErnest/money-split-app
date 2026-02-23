@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 16 of 16 (PostHog Analytics Integration)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-24 — Completed 16-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-24 — Completed 16-02-PLAN.md
 
-Progress: [##################################] 100% (phases 1-15) | Phase 16: ████░░░░ 1/2
+Progress: [████████████████████████████████████] 100% (all phases complete)
 
 ## Performance Metrics
 
@@ -35,6 +35,10 @@ Progress: [##################################] 100% (phases 1-15) | Phase 16: �
 - Plans completed: 6
 - Total: ~32min
 
+**v1.4 Milestone (complete):**
+- Plans completed: 2
+- Total: ~6min
+
 ## Accumulated Context
 
 ### Decisions
@@ -48,6 +52,8 @@ Recent for v1.4:
 - Standalone PostHog client instance pattern (allows non-React access)
 - posthog.debug() is a method call, not a constructor option (v4.36.0)
 - PostHogProvider placed outside AuthProvider for auth event capture
+- Events fire only after RPC success, never on error paths
+- trackInviteShared fires on intent (Share.share()), not delivery
 
 ### Known Issues
 
@@ -64,5 +70,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 16-01-PLAN.md (PostHog analytics foundation)
+Stopped at: Completed 16-02-PLAN.md (PostHog event instrumentation) -- Phase 16 complete
 Resume file: None

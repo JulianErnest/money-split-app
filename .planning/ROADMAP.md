@@ -6,7 +6,7 @@
 - v1.1 Invites & Settle Up - Phases 7-9 (shipped 2026-02-20)
 - v1.2 Home Screen Dashboard - Phases 10-12 (shipped 2026-02-21)
 - v1.3 Apple Sign-In - Phases 13-15 (shipped 2026-02-22)
-- v1.4 PostHog Analytics - Phase 16 (in progress)
+- v1.4 PostHog Analytics - Phase 16 (shipped 2026-02-24)
 
 ## Phases
 
@@ -140,7 +140,7 @@ Plans:
 
 </details>
 
-### v1.4 PostHog Analytics (In Progress)
+### v1.4 PostHog Analytics (SHIPPED 2026-02-24)
 
 **Milestone Goal:** Add product analytics to understand how testers use the app, track key funnels, and build the analytics infrastructure for growth.
 
@@ -159,7 +159,7 @@ Plans:
 
 Plans:
 - [x] 16-01-PLAN.md — PostHog client, provider wrapper, screen tracking, identity management, sign-out reset
-- [ ] 16-02-PLAN.md — Wire all 9 core product events into existing screen handlers
+- [x] 16-02-PLAN.md — Wire all 9 core product events into existing screen handlers
 
 ## Progress
 
@@ -184,4 +184,4 @@ Phases execute in numeric order: 16
 | 13. Database & Infrastructure Prep | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 15. Profile Setup & Invite Linking | v1.3 | 1/1 | Complete | 2026-02-22 |
-| 16. PostHog Analytics Integration | v1.4 | 1/2 | In progress | - |
+| 16. PostHog Analytics Integration | v1.4 | 2/2 | Complete | 2026-02-24 |
