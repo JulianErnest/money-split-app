@@ -8,6 +8,7 @@
 - v1.3 Apple Sign-In - Phases 13-15 (shipped 2026-02-22)
 - v1.4 PostHog Analytics - Phase 16 (shipped 2026-02-24)
 
+
 ## Phases
 
 **Phase Numbering:**
