@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { colors, spacing } from "@/theme";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { posthogClient } from "@/lib/analytics";
 
 interface UserProfile {
   display_name: string | null;
@@ -82,6 +83,7 @@ export default function ProfileScreen() {
           onPress: async () => {
             setSigningOut(true);
             try {
+              posthogClient.reset(); // Clear PostHog identity BEFORE sign-out
               await supabase.auth.signOut();
               // AuthProvider listener will detect session removal
               // and route to auth screen automatically
