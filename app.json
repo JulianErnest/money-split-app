@@ -48,7 +48,8 @@
       ],
       "expo-sqlite",
       "expo-font",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
