@@ -1,570 +1,602 @@
-# Architecture Patterns
+# Architecture Research
 
-**Domain:** Apple Sign-In integration into existing Supabase + Expo Router auth architecture
-**Researched:** 2026-02-22
+**Domain:** PostHog analytics integration in Expo Router app
+**Researched:** 2026-02-24
+**Confidence:** HIGH
 
-## Recommended Architecture
+Confidence is HIGH because all findings are based on the installed SDK source code (posthog-react-native v4.36.0 type definitions in node_modules), official PostHog GitHub issue resolutions, and Expo Router official documentation -- not training data or blog posts.
 
-### High-Level Change Summary
-
-Replace the two-screen phone OTP flow (`phone.tsx` -> `otp.tsx`) with a single-screen Apple Sign-In flow, then expand `profile-setup.tsx` to collect phone number. The auth context, root navigator logic, and Supabase client remain structurally identical -- the changes are surgical, not architectural.
-
-```
-CURRENT FLOW:
-  phone.tsx ──> otp.tsx ──> [auth-context checks isNewUser] ──> profile-setup.tsx ──> (tabs)
-  signInWithOtp()          verifyOtp()                          upsert users row
-
-NEW FLOW:
-  sign-in.tsx ──> [auth-context checks isNewUser] ──> profile-setup.tsx ──> (tabs)
-  Apple signInAsync()                                  upsert users row
-  + signInWithIdToken()                                (now with phone_number field)
-```
-
-### Component Map: What Changes
-
-| Component | Status | Change Description |
-|-----------|--------|--------------------|
-| `app/(auth)/phone.tsx` | DELETE | Replaced by sign-in.tsx |
-| `app/(auth)/otp.tsx` | DELETE | No longer needed |
-| `app/(auth)/sign-in.tsx` | NEW | Apple Sign-In button + signInWithIdToken |
-| `app/(auth)/profile-setup.tsx` | MODIFY | Add phone number input field (required) |
-| `app/(auth)/_layout.tsx` | MODIFY | Update Stack.Screen entries (remove phone/otp, add sign-in) |
-| `app/_layout.tsx` | MODIFY | Change unauthenticated redirect from `/(auth)/phone` to `/(auth)/sign-in` |
-| `lib/auth-context.tsx` | MODIFY | Update `checkIsNewUser` to also check phone_number |
-| `lib/supabase.ts` | NO CHANGE | Supabase client config is auth-method-agnostic |
-| `lib/group-members.ts` | NO CHANGE | Phone utilities unchanged |
-| `app/(tabs)/profile.tsx` | MINOR MODIFY | Update sign-out confirmation text |
-| `app.json` | MODIFY | Add `ios.usesAppleSignIn: true` + expo-apple-authentication plugin |
-| `components/groups/AddMemberModal.tsx` | NO CHANGE | Still uses phone numbers for invites |
-
-### Database Changes
-
-| Object | Status | Change Description |
-|--------|--------|--------------------|
-| `users` table | MIGRATE | `phone_number` column: remove NOT NULL, keep UNIQUE (allow NULL) |
-| `users` table TypeScript types | MODIFY | `phone_number: string \| null` in Insert type |
-| `handle_pending_member_claim` trigger | MODIFY | Must handle Apple users (no phone at signup time) |
-| `add_pending_member` RPC | NO CHANGE | Still matches on phone_number in users table |
-| `get_my_pending_invites` RPC | NO CHANGE | Matches on user_id, not phone |
-| `accept_invite` / `decline_invite` RPCs | NO CHANGE | Operate on pending_member_id |
-| RLS policies | NO CHANGE | All based on auth.uid(), not phone |
-| Supabase Auth config | MODIFY | Enable Apple provider in dashboard |
-
-## Detailed Architecture
-
-### 1. Apple Sign-In Screen (`app/(auth)/sign-in.tsx`)
-
-**New file.** Replaces `phone.tsx` and `otp.tsx` with a single screen.
-
-**Data Flow:**
+## System Overview
 
 ```
-User taps Apple Sign-In button
-  |
-  v
-AppleAuthentication.signInAsync({
-  requestedScopes: [FULL_NAME, EMAIL]
-})
-  |
-  v
-credential.identityToken (JWT from Apple)
-credential.fullName (only on FIRST sign-in ever)
-  |
-  v
-supabase.auth.signInWithIdToken({
-  provider: 'apple',
-  token: credential.identityToken,
-})
-  |
-  v
-Supabase creates/finds auth.users row
-  - id: new UUID
-  - email: from Apple (may be relay address)
-  - phone: EMPTY STRING (not null) -- Apple provides no phone
-  - raw_user_meta_data: { email, email_verified, ... }
-  |
-  v
-If credential.fullName exists (first sign-in):
-  supabase.auth.updateUser({
-    data: { full_name, given_name, family_name }
-  })
-  |
-  v
-auth.onAuthStateChange fires -> AuthProvider picks up session
-  |
-  v
-auth-context.checkIsNewUser() runs -> finds no display_name AND no phone_number
-  -> isNewUser = true -> redirects to profile-setup
++-----------------------------------------------------------+
+|  app/_layout.tsx (RootLayout)                             |
+|                                                            |
+|  GestureHandlerRootView                                   |
+|    +-- PostHogProvider  <-- NEW (outermost data provider) |
+|    |     client={posthogClient}                            |
+|    |     autocapture={{ captureTouches, !captureScreens }} |
+|    |                                                       |
+|    +-- AuthProvider  (existing)                            |
+|    |     session, user, isLoading, isNewUser               |
+|    |                                                       |
+|    +-- NetworkProvider  (existing)                         |
+|    |                                                       |
+|    +-- ToastProvider  (existing)                           |
+|    |                                                       |
+|    +-- BottomSheetModalProvider  (existing)                |
+|    |                                                       |
+|    +-- AnalyticsTracker  <-- NEW (screen + identify)      |
+|    |     usePathname() -> posthog.screen()                 |
+|    |     useAuth() -> posthog.identify() / reset()         |
+|    |                                                       |
+|    +-- SyncWatcher  (existing)                             |
+|    +-- RootNavigator  (existing)                           |
+|    +-- OfflineBanner  (existing)                           |
+|    +-- StatusBar  (existing)                               |
++-----------------------------------------------------------+
+
+Event Flow:
+  User taps "Add Expense" button
+    -> Screen component calls analytics.trackExpenseCreated(data)
+    -> analytics helper calls posthogClient.capture('expense_created', {...})
+    -> PostHog SDK queues event internally (flushAt=20 default)
+    -> SDK flushes batch to PostHog cloud (us.i.posthog.com)
+
+Identification Flow:
+  Supabase auth state changes (onAuthStateChange)
+    -> AuthProvider updates session/user state
+    -> AnalyticsTracker detects auth change via useAuth()
+    -> If signed in + profile complete: posthog.identify(user.id, {name, ...})
+    -> If signed out: posthog.reset()
 ```
 
-**Key implementation details:**
-- Use `expo-apple-authentication`'s `AppleAuthenticationButton` component for Apple's required button styling
-- Check `AppleAuthentication.isAvailableAsync()` before rendering (always true on iOS 13+)
-- Handle `ERR_REQUEST_CANCELED` error code (user dismissed the sheet -- not an error)
-- No nonce is required for the Expo `signInAsync` + Supabase `signInWithIdToken` flow. The Expo library handles the Apple authentication natively without requiring a custom nonce. (Nonce is only needed for the Android/web OAuth browser flow.)
-- Capture `credential.fullName` on first sign-in and save via `updateUser` -- Apple never provides it again
+## Component Responsibilities
 
-**Confidence:** HIGH -- based on official Supabase docs example for Expo + Apple Sign-In
+| Component | Responsibility | Typical Implementation |
+|-----------|----------------|------------------------|
+| `PostHogProvider` | Initialize PostHog SDK, provide client context, enable touch autocapture | Wraps app tree in `app/_layout.tsx`, configured with `client` prop |
+| `AnalyticsTracker` | Auto-track screen views on route change, identify/reset user on auth change | Renderless component using `usePathname()`, `useAuth()`, `usePostHog()` |
+| `lib/analytics.ts` | PostHog client instance, typed event capture helpers | Exports typed functions like `trackExpenseCreated()` that call `posthogClient.capture()` |
+| `usePostHog()` hook | Access PostHog client instance from any component | Provided by `posthog-react-native`, available inside `PostHogProvider` |
 
-### 2. Auth Context Changes (`lib/auth-context.tsx`)
+## Recommended Project Structure
 
-**Current `checkIsNewUser` logic:**
-```typescript
-// Current: only checks display_name
-if (error || !data || !data.display_name) {
-  setIsNewUser(true);
+```
+app/
+  _layout.tsx              # MODIFY - Add PostHogProvider + AnalyticsTracker
+
+lib/
+  analytics.ts             # NEW - PostHog client init + event tracking helpers
+
+(No new context file needed - PostHogProvider handles context.
+ Event tracking calls are added to existing screen components
+ as the milestone progresses.)
+```
+
+### File-by-file breakdown of new code
+
+**`lib/analytics.ts`** -- Central analytics module (~80-100 lines):
+- Creates a pre-configured PostHog instance via `new PostHog(apiKey, options)`
+- Exports the instance as `posthogClient` (for the Provider's `client` prop and non-React usage)
+- Exports typed event tracking functions (one per tracked event)
+- Exports `pathnameToScreenName()` mapping function
+
+**`app/_layout.tsx`** -- Modified root layout (~20 lines of changes):
+- Import `PostHogProvider` from `posthog-react-native`
+- Import `posthogClient` from `@/lib/analytics`
+- Wrap provider tree with `PostHogProvider`
+- Add `AnalyticsTracker` renderless component (can be defined inline in this file or extracted)
+
+## Architectural Patterns
+
+### Pattern 1: PostHog Provider Placement
+
+**Where:** `app/_layout.tsx`, wrapping the entire provider tree as the outermost data provider (inside `GestureHandlerRootView` but outside `AuthProvider`).
+
+**Why outermost:** PostHog needs to capture events from the moment the app loads, including auth events. If placed inside `AuthProvider`, the SDK would not be initialized during auth state transitions. The `GestureHandlerRootView` is a pure gesture wrapper and must remain outermost for `react-native-gesture-handler` to work.
+
+**Implementation:**
+
+```tsx
+// app/_layout.tsx - RootLayout function (simplified)
+import { PostHogProvider } from 'posthog-react-native';
+import { posthogClient } from '@/lib/analytics';
+
+export default function RootLayout() {
+  // ... existing font loading ...
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PostHogProvider
+        client={posthogClient}
+        autocapture={{
+          captureTouches: true,
+          captureScreens: false,  // CRITICAL: must be false for Expo Router
+        }}
+      >
+        <AuthProvider>
+          <NetworkProvider>
+            <ToastProvider>
+              <BottomSheetModalProvider>
+                <AnalyticsTracker />
+                <SyncWatcher />
+                <RootNavigator />
+                <OfflineBanner />
+                <StatusBar style="light" />
+              </BottomSheetModalProvider>
+            </ToastProvider>
+          </NetworkProvider>
+        </AuthProvider>
+      </PostHogProvider>
+    </GestureHandlerRootView>
+  );
 }
 ```
 
-**New `checkIsNewUser` logic:**
-```typescript
-// New: check BOTH display_name AND phone_number
-const { data } = await supabase
-  .from("users")
-  .select("display_name, phone_number")
-  .eq("id", userId)
-  .single();
+**Critical: `captureScreens: false` is mandatory.** The PostHog SDK's built-in screen tracking does NOT work with Expo Router. This is a confirmed, closed issue (PostHog/posthog-js#2740, closed as "not planned"). The SDK's internal `useNavigationTracker` hook calls `useNavigationState()` which requires being inside a `NavigationContainer` -- but Expo Router does not expose its `NavigationContainer`. Setting `captureScreens: true` causes a runtime crash:
 
-if (!data || !data.display_name || !data.phone_number) {
-  setIsNewUser(true);
-} else {
-  setIsNewUser(false);
+```
+Error: Couldn't get the navigation state. Is your component inside a navigator?
+```
+
+**Source (HIGH confidence):** SDK type definitions at `node_modules/posthog-react-native/dist/types.d.ts` lines 37-41 explicitly document this:
+
+> "For expo-router, expo-router uses @react-navigation/native, but does not expose the NavigationContainer, you'll need to capture the screens manually and disable this option."
+
+Also confirmed by GitHub issue PostHog/posthog-js#2740.
+
+### Pattern 2: Screen Tracking with Expo Router
+
+**Approach:** Manual screen tracking using Expo Router's `usePathname()` hook, calling `posthog.screen()` on pathname changes. This is the officially recommended pattern per both Expo docs and the PostHog SDK source code comments.
+
+**Implementation -- AnalyticsTracker component:**
+
+```tsx
+// Can be defined in app/_layout.tsx or extracted to its own file
+
+import { usePathname, useGlobalSearchParams } from 'expo-router';
+import { usePostHog } from 'posthog-react-native';
+import { useAuth } from '@/lib/auth-context';
+import { useEffect, useRef } from 'react';
+import { pathnameToScreenName } from '@/lib/analytics';
+
+function AnalyticsTracker() {
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+  const posthog = usePostHog();
+  const { session, isNewUser } = useAuth();
+  const identifiedRef = useRef(false);
+
+  // Screen tracking: fires on every route change
+  useEffect(() => {
+    if (posthog && pathname) {
+      const screenName = pathnameToScreenName(pathname);
+      posthog.screen(screenName, {
+        path: pathname,
+        ...params,
+      });
+    }
+  }, [pathname, params]);
+
+  // User identification: fires on auth state change
+  useEffect(() => {
+    if (!posthog) return;
+
+    if (session?.user && !isNewUser) {
+      posthog.identify(session.user.id, {
+        $set: {
+          name: session.user.user_metadata?.full_name,
+        },
+      });
+      identifiedRef.current = true;
+    } else if (!session && identifiedRef.current) {
+      posthog.reset();
+      identifiedRef.current = false;
+    }
+  }, [session, isNewUser]);
+
+  return null;  // Renderless component
 }
 ```
 
-**Why:** With phone OTP, `phone_number` was always populated at auth time (the trigger inserted it). With Apple Sign-In, the user has no phone number until profile setup completes. We must gate on BOTH fields to ensure the user reaches profile setup.
+**Screen name mapping:** Expo Router pathnames are URL-like (`/(tabs)`, `/(auth)/sign-in`, `/group/abc123`). These should be mapped to readable screen names for PostHog dashboards:
 
-**Edge case -- existing users:** Users who authenticated with phone OTP before the Apple Sign-In migration already have `display_name` AND `phone_number`. They will pass the `isNewUser` check and go straight to `(tabs)`. No forced re-onboarding.
+```tsx
+// In lib/analytics.ts
+export function pathnameToScreenName(pathname: string): string {
+  const routes: Record<string, string> = {
+    '/': 'Home',
+    '/add': 'Add Tab',
+    '/profile': 'Profile',
+    '/sign-in': 'Sign In',
+    '/profile-setup': 'Profile Setup',
+    '/activity': 'Activity',
+  };
 
-### 3. Profile Setup Changes (`app/(auth)/profile-setup.tsx`)
+  if (routes[pathname]) return routes[pathname];
 
-**Current profile-setup collects:**
-- Display name (required, min 2 chars)
-- Avatar emoji (optional, random default)
+  // Pattern matches for dynamic routes
+  if (pathname.startsWith('/group/') && pathname.includes('/expense/'))
+    return 'Expense Detail';
+  if (pathname.startsWith('/group/') && pathname.includes('/balance/'))
+    return 'Balance Detail';
+  if (pathname.startsWith('/group/') && pathname.includes('/add-expense'))
+    return 'Add Expense';
+  if (pathname.startsWith('/group/'))
+    return 'Group Detail';
+  if (pathname.startsWith('/join/'))
+    return 'Join Group';
 
-**New profile-setup collects:**
-- Display name (required, min 2 chars)
-- Phone number (required, PH format +63 9XX XXX XXXX) -- UNVERIFIED
-- Avatar emoji (optional, random default)
+  return pathname;  // Fallback to raw path
+}
+```
 
-**Critical change in the upsert:**
+**Why `usePathname` over `useSegments`:** `usePathname()` returns the full path (e.g., `/group/abc123/add-expense`) which is simpler to work with and maps directly to the mental model of "pages." `useSegments()` returns an array of segments which is more useful for conditional routing logic (already used in `RootNavigator`), not screen naming.
 
-```typescript
-// Current upsert
-await supabase.from("users").upsert({
-  id: user.id,
-  phone_number: user.phone ?? "",  // <-- comes from auth.users phone field
-  display_name: trimmedName,
-  avatar_url: selectedEmoji,
+**Source (HIGH confidence):** Expo Router docs at https://docs.expo.dev/router/reference/screen-tracking/ show this exact pattern with `usePathname()` + `useEffect`. The docs explicitly state: "Unlike React Navigation, Expo Router always has access to a URL. This means screen tracking is as easy as the web."
+
+### Pattern 3: User Identification with Supabase
+
+**When to identify:** After the user is fully set up (has session AND has completed profile setup, i.e., `!isNewUser`). NOT during the sign-in flow itself, because:
+1. The user may be a first-time Apple Sign-In user who hasn't set up their profile yet
+2. We want the PostHog person to have display_name from the start, not be identified with null properties
+
+**Identification flow:**
+
+```
+Apple Sign-In
+  -> Supabase creates session (user.id available)
+  -> AuthProvider sets session, checks isNewUser
+  -> If isNewUser=true: DO NOT identify yet (no profile data)
+  -> User completes profile-setup (name + phone)
+  -> AuthProvider.refreshProfile() called
+  -> isNewUser becomes false
+  -> AnalyticsTracker detects change via useEffect dependency
+  -> posthog.identify(user.id, { $set: { name: displayName } })
+```
+
+**Distinct ID choice:** Use `session.user.id` (Supabase UUID) as the PostHog distinct ID. This is the stable, primary identifier in the database and the foreign key for all user data.
+
+**Properties to set on identify:**
+
+```tsx
+posthog.identify(session.user.id, {
+  $set: {
+    name: displayName,          // From users table or user_metadata
+  },
+  $set_once: {
+    initial_sign_in_date: new Date().toISOString(),
+  },
+});
+```
+
+**When to reset:** Call `posthog.reset()` when the user signs out. This clears the distinct ID, anonymous ID, and all super properties. The `AnalyticsTracker` watches for `session` becoming null.
+
+**Anonymous-to-identified merge:** PostHog automatically merges events captured before `identify()` (under an anonymous ID) with the identified person. This means screen views during the sign-in and profile-setup flow are retroactively attributed to the person once identified. No extra code is needed for this -- it is built into PostHog's identification system.
+
+**Updating person properties later:** When the user's group count changes or other properties update, use `posthog.setPersonProperties()` rather than re-calling `identify()`:
+
+```tsx
+posthogClient.setPersonProperties({ group_count: newCount });
+```
+
+**Source (HIGH confidence):** The `identify()` signature from `node_modules/posthog-react-native/dist/posthog-rn.d.ts` line 633 confirms support for `$set` and `$set_once` in the properties parameter. The `reset()` method on line 206 confirms it clears distinct ID, anonymous ID, and super properties. The `setPersonProperties()` method on lines 730-734 confirms it can update person properties independently.
+
+### Pattern 4: Event Tracking Helpers
+
+**Approach:** Create a typed analytics module (`lib/analytics.ts`) that exports named functions for each tracked event. Components import and call these functions rather than calling `posthog.capture()` directly.
+
+**Why helpers instead of direct capture calls:**
+1. **Type safety** -- event names and properties are defined in one place, preventing typos
+2. **Refactorability** -- if you switch from PostHog to another provider, change one file
+3. **Discoverability** -- `lib/analytics.ts` serves as a catalog of all tracked events
+4. **Consistency** -- property names and shapes are standardized
+
+**Implementation sketch:**
+
+```tsx
+// lib/analytics.ts
+import PostHog from 'posthog-react-native';
+
+export const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY!;
+export const POSTHOG_HOST = 'https://us.i.posthog.com';
+
+// Single PostHog instance shared by provider and helpers
+export const posthogClient = new PostHog(POSTHOG_API_KEY, {
+  host: POSTHOG_HOST,
 });
 
-// New upsert
-await supabase.from("users").upsert({
-  id: user.id,
-  phone_number: `+63${rawDigits}`,  // <-- comes from user input
-  display_name: trimmedName,
-  avatar_url: selectedEmoji,
-});
-```
+// --- Typed event helpers ---
 
-**Phone number is unverified.** This is an explicit design decision from PROJECT.md. The phone number is collected for the invite/pending-member system, not for authentication. Users could enter a wrong number, but:
-- The social pressure of a barkada app self-corrects (friends know each other's numbers)
-- A wrong number means invites won't find you -- self-punishing mistake
-- Verification would require re-introducing the OTP flow we're removing
-
-**Phone uniqueness validation:** The `users.phone_number` column has a UNIQUE constraint. If the user enters a phone number already claimed by another user, the upsert will fail. The UI must handle this error gracefully: "This phone number is already registered to another account."
-
-### 4. Database Schema Migration
-
-**Migration: `ALTER TABLE users ALTER COLUMN phone_number DROP NOT NULL`**
-
-This is the critical schema change. Currently:
-```sql
-phone_number text unique not null
-```
-
-Must become:
-```sql
-phone_number text unique  -- nullable
-```
-
-**Why:** When Apple Sign-In creates the auth.users row, the `handle_pending_member_claim` trigger fires and currently does:
-```sql
-insert into users (id, phone_number)
-values (new.id, new.phone)
-on conflict (id) do nothing;
-```
-
-For Apple Sign-In users, `new.phone` will be an empty string (Supabase stores '' not NULL for the phone field when the user signed in via social provider). This creates a problem:
-
-1. The UNIQUE constraint on `phone_number` means only ONE user can have '' as their phone_number
-2. The NOT NULL constraint means we can't store NULL
-
-**Solution:** Make `phone_number` nullable, and update the trigger to store NULL instead of empty string:
-
-```sql
--- Updated trigger
-insert into users (id, phone_number)
-values (new.id, NULLIF(new.phone, ''))
-on conflict (id) do nothing;
-```
-
-NULL values are exempt from UNIQUE constraints in PostgreSQL, so multiple Apple Sign-In users can exist without phone numbers simultaneously.
-
-**Confidence:** HIGH for the nullable migration approach. MEDIUM for `new.phone` being empty string vs NULL -- this is based on Supabase's typical behavior with social providers, but should be verified with a test sign-in. The NULLIF guard handles both cases safely.
-
-### 5. Trigger Update (`handle_pending_member_claim`)
-
-**Current trigger (from migration 00019):**
-```sql
--- Ensure public.users row exists
-insert into users (id, phone_number)
-values (new.id, new.phone)
-on conflict (id) do nothing;
-
--- Link identity to pending invites
-update pending_members
-set user_id = new.id
-where user_id is null
-  and ltrim(phone_number, '+') = ltrim(new.phone, '+');
-```
-
-**Updated trigger:**
-```sql
--- Ensure public.users row exists (phone may be empty for Apple Sign-In)
-insert into users (id, phone_number)
-values (new.id, NULLIF(NULLIF(new.phone, ''), ' '))
-on conflict (id) do nothing;
-
--- Link identity to pending invites (only if phone is present)
-if new.phone is not null and new.phone != '' then
-  update pending_members
-  set user_id = new.id
-  where user_id is null
-    and ltrim(phone_number, '+') = ltrim(new.phone, '+');
-end if;
-```
-
-**Why the conditional:** Apple Sign-In users have no phone at signup time. The pending_member linking by phone cannot happen. However, there's a second linking opportunity: when the user completes profile setup and provides their phone number, a NEW function should link any pending invites matching that phone.
-
-### 6. New RPC: Link Phone After Profile Setup
-
-**New function needed: `link_phone_to_pending_invites`**
-
-After profile-setup saves the phone number to the `users` table, we need to retroactively link any `pending_members` rows that match this phone. This replicates what the auth trigger used to do for phone OTP users, but now happens at profile-setup time.
-
-```sql
-create or replace function public.link_phone_to_pending_invites(
-  p_phone_number text
-)
-returns void
-language plpgsql
-security definer
-set search_path = public
-set row_security = off
-as $$
-declare
-  current_user_id uuid := auth.uid();
-  normalized_phone text;
-begin
-  if current_user_id is null then
-    raise exception 'Not authenticated';
-  end if;
-
-  normalized_phone := ltrim(p_phone_number, '+');
-
-  -- Link pending invites to this user
-  update pending_members
-  set user_id = current_user_id
-  where user_id is null
-    and ltrim(phone_number, '+') = normalized_phone;
-end;
-$$;
-```
-
-**Called from profile-setup** after the users upsert succeeds. This is the mechanism that replaces the auth trigger's phone-matching for Apple Sign-In users.
-
-### 7. Root Navigator Changes (`app/_layout.tsx`)
-
-**Minimal change:**
-```typescript
-// Current
-router.replace("/(auth)/phone");
-
-// New
-router.replace("/(auth)/sign-in");
-```
-
-The rest of the navigator logic (session check, isNewUser routing, profile-setup redirect) works identically. This is the beauty of the existing architecture -- the auth method is decoupled from the navigation logic.
-
-### 8. Auth Layout Changes (`app/(auth)/_layout.tsx`)
-
-```typescript
-// Current
-<Stack.Screen name="phone" />
-<Stack.Screen name="otp" />
-<Stack.Screen name="profile-setup" />
-
-// New
-<Stack.Screen name="sign-in" />
-<Stack.Screen name="profile-setup" />
-```
-
-### 9. App Config Changes (`app.json`)
-
-```json
-{
-  "expo": {
-    "ios": {
-      "usesAppleSignIn": true
-    },
-    "plugins": [
-      "expo-apple-authentication",
-      // ... existing plugins
-    ]
-  }
+export function trackSignIn(method: 'apple') {
+  posthogClient.capture('sign_in', { method });
 }
-```
 
-### 10. Supabase Dashboard Configuration
+export function trackProfileCompleted(hasAvatar: boolean) {
+  posthogClient.capture('profile_completed', { has_avatar: hasAvatar });
+}
 
-Enable Apple as an auth provider in the Supabase dashboard:
+export function trackGroupCreated(groupId: string) {
+  posthogClient.capture('group_created', { group_id: groupId });
+}
 
-1. Go to Authentication > Providers > Apple
-2. Enable the Apple provider
-3. For the native `signInWithIdToken` flow on iOS, you need:
-   - **Bundle ID** (from app.json: `com.kkbsplit.app`) -- this is the audience claim Supabase validates in the Apple ID token
-   - No Service ID, Secret Key, or redirect URL needed for native-only flow
-4. If you want to support Android/web later, you'd need the full OAuth config (Service ID, .p8 key, etc.)
-
-**Confidence:** MEDIUM -- The dashboard configuration for native-only Apple Sign-In is simpler than the full OAuth flow, but the exact fields vary across Supabase dashboard versions. Verify in the actual dashboard.
-
-## Component Boundaries
-
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| `sign-in.tsx` | Apple native auth + Supabase token exchange | `expo-apple-authentication`, `supabase.auth` |
-| `auth-context.tsx` | Session state, isNewUser detection | `supabase.auth`, `supabase.from("users")` |
-| `profile-setup.tsx` | Collect display name + phone + avatar, upsert user | `supabase.from("users")`, `supabase.rpc("link_phone_to_pending_invites")` |
-| `_layout.tsx` (root) | Route based on session + isNewUser | `auth-context` |
-| `handle_pending_member_claim` trigger | Create users row on auth signup | `auth.users`, `public.users`, `public.pending_members` |
-| `link_phone_to_pending_invites` RPC | Link pending invites when phone collected | `public.pending_members` |
-
-## Data Flow: Complete Auth + Invite Linking Journey
-
-```
-1. User taps "Sign in with Apple"
-   -> Apple native auth sheet appears
-   -> User authenticates with Face ID / password
-
-2. Apple returns credential (identityToken, fullName, email)
-   -> sign-in.tsx calls supabase.auth.signInWithIdToken({ provider: 'apple', token })
-   -> Supabase validates token, creates auth.users row
-      - auth.users.phone = '' (empty string)
-      - auth.users.email = Apple email or relay
-
-3. Trigger fires: handle_pending_member_claim
-   -> Creates public.users row with id, phone_number = NULL
-   -> Skips pending_members linking (no phone to match)
-
-4. Auth state change fires -> AuthProvider detects session
-   -> checkIsNewUser: no display_name, no phone_number -> isNewUser = true
-   -> Root navigator redirects to profile-setup
-
-5. User fills in display name + phone number + avatar
-   -> profile-setup.tsx upserts: { id, display_name, phone_number: '+63...', avatar_url }
-   -> Calls link_phone_to_pending_invites('+63...')
-      -> Any pending_members with matching phone get user_id linked
-   -> refreshProfile() -> isNewUser = false
-   -> Root navigator redirects to (tabs)
-
-6. User now in app, invite inbox shows linked pending invites
-   -> get_my_pending_invites() returns invites linked in step 5
-   -> User can accept/decline as normal
-```
-
-## Patterns to Follow
-
-### Pattern 1: Platform-gated Apple Button
-
-```typescript
-import * as AppleAuthentication from 'expo-apple-authentication';
-import { Platform } from 'react-native';
-
-// Only render on iOS -- expo-apple-authentication is iOS-only
-if (Platform.OS !== 'ios') return null;
-
-// Check runtime availability
-const isAvailable = await AppleAuthentication.isAvailableAsync();
-if (!isAvailable) return null;
-```
-
-This app is iOS-focused (Filipino barkada app distributed via TestFlight), so the Platform gate is a safety net, not a feature flag.
-
-### Pattern 2: First-Sign-In Name Capture
-
-Apple provides fullName ONLY on the very first sign-in. If you miss it, it's gone forever (unless the user revokes your app in Settings and re-authorizes).
-
-```typescript
-const credential = await AppleAuthentication.signInAsync({ ... });
-
-// IMMEDIATELY after signInWithIdToken succeeds:
-if (credential.fullName?.givenName) {
-  await supabase.auth.updateUser({
-    data: {
-      full_name: [
-        credential.fullName.givenName,
-        credential.fullName.familyName,
-      ].filter(Boolean).join(' '),
-    },
+export function trackExpenseCreated(data: {
+  groupId: string;
+  amount: number;
+  splitType: 'equal' | 'custom';
+  memberCount: number;
+}) {
+  posthogClient.capture('expense_created', {
+    group_id: data.groupId,
+    amount: data.amount,
+    split_type: data.splitType,
+    member_count: data.memberCount,
   });
 }
+
+export function trackSettleUp(data: { groupId: string; amount: number }) {
+  posthogClient.capture('settle_up', {
+    group_id: data.groupId,
+    amount: data.amount,
+  });
+}
+
+export function trackInviteAccepted(groupId: string) {
+  posthogClient.capture('invite_accepted', { group_id: groupId });
+}
+
+export function trackInviteDeclined(groupId: string) {
+  posthogClient.capture('invite_declined', { group_id: groupId });
+}
+
+export function trackJoinedViaLink(groupId: string) {
+  posthogClient.capture('joined_via_link', { group_id: groupId });
+}
+
+// --- Screen name mapping ---
+export function pathnameToScreenName(pathname: string): string { ... }
 ```
 
-This metadata is stored in `auth.users.raw_user_meta_data` and can optionally be used as a default for `display_name` in profile setup.
+### Pattern 5: Standalone Client Instance (not provider-managed)
 
-### Pattern 3: NULLIF for Phone Normalization
+**Architecture decision:** Create `new PostHog()` in `lib/analytics.ts`, pass to `PostHogProvider` via `client` prop, rather than letting the provider create its own instance.
 
-```sql
-NULLIF(NULLIF(new.phone, ''), ' ')
+The `PostHogProvider` supports two initialization modes (from `PostHogProviderProps` in the SDK):
+1. `apiKey` + `options` -- provider creates and manages client internally
+2. `client` -- you pass a pre-created `PostHog` instance
+
+**Use mode 2 (standalone instance passed to provider).** Reason: event tracking helpers in `lib/analytics.ts` need access to the PostHog client outside of React components (e.g., in API callback functions, in the offline queue sync handler). A standalone instance can be imported anywhere. The provider still gets the instance via the `client` prop for autocapture and `usePostHog()` to work.
+
+```tsx
+// app/_layout.tsx
+import { PostHogProvider } from 'posthog-react-native';
+import { posthogClient } from '@/lib/analytics';
+
+<PostHogProvider client={posthogClient} autocapture={...}>
+  {/* app tree */}
+</PostHogProvider>
 ```
 
-PostgreSQL UNIQUE constraints allow multiple NULLs but not multiple empty strings. Always normalize empty/whitespace phone values to NULL in database operations.
+This means `posthogClient` is the single source of truth, usable from:
+- React components (via `usePostHog()` hook OR direct import)
+- Non-React code (via direct import from `@/lib/analytics`)
 
-## Anti-Patterns to Avoid
+**Source (HIGH confidence):** `PostHogProviderProps` interface in `node_modules/posthog-react-native/dist/PostHogProvider.d.ts` line 18 shows `client?: PostHog` prop. The JSDoc example on lines 67-80 demonstrates this exact pattern.
 
-### Anti-Pattern 1: Verifying Apple Email for Phone Matching
+## Data Flow
 
-**What:** Trying to use the Apple email (which may be a relay like `abc123@privaterelay.appleid.com`) to match users.
-**Why bad:** Apple relay emails are unique per app and opaque. They tell you nothing about the user's identity for matching purposes.
-**Instead:** Use phone number for matching (collected during profile setup), which is the established pattern in this app.
+### Event Flow
 
-### Anti-Pattern 2: Storing Empty String as Phone Number
-
-**What:** Allowing `phone_number = ''` in the users table.
-**Why bad:** The UNIQUE constraint means only one user can have `phone_number = ''`. The second Apple Sign-In user breaks.
-**Instead:** Use NULL for missing phone numbers. PostgreSQL UNIQUE allows multiple NULLs.
-
-### Anti-Pattern 3: Making Phone Number Optional Long-Term
-
-**What:** Allowing users to skip the phone number in profile setup.
-**Why bad:** The entire invite system (`add_pending_member`, `pending_members` table, invite inbox) depends on phone numbers to link users. A user without a phone number cannot receive phone-based invites.
-**Instead:** Phone number is required in profile setup. The `isNewUser` check gates on both `display_name` AND `phone_number`.
-
-### Anti-Pattern 4: Re-running Auth Trigger for Phone Linking
-
-**What:** Trying to fire the `handle_pending_member_claim` trigger again after phone is collected.
-**Why bad:** The trigger fires on `INSERT INTO auth.users`, not on update. You cannot re-trigger it.
-**Instead:** Use a separate RPC (`link_phone_to_pending_invites`) called explicitly from profile-setup after phone is saved.
-
-### Anti-Pattern 5: Using Supabase OAuth (Browser) Flow for Apple on iOS
-
-**What:** Using `supabase.auth.signInWithOAuth({ provider: 'apple' })` which opens a browser.
-**Why bad:** On iOS, Apple requires native Sign-In with Apple for apps that offer social login. The browser-based OAuth flow is for web apps. Apple may reject your app in review.
-**Instead:** Use `expo-apple-authentication` (native) + `signInWithIdToken` (token exchange).
-
-## Migration Strategy
-
-### Order of Operations
-
-This is critical. The schema migration must happen BEFORE the app code deploys, because:
-- Existing users have phone numbers (safe with new nullable column)
-- New Apple Sign-In users need nullable phone_number
-- The trigger must handle the new flow
-
-**Step 1: Database migration** (backward compatible)
-```sql
--- 1. Allow NULL phone numbers
-ALTER TABLE public.users ALTER COLUMN phone_number DROP NOT NULL;
-
--- 2. Update trigger to handle empty phone
-CREATE OR REPLACE FUNCTION public.handle_pending_member_claim() ...
-
--- 3. Create new linking RPC
-CREATE OR REPLACE FUNCTION public.link_phone_to_pending_invites() ...
-
--- 4. Update TypeScript types
+```
+1. User performs action (e.g., taps "Add Expense" -> submits)
+2. Screen component calls: trackExpenseCreated({ groupId, amount, ... })
+3. analytics.ts function calls: posthogClient.capture('expense_created', props)
+4. PostHog SDK internally:
+   a. Enriches event with: distinct_id, $session_id, $screen_name,
+      device info ($os_name, $device_name, $app_version),
+      super properties, timestamp, UUID
+   b. Adds to internal queue (in-memory + expo-file-system persistence)
+   c. When queue reaches flushAt (default 20) OR flushInterval (default 30s):
+      -> Batches events into single POST request
+      -> Sends to https://us.i.posthog.com/batch/
+   d. On success: events removed from queue
+   e. On failure: events retained, retried (fetchRetryCount=3, fetchRetryDelay=3s)
+5. Events appear in PostHog dashboard
 ```
 
-**Step 2: Supabase dashboard** (no downtime)
-- Enable Apple provider with bundle ID
+**Queue and persistence details** (from `@posthog/core/dist/types.d.ts`):
+- `flushAt`: 20 events triggers a flush (default)
+- `flushInterval`: 30000ms between periodic flushes (default)
+- `maxBatchSize`: max events per batch (must be >= flushAt)
+- `maxQueueSize`: 1000 events max cached (default)
+- `fetchRetryCount`: 3 retries on failure
+- `fetchRetryDelay`: 3000ms between retries
+- Persistence via `expo-file-system` (already installed in this project)
 
-**Step 3: App code** (new binary required)
-- Install expo-apple-authentication
-- Add sign-in.tsx, remove phone.tsx + otp.tsx
-- Update profile-setup.tsx, auth-context.tsx, layouts
-- Update app.json
-- Build new binary with EAS
+### Identification Flow
 
-**Step 4: Deploy new binary** (users update)
-- Old binaries continue working until forced update (phone OTP still functional until Supabase phone provider disabled)
-- New binary uses Apple Sign-In
+```
+App Launch (cold start):
+  1. PostHogProvider initializes with posthogClient
+  2. SDK loads persisted distinct_id from expo-file-system storage
+  3. If user was previously identified, SDK already has their distinct_id
+  4. AuthProvider restores Supabase session from expo-sqlite/localStorage
+  5. AnalyticsTracker detects session + !isNewUser
+  6. Calls posthog.identify(user.id) -- no-op if already identified
+     with the same ID (PostHog deduplicates)
 
-**Step 5: Disable phone OTP** (cleanup, after all users migrated)
-- Turn off phone provider in Supabase dashboard
-- Existing sessions from phone OTP continue until JWT expiry
+First-time Sign-In:
+  1. User taps Apple Sign-In on sign-in screen
+  2. Supabase creates session, AuthProvider sets isNewUser=true
+  3. AnalyticsTracker detects session but isNewUser=true -> skips identify
+  4. Screen calls: trackSignIn('apple')  (captured under anonymous ID)
+  5. User navigates to profile setup  ($screen event captured)
+  6. User completes profile setup (name + phone)
+  7. Profile-setup calls refreshProfile(), isNewUser becomes false
+  8. Screen calls: trackProfileCompleted(hasAvatar)
+  9. AnalyticsTracker detects !isNewUser -> posthog.identify(user.id, props)
+  10. PostHog merges all anonymous events (steps 4-8) with identified person
 
-### Backward Compatibility
+Sign-Out:
+  1. User signs out (supabase.auth.signOut())
+  2. AuthProvider sets session=null
+  3. AnalyticsTracker detects null session
+  4. Calls posthog.reset()
+  5. PostHog generates new anonymous ID for any subsequent events
+```
 
-The migration is safe because:
-- Making `phone_number` nullable is backward compatible (existing rows have values)
-- The updated trigger uses NULLIF, which is a no-op when phone has a value (existing phone OTP users unaffected)
-- The new `link_phone_to_pending_invites` RPC is additive (doesn't change existing RPCs)
-- RLS policies use `auth.uid()`, not phone -- unaffected by auth method change
+### Screen Tracking Flow
 
-## Scalability Considerations
+```
+User navigates from Home to Group Detail:
+  1. Expo Router updates URL from "/" to "/group/abc123"
+  2. usePathname() in AnalyticsTracker returns "/group/abc123"
+  3. useEffect fires (pathname changed)
+  4. pathnameToScreenName("/group/abc123") returns "Group Detail"
+  5. posthog.screen("Group Detail", { path: "/group/abc123" })
+  6. SDK captures "$screen" event with $screen_name = "Group Detail"
+  7. SDK also sets "Group Detail" as a session property
+     ($screen_name is automatically included in subsequent events)
+```
 
-Not a primary concern for this app (targeting 5-10 testers), but worth noting:
+## Integration Points
 
-| Concern | Current (Phone OTP) | After (Apple Sign-In) |
-|---------|---------------------|----------------------|
-| Auth cost | Supabase phone SMS costs per OTP | Zero -- Apple Sign-In is free |
-| Phone number collection | Verified at auth time | Unverified at profile setup |
-| Invite matching speed | Immediate at signup (trigger) | Delayed until profile setup (RPC) |
-| Multiple device support | Phone OTP works on any device | Apple Sign-In requires iOS |
+### Existing Files to Modify
 
-## Build Order (Suggested Phase Structure)
+| File | What to Add | Why |
+|------|-------------|-----|
+| `app/_layout.tsx` | Wrap with `PostHogProvider` using `client={posthogClient}`, add `<AnalyticsTracker />` renderless component | Provider must wrap app tree for autocapture + context; tracker handles screen views and identification |
+| `app/(auth)/sign-in.tsx` | Call `trackSignIn('apple')` after successful Apple auth | Track sign-in funnel entry point |
+| `app/(auth)/profile-setup.tsx` | Call `trackProfileCompleted()` after profile save succeeds | Track onboarding completion |
+| `app/(tabs)/index.tsx` | Call `trackGroupCreated()` after group creation, `trackInviteAccepted/Declined()` on invite actions | Track core group management actions |
+| `app/group/[id]/add-expense.tsx` | Call `trackExpenseCreated()` after expense submission succeeds | Track core expense action |
+| `app/group/[id].tsx` | Call `trackSettleUp()` after settlement succeeds | Track settle-up action |
+| `app/join/[code].tsx` | Call `trackJoinedViaLink()` after successful deep-link join | Track invite link conversion |
 
-Based on dependency analysis:
+### New Files to Create
 
-1. **Database migration** -- must come first, zero downtime
-   - ALTER phone_number nullable
-   - Update trigger
-   - Create link_phone RPC
-   - Update TypeScript types
+| File | Purpose |
+|------|---------|
+| `lib/analytics.ts` | PostHog client instance creation, API key/host constants, typed event tracking helper functions, `pathnameToScreenName()` utility |
 
-2. **Supabase dashboard config** -- enable Apple provider
-   - Configure bundle ID
+### Environment Variables to Add
 
-3. **Install + configure expo-apple-authentication** -- new binary dependency
-   - `npx expo install expo-apple-authentication`
-   - Update app.json
+| Variable | Purpose | Where to Set |
+|----------|---------|--------------|
+| `EXPO_PUBLIC_POSTHOG_API_KEY` | PostHog project API key | `.env` file locally, EAS Secrets for builds |
 
-4. **New sign-in screen** -- core auth change
-   - Create sign-in.tsx with Apple button
-   - Wire up signInWithIdToken flow
+## Suggested Build Order
 
-5. **Update profile-setup** -- phone collection
-   - Add phone input field
-   - Call link_phone_to_pending_invites after save
-   - Update checkIsNewUser in auth-context
+The build order ensures each step produces a testable, verifiable result before the next step adds complexity. Steps 1-5 are the core integration; steps 6-8 add the event tracking.
 
-6. **Update navigation** -- route changes
-   - Root layout redirect
-   - Auth layout Stack.Screen entries
-   - Delete phone.tsx and otp.tsx
+1. **PostHog project setup + environment variable**
+   - Create PostHog project at posthog.com (if not done)
+   - Copy project API key
+   - Add `EXPO_PUBLIC_POSTHOG_API_KEY` to `.env`
+   - Verify the env var loads at runtime via `console.log`
 
-7. **Polish + test** -- edge cases
-   - Profile screen sign-out text
-   - Error handling (duplicate phone, cancelled auth)
-   - Test with fresh Apple ID and existing phone user
+2. **Create `lib/analytics.ts` with PostHog client instance**
+   - Initialize `posthogClient = new PostHog(apiKey, { host })`
+   - Export the client and config constants
+   - Export `pathnameToScreenName()` function
+   - No event helpers yet -- just the client and screen mapper
+   - **Verify:** Import in `_layout.tsx`, log `posthogClient.getDistinctId()` to confirm SDK initializes
+
+3. **Add PostHogProvider to `app/_layout.tsx`**
+   - Import `PostHogProvider` from `posthog-react-native`
+   - Wrap provider tree with `PostHogProvider client={posthogClient}`
+   - Set `autocapture={{ captureTouches: true, captureScreens: false }}`
+   - **Verify:** Open app, check PostHog Live Events for touch autocapture events
+
+4. **Add AnalyticsTracker with screen tracking**
+   - Implement `AnalyticsTracker` component with `usePathname()` + `posthog.screen()`
+   - Place `<AnalyticsTracker />` inside the provider tree (after BottomSheetModalProvider, before SyncWatcher)
+   - **Verify:** Navigate between tabs and screens, check PostHog Live Events for `$screen` events with correct names
+
+5. **Add user identification to AnalyticsTracker**
+   - Add `useAuth()` dependency, watch `session` and `isNewUser`
+   - Call `posthog.identify(user.id, { $set: { name } })` when fully set up
+   - Call `posthog.reset()` on sign-out
+   - **Verify:** Sign in, check PostHog Persons tab shows identified person with correct Supabase UUID and name
+
+6. **Add event tracking helpers to `lib/analytics.ts`**
+   - Add typed functions for each tracked event (8 events total)
+   - **Verify:** File compiles, functions have correct signatures
+
+7. **Wire event tracking into screen components**
+   - Add `trackSignIn()` to sign-in.tsx
+   - Add `trackProfileCompleted()` to profile-setup.tsx
+   - Add `trackGroupCreated()`, `trackInviteAccepted()`, `trackInviteDeclined()` to index.tsx
+   - Add `trackExpenseCreated()` to add-expense.tsx
+   - Add `trackSettleUp()` to group/[id].tsx
+   - Add `trackJoinedViaLink()` to join/[code].tsx
+   - **Verify:** Walk through each flow, confirm events appear in PostHog with correct properties
+
+8. **Add user properties sync**
+   - After identify, call `setPersonProperties` with group_count
+   - Update group_count when groups are created/joined
+   - **Verify:** Check PostHog person profile shows updated properties
+
+## Key Architectural Decisions
+
+### Decision 1: Standalone PostHog instance over provider-managed
+
+**Choice:** Create `new PostHog()` in `lib/analytics.ts`, pass to `PostHogProvider` via `client` prop.
+
+**Rationale:** The app has non-React code paths that need PostHog access (the event tracking helpers are pure functions, not hooks). A standalone instance is importable from any TypeScript file. The `PostHogProvider` documentation explicitly supports this pattern with the `client` prop.
+
+**Trade-off:** Two ways to access PostHog in components (import `posthogClient` directly vs. `usePostHog()` hook). Convention: use `usePostHog()` in components, direct import in non-component code.
+
+### Decision 2: Manual screen tracking (not autocapture)
+
+**Choice:** `captureScreens: false` + manual `posthog.screen()` via `usePathname()`.
+
+**Rationale:** This is a requirement, not a preference. PostHog's autocapture screen tracking crashes with Expo Router due to the `useNavigationState` error. Manual tracking via `usePathname()` is the officially recommended approach for Expo Router apps, documented both in the SDK source code and Expo's own screen tracking guide.
+
+### Decision 3: AnalyticsTracker as renderless component
+
+**Choice:** A `<AnalyticsTracker />` component that returns `null`, placed inside the provider tree in `_layout.tsx`.
+
+**Rationale:** It needs access to both `usePostHog()` (from PostHogProvider context) and `useAuth()` (from AuthProvider context), plus Expo Router's `usePathname()`. As a component inside both providers, it naturally has access to all contexts. The existing `SyncWatcher` component uses the same renderless pattern.
+
+### Decision 4: Identify after profile completion, not after sign-in
+
+**Choice:** Wait for `isNewUser === false` before calling `posthog.identify()`.
+
+**Rationale:** For first-time users, the Supabase session exists but the user profile (display_name) does not yet. If we identify immediately on session creation, the person in PostHog would have no meaningful properties. By waiting until profile setup completes, the first identify call includes the user's display name. PostHog's anonymous-to-identified merge ensures all pre-identification events (sign-in, profile setup screen views) are retroactively attributed to the identified person.
+
+### Decision 5: Event names use snake_case, not camelCase
+
+**Choice:** `expense_created` not `expenseCreated`.
+
+**Rationale:** PostHog convention. PostHog's built-in events use `$screen`, `$autocapture`, `$identify`. Community convention follows snake_case for custom events. This also makes events readable in the PostHog dashboard without transformation.
+
+## SDK Dependencies Already Installed
+
+The project already has all required packages. No new installations needed:
+
+| Package | Version | Status | Purpose |
+|---------|---------|--------|---------|
+| `posthog-react-native` | ^4.36.0 | Already in package.json | PostHog SDK |
+| `expo-file-system` | ~19.0.21 | Already installed | Event persistence/storage |
+| `expo-application` | ~7.0.8 | Already installed | App version/build info |
+| `expo-device` | ~8.0.10 | Already installed | Device info |
+| `expo-localization` | ~17.0.8 | Already installed | Locale/timezone |
+
+**Source:** package.json already lists `posthog-react-native` and all its Expo peer dependencies.
 
 ## Sources
 
-- [Supabase Apple Sign-In Docs](https://supabase.com/docs/guides/auth/social-login/auth-apple) -- HIGH confidence, official documentation
-- [Supabase Expo Social Auth Quickstart](https://supabase.com/docs/guides/auth/quickstarts/with-expo-react-native-social-auth) -- HIGH confidence, official example
-- [Expo Apple Authentication API](https://docs.expo.dev/versions/latest/sdk/apple-authentication/) -- HIGH confidence, official SDK docs
-- [Supabase Native Mobile Auth Blog](https://supabase.com/blog/native-mobile-auth) -- HIGH confidence, official blog
-- [Supabase User Management Guide](https://supabase.com/docs/guides/auth/managing-user-data) -- HIGH confidence, official docs
-- [Supabase Users Docs](https://supabase.com/docs/guides/auth/users) -- HIGH confidence, official docs
-- Codebase analysis of existing auth flow, migrations, and data model -- HIGH confidence, direct source
+- PostHog React Native SDK type definitions (installed at `node_modules/posthog-react-native/dist/types.d.ts`) -- PostHogAutocaptureOptions interface, `captureScreens` documentation with Expo Router comments (lines 22-60)
+- PostHog React Native SDK class definition (installed at `node_modules/posthog-react-native/dist/posthog-rn.d.ts`) -- `identify()` (line 633), `capture()` (inherited from core), `screen()` (line 534), `reset()` (line 206), `setPersonProperties()` (lines 730-734), `register()` (line 163)
+- PostHog Provider definition (installed at `node_modules/posthog-react-native/dist/PostHogProvider.d.ts`) -- `PostHogProviderProps` interface, `client` prop (line 18), examples (lines 67-80)
+- PostHog Core SDK types (installed at `node_modules/@posthog/core/dist/types.d.ts`) -- `PostHogCoreOptions` (flushAt, flushInterval, maxQueueSize, fetchRetryCount, etc.)
+- [PostHog GitHub Issue #2740](https://github.com/PostHog/posthog-js/issues/2740) -- Expo Router autocapture crash, closed "not planned", recommends manual screen capture
+- [Expo Router Screen Tracking Docs](https://docs.expo.dev/router/reference/screen-tracking/) -- Official `usePathname()` + `useEffect` pattern for analytics
+- [PostHog React Native Install Snippet](https://github.com/PostHog/posthog.com/blob/master/contents/docs/integrate/_snippets/install-react-native.mdx) -- PostHogProvider setup examples, installation commands
+- [posthog-react-native CHANGELOG](https://github.com/PostHog/posthog-js-lite/blob/main/posthog-react-native/CHANGELOG.md) -- v4.2.0 added captureScreens docs for expo-router, v4.1.5 fixed navigation ref for expo-router
+
+---
+*Architecture research for: PostHog in Expo/React Native*
+*Researched: 2026-02-24*

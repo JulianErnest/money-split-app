@@ -1,486 +1,489 @@
-# Domain Pitfalls: Replacing Phone OTP with Apple Sign-In
+# Domain Pitfalls: PostHog Analytics in Expo/React Native
 
-**Domain:** Auth provider swap (Supabase phone OTP -> Apple Sign-In) in Expo managed workflow
-**Researched:** 2026-02-22
-**Overall confidence:** HIGH (verified against codebase + official Supabase/Expo/Apple docs)
+**Domain:** PostHog analytics integration in Expo managed workflow (SDK 54, Expo Router v6, Supabase auth)
+**Researched:** 2026-02-24
+**Overall confidence:** HIGH (verified against installed SDK v4.36.0 type definitions, PostHog GitHub issues, official docs, and project codebase)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause broken authentication, App Store rejection, or data corruption.
+Mistakes that cause broken analytics, app crashes, or data corruption that requires starting over in PostHog.
 
 ---
 
-### Pitfall 1: `handle_pending_member_claim` Trigger Crashes on `new.phone` Being NULL
+### Pitfall 1: Autocapture Screen Tracking Crashes with Expo Router
 
-**What goes wrong:** The existing `on_auth_user_created_claim_pending` trigger (migration `00019`) fires `AFTER INSERT ON auth.users` and reads `new.phone` to match pending members. When a user signs up via Apple Sign-In, the `auth.users.phone` column is NULL because Apple provides an email (or private relay email), not a phone number. The trigger body does:
+**What goes wrong:** Enabling `autocapture={{ captureScreens: true }}` on `PostHogProvider` when using Expo Router causes the app to crash with the error: `[Error: Couldn't get the navigation state. Is your component inside a navigator?]`. The PostHogProvider attempts to use `useNavigationState` from React Navigation to detect screen changes, but Expo Router's architecture does not expose a `NavigationContainer` that PostHog can hook into. The crash happens immediately on app start.
 
-```sql
-insert into users (id, phone_number)
-values (new.id, new.phone)
-on conflict (id) do nothing;
-```
-
-This will attempt to insert NULL into `public.users.phone_number`, which has a `NOT NULL` constraint (from `00001_initial_schema.sql`: `phone_number text unique not null`). The trigger's outer `EXCEPTION WHEN OTHERS` catch block will swallow the error silently, but the `public.users` row will NOT be created. Without a `public.users` row, all RLS policies that join on `public.users` will fail, and the user will see an empty app with no ability to create groups, view profiles, or do anything.
-
-**Why it happens:** The trigger was written assuming all auth.users rows have a phone number (because phone OTP was the only auth method). Apple Sign-In populates `email` and `raw_user_meta_data` but leaves `phone` as NULL.
+**Why it happens:** Expo Router wraps React Navigation internally and does not allow consumer code to inject a `NavigationContainer`. PostHog's autocapture screen tracking was designed for raw `@react-navigation/native` where you control the `NavigationContainer` and place `PostHogProvider` as a child of it. With Expo Router, the `Stack` component requires its direct children to be `<Stack.Screen>` only, and there is no user-accessible navigation container to wrap. This is a documented incompatibility -- PostHog's own team member (marandaneto) confirmed in [GitHub issue #2740](https://github.com/PostHog/posthog-js/issues/2740) that `autocapture.captureScreens` should NOT be used with Expo Router.
 
 **Consequences:**
-- User signs in with Apple, sees blank app
-- No `public.users` row created -> all FK references fail
-- `group_members` INSERT fails (FK to `public.users`)
-- Silent failure (trigger catches exception, logs warning, but user sees no error)
-- Pending member auto-linking silently fails
+- App crashes on startup with a navigation state error
+- If caught by error boundary, the app loads but no screens are tracked and error noise fills logs
+- Developers waste hours debugging what looks like a navigation setup problem
 
 **Warning signs:**
-- After Apple Sign-In, profile setup screen fails to save (upsert into `users` table fails)
-- User appears in Supabase Auth dashboard but not in `public.users` table
-- No error messages visible to the user
+- `useNavigationState` error in console immediately after adding PostHogProvider
+- App white-screens on launch after adding PostHog
 
-**Prevention:**
-1. Alter `public.users.phone_number` to be NULLABLE before enabling Apple Sign-In: `ALTER TABLE public.users ALTER COLUMN phone_number DROP NOT NULL;`
-2. Rewrite `handle_pending_member_claim` to handle the case where `new.phone` is NULL -- skip the phone-based pending member matching if phone is not provided
-3. Update the `users` table INSERT in the trigger to handle NULL phone: `INSERT INTO users (id, phone_number) VALUES (new.id, new.phone) ON CONFLICT (id) DO NOTHING;` only works if phone_number allows NULL
-4. Add a separate code path in the trigger for Apple users (match by user metadata or skip matching entirely)
+**How to avoid:**
+1. Set `autocapture={{ captureScreens: false, captureTouches: false }}` (or omit autocapture entirely)
+2. Implement manual screen tracking using Expo Router's `usePathname()` and `useGlobalSearchParams()` hooks
+3. Create a `<ScreenTracker />` component that calls `posthog.screen(pathname)` inside a `useEffect` that depends on the pathname
+4. Place the `<ScreenTracker />` component inside the root layout, AFTER the navigator
 
-**Detection:** Query `SELECT id FROM auth.users WHERE id NOT IN (SELECT id FROM public.users)` after testing Apple Sign-In. If rows exist, the trigger is silently failing.
+**Phase to address:** SDK setup phase (initial PostHogProvider configuration).
 
-**Phase:** Must be addressed in the database migration phase, BEFORE enabling Apple Sign-In in the Supabase dashboard.
-
-**Confidence:** HIGH -- directly verified by reading the trigger code in `00019` and the `NOT NULL` constraint in `00001`.
+**Confidence:** HIGH -- verified via [PostHog GitHub issue #2740](https://github.com/PostHog/posthog-js/issues/2740) (closed as "not planned", official guidance to disable captureScreens), [PostHog GitHub issue #2455](https://github.com/PostHog/posthog-js/issues/2455), and PostHog changelog v4.1.4-4.2.0 documenting navigation tracking fixes.
 
 ---
 
-### Pitfall 2: `public.users.phone_number UNIQUE` Constraint Blocks Multiple Apple Users
+### Pitfall 2: Touch Autocapture Does Not Work with Expo Router
 
-**What goes wrong:** If you make `phone_number` NULLABLE (to fix Pitfall 1), multiple Apple Sign-In users who haven't entered their phone number yet would all have `phone_number = NULL`. PostgreSQL's UNIQUE constraint treats each NULL as distinct (NULLs are not equal to each other), so this actually works by default. However, if the migration accidentally uses a UNIQUE INDEX instead of a UNIQUE constraint, or if the migration adds a default value like empty string `''`, then the second Apple user will violate the unique constraint and the signup will fail.
+**What goes wrong:** Enabling `autocapture={{ captureTouches: true }}` with Expo Router results in touch events never being captured, or being captured with null/undefined element data. The `e._targetInst` is consistently null during touch event processing, making the captured events useless (no information about which element was tapped).
 
-**Why it happens:** Developers often "fix" NULL by defaulting to empty string `''`, which then violates UNIQUE when the second user signs up with no phone number.
+**Why it happens:** PostHog's touch autocapture was built for React Navigation's component tree structure. Expo Router's file-based routing creates a different component hierarchy that PostHog's touch event introspection cannot traverse. This is an open issue ([PostHog/posthog-js-lite #171](https://github.com/PostHog/posthog-js-lite/issues/171)) labeled "help wanted" -- meaning the PostHog team has not yet solved it.
 
 **Consequences:**
-- First Apple Sign-In user works fine
-- Second Apple Sign-In user gets a database error on signup
-- Error message is cryptic (unique constraint violation)
+- Touch events captured with no useful data (no element name, no screen context)
+- Noisy event stream in PostHog dashboard with unhelpful autocapture events
+- Wasted event quota on garbage data
 
 **Warning signs:**
-- Works in solo testing, fails when a second tester uses Apple Sign-In
-- Error in Supabase logs: `duplicate key value violates unique constraint "users_phone_number_key"`
+- Autocapture events in PostHog dashboard have empty `$elements` arrays
+- Touch events show up but with no meaningful element hierarchy
 
-**Prevention:**
-1. Make `phone_number` NULLABLE (not empty string): `ALTER TABLE public.users ALTER COLUMN phone_number DROP NOT NULL;` and do NOT set a default value
-2. Verify the existing UNIQUE constraint (`users_phone_number_key`) handles NULLs correctly -- standard PostgreSQL UNIQUE allows multiple NULLs
-3. If a partial unique index is needed later (unique only when non-null), create it explicitly: `CREATE UNIQUE INDEX users_phone_unique ON public.users(phone_number) WHERE phone_number IS NOT NULL;`
+**How to avoid:**
+1. Disable touch autocapture: `autocapture={{ captureScreens: false, captureTouches: false }}`
+2. Use explicit `posthog.capture('button_tapped', { button: 'create_group' })` calls on important interactions
+3. This is actually better for a focused analytics strategy -- you track intentional events rather than noisy autocapture
 
-**Phase:** Database migration phase (same migration as Pitfall 1).
+**Phase to address:** SDK setup phase (initial PostHogProvider configuration).
 
-**Confidence:** HIGH -- verified by reading `00001_initial_schema.sql` constraint definition.
+**Confidence:** HIGH -- verified via [PostHog/posthog-js-lite issue #171](https://github.com/PostHog/posthog-js-lite/issues/171) (open, unresolved).
 
 ---
 
-### Pitfall 3: Profile Setup Hardcodes `user.phone` for Users Table Insert
+### Pitfall 3: Calling `identify()` at Wrong Time Creates Orphaned or Merged Persons
 
-**What goes wrong:** The profile setup screen (`app/(auth)/profile-setup.tsx`, line 58) does:
+**What goes wrong:** If `identify()` is called too late (after events have been captured), PostHog creates an anonymous person, captures events against it, then merges the anonymous person into the identified person when `identify()` is finally called. This is the intended behavior. However, if `identify()` is called with the WRONG distinct_id (e.g., passing `undefined`, `null`, `"null"`, `""`, or a generic placeholder), PostHog merges ALL those anonymous sessions into a single garbage person record. This is irreversible -- the merged person data cannot be unmerged.
 
-```typescript
-const { error: upsertError } = await supabase.from("users").upsert({
-  id: user.id,
-  phone_number: user.phone ?? "",
-  display_name: trimmedName,
-  avatar_url: selectedEmoji,
-});
-```
-
-For Apple Sign-In users, `user.phone` is `undefined`, so `phone_number` becomes `""`. If the UNIQUE constraint is kept, the second Apple user's profile setup will fail. If NOT NULL is kept, the upsert silently succeeds but stores an empty string which is semantically wrong and breaks phone-based invite matching.
-
-**Why it happens:** The profile setup was written for phone OTP where `user.phone` is always populated by Supabase Auth.
+**Why it happens:** In this app, the Supabase auth state is loaded asynchronously. If PostHog initializes before the auth state is restored, events fire against an anonymous user. If the developer then calls `identify()` inside a useEffect that runs before `session` is populated (while `isLoading` is still true), the distinct_id is `undefined` or `null`. PostHog's SDK will either skip the identify (if undefined) or identify with a garbage string like `"null"`.
 
 **Consequences:**
-- Profile saves with empty string phone_number (or fails entirely)
-- Phone-based invite matching breaks (phone_number `""` matches nothing)
-- Profile screen shows empty phone number
+- Multiple real users merged into one person record (if they all identified as `"null"` or `""`)
+- Historical data permanently corrupted -- no way to unmerge persons in PostHog
+- Analytics dashboards show one "super user" with all events
+- Funnels and retention metrics are meaningless
 
 **Warning signs:**
-- Profile setup succeeds but phone number shows as blank on profile screen
-- `add_pending_member` fails to match existing users by phone
+- PostHog dashboard shows far fewer persons than expected
+- One person has an impossibly high event count
+- Distinct ID in PostHog shows as `"null"`, `"undefined"`, or empty string
 
-**Prevention:**
-1. Change profile setup to pass `phone_number: user.phone || null` (NULL, not empty string)
-2. Add a separate "phone number collection" step in the post-auth flow for Apple users
-3. Update the profile setup screen to conditionally show a phone number input field for Apple Sign-In users (since phone is not yet known)
+**How to avoid:**
+1. Guard `identify()` behind the auth state: only call when `session?.user?.id` is truthy
+2. Place the identify call in the auth context effect that fires AFTER session is restored
+3. Add a runtime check: `if (!userId || userId === 'null') return;` before calling identify
+4. Use `personProfiles: 'identified_only'` so anonymous events are cheaper and don't create person profiles until identify is called
+5. Test by checking PostHog dashboard after first sign-in -- verify the distinct_id matches the Supabase user ID
 
-**Phase:** Auth UI rewrite phase (when building the Apple Sign-In screen and updating profile setup).
+**Phase to address:** User identification implementation phase.
 
-**Confidence:** HIGH -- directly verified in `profile-setup.tsx` line 58.
+**Confidence:** HIGH -- verified via [PostHog identify docs](https://posthog.com/docs/product-analytics/identify) and SDK type definitions showing `identify(distinctId?: string)` accepts undefined.
 
 ---
 
-### Pitfall 4: Apple Name Data Only Available on First Sign-In (Lost Forever If Not Captured)
+### Pitfall 4: Missing `reset()` on Sign-Out Leaks User Identity Across Sessions
 
-**What goes wrong:** Apple provides the user's full name (`givenName`, `familyName`) only during the FIRST authorization. Every subsequent `signInWithIdToken` call returns NULL for name fields. If your code doesn't capture and store the name from Apple's credential response on first sign-in, it is permanently lost. The user must revoke app access via Apple ID settings and re-authorize to get the name again.
+**What goes wrong:** When a user signs out, if `posthog.reset()` is not called, the PostHog SDK retains the previous user's distinct_id. If a different user signs in on the same device (or the same user signs out and back in), all events are attributed to the PREVIOUS user's identity until `identify()` is called for the new user. For events captured between sign-out and sign-in, they will be permanently attributed to the wrong person.
 
-**Why it happens:** This is an Apple privacy design decision. Supabase Auth does NOT automatically extract the name from Apple's credential because it's only in the native response object, not in the ID token JWT claims.
-
-**Consequences:**
-- User signs up, name is not saved
-- Display name defaults to "User" or empty
-- No way to recover the name without the user revoking and re-authorizing
-- During development/testing, developers often hit this: they sign in once without capturing the name, then can never test the name capture flow again with the same Apple ID
-
-**Warning signs:**
-- During testing, name capture works the first time but never again
-- Production users report "my name isn't showing" after signing up
-- `raw_user_meta_data` in auth.users shows empty name fields
-
-**Prevention:**
-1. In the `AppleAuthentication.signInAsync()` response handler, immediately extract `credential.fullName.givenName` and `credential.fullName.familyName` BEFORE calling `supabase.auth.signInWithIdToken()`
-2. After Supabase auth succeeds, call `supabase.auth.updateUser({ data: { full_name: fullName } })` to persist in metadata
-3. Pre-populate the display name field in profile setup with the captured Apple name
-4. During development: to reset, go to Settings > Apple ID > Sign-In & Security > Sign in with Apple > [Your App] > Stop Using Apple ID. Then sign in again to get the name.
-
-**Phase:** Apple Sign-In implementation phase (must be in the initial credential handler code).
-
-**Confidence:** HIGH -- verified via [Supabase Apple docs](https://supabase.com/docs/guides/auth/social-login/auth-apple) and [Expo Apple Authentication docs](https://docs.expo.dev/versions/latest/sdk/apple-authentication/).
-
----
-
-### Pitfall 5: EAS Build Silently Disables Sign-in with Apple Capability
-
-**What goes wrong:** EAS Build's automatic capability synchronization can disable the "Sign in with Apple" capability on the Apple Developer Console during a build. If the entitlement `com.apple.developer.applesignin` is not present in the local configuration, EAS Build assumes the capability is not needed and disables it remotely. This results in Apple Sign-In failing at runtime with a cryptic error -- the button appears but the authentication sheet never opens or returns an error.
-
-**Why it happens:** EAS Build syncs local entitlements with Apple's servers. If the `expo-apple-authentication` config plugin is not in `app.json` (it is NOT currently in this project's `app.json`), the entitlement is missing locally, and EAS Build disables the remote capability.
+**Why it happens:** PostHog persists the distinct_id to file storage (via `expo-file-system`). It survives app restarts. Without an explicit `reset()` call, the SDK does not know the user has changed.
 
 **Consequences:**
-- App builds successfully (no build error)
-- Apple Sign-In button renders
-- Pressing the button throws an error or nothing happens
-- Only discovered when testing on a real device (simulator has its own issues)
-- Debugging is difficult because the build succeeded
+- Events attributed to wrong user
+- Person profiles contaminated with another user's behavior
+- Privacy violation -- one user's activity visible on another user's profile
+- Especially problematic during beta testing when testers share devices
 
 **Warning signs:**
-- `AppleAuthentication.signInAsync()` throws `ERR_REQUEST_CANCELED` or similar
-- Apple Sign-In works in development but not in EAS-built binaries
-- Checking Apple Developer Portal shows "Sign in with Apple" capability is disabled
+- After sign-out/sign-in cycle, PostHog dashboard shows events from User B under User A's profile
+- Person profile has impossible behavior (events from two different geographic locations simultaneously)
 
-**Prevention:**
-1. Add `"expo-apple-authentication"` to the `plugins` array in `app.json` BEFORE the first EAS build
-2. Set `"ios": { "usesAppleSignIn": true }` in `app.json` for explicitness
-3. After the first EAS build with the plugin, verify the capability is enabled in Apple Developer Portal
-4. Test on a REAL DEVICE with an EAS-built binary (not Expo Go, not simulator)
-5. Consider adding `EXPO_DEBUG=1` to the first build to see capability sync logs
+**How to avoid:**
+1. Call `posthog.reset()` immediately when the user signs out, BEFORE navigating to the sign-in screen
+2. In the auth context, listen for the `SIGNED_OUT` auth state change event and call reset there
+3. Pattern: `supabase.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') posthog.reset() })`
+4. Note: `reset()` clears ALL persisted state including super properties, anonymous ID, feature flags. This is the correct behavior for sign-out.
 
-**Phase:** Infrastructure/setup phase (before any Apple Sign-In code is written).
+**Phase to address:** User identification implementation phase.
 
-**Confidence:** HIGH -- verified via [Expo iOS capabilities docs](https://docs.expo.dev/build-reference/ios-capabilities/) and multiple reported issues ([#804](https://github.com/expo/eas-cli/issues/804), [#452](https://github.com/expo/eas-cli/issues/452), [#2599](https://github.com/expo/eas-cli/issues/2599)).
-
----
-
-### Pitfall 6: Pending Member Invite Flow Fundamentally Changes (Phone Not Known at Auth Time)
-
-**What goes wrong:** The entire `add_pending_member` RPC and invite system is designed around adding people by phone number. The flow is: User A enters User B's phone number -> pending_members row created with `phone_number` -> when User B signs up with that phone, auto-link trigger matches `new.phone` to `pending_members.phone_number`. With Apple Sign-In, User B's phone number is not in `auth.users.phone` -- it is collected LATER in the profile setup flow. This means the auto-link trigger fires at signup time but has no phone to match with. The phone number is only available after the user manually enters it in a phone collection step.
-
-**Why it happens:** The current architecture couples authentication identity (phone number) with the invite matching key (also phone number). Apple Sign-In decouples these -- identity is Apple ID, but the invite key is still phone number.
-
-**Consequences:**
-- Users sign up via Apple but are never auto-linked to their pending invites
-- Invites "disappear" -- they exist in `pending_members` but the `user_id` column is never set
-- Users have to be manually added to groups after signing up
-- The invite inbox (`get_my_pending_invites`) shows nothing because `user_id` is NULL
-
-**Warning signs:**
-- "I signed up but don't see my group invites"
-- `pending_members` table has rows where `user_id IS NULL` for users who have signed up
-- Group creator sees pending members that never convert to real members
-
-**Prevention:**
-1. Add a NEW trigger or RPC that runs AFTER the user enters their phone number (during profile setup or a dedicated phone collection step), not at auth time
-2. Create a function like `claim_pending_by_phone(p_phone text)` that the client calls after the user enters their phone number
-3. This function should do what the current trigger does: match `pending_members.phone_number` to the provided phone, set `user_id`, and create the invite linkage
-4. Keep the existing trigger for backward compatibility but make it gracefully skip when `new.phone IS NULL`
-5. Consider whether to run the claim immediately on phone entry (auto-link) or just set `user_id` (consent-aware)
-
-**Phase:** Database migration + post-auth phone collection flow (must be designed before implementation).
-
-**Confidence:** HIGH -- directly verified by reading trigger code in `00019` and the `add_pending_member` RPC in `00019`.
+**Confidence:** HIGH -- verified via SDK type definitions (`reset()` method documented to clear all persisted properties) and [PostHog identify docs](https://posthog.com/docs/getting-started/identify-users).
 
 ---
 
 ## Moderate Pitfalls
 
-Mistakes that cause delays, confusing UX, or technical debt.
+Mistakes that cause unreliable data, wasted quota, or technical debt.
 
 ---
 
-### Pitfall 7: Apple "Hide My Email" Private Relay Creates Unusable Email Addresses
+### Pitfall 5: Event Naming Inconsistency Makes Analytics Unusable Over Time
 
-**What goes wrong:** When users choose "Hide My Email" during Apple Sign-In, Apple generates a unique `@privaterelay.appleid.com` address. This email is stored in `auth.users.email`. If your app attempts to send emails to this relay address without configuring Apple's email relay service, the emails will bounce. Additionally, if you display this relay email anywhere in the UI, it looks confusing and unprofessional.
+**What goes wrong:** Without an upfront naming convention, different parts of the codebase emit differently named events for similar actions: `createGroup`, `group_created`, `Create Group`, `create-group`. PostHog treats each as a separate event. Over time, the event list becomes polluted with duplicates and variations. Funnels break because they reference one variant while the app emits another. This is extremely difficult to fix retroactively because PostHog does not support renaming historical events.
 
-**Why it happens:** Apple's privacy-first design gives users the option to hide their real email. The relay email works for forwarding only if you configure your sending domain with Apple.
+**Why it happens:** Solo developer or small team adds events incrementally without a central reference. Each screen or feature uses whatever naming felt natural at the time.
 
 **Consequences:**
-- Transactional emails (if any future feature sends them) bounce
-- Profile screen shows `abc123@privaterelay.appleid.com` instead of a meaningful identifier
-- Users are confused by the relay email
+- Duplicate events in PostHog dashboard (e.g., `add_expense` and `expense_added`)
+- Funnels and insights reference the wrong event name
+- Cleaning up requires finding and updating every `posthog.capture()` call in the codebase
+- Historical data for the wrong-named events is lost (cannot be renamed)
 
-**Prevention:**
-1. Never display Apple's email directly in the UI -- show display_name and phone number instead
-2. If you need email communication later, register your sending domain with Apple's private relay service
-3. Store the relay email in `auth.users` (Supabase does this automatically) but don't surface it in the app UI
-4. Use phone number (collected post-auth) as the user-visible identifier
+**Warning signs:**
+- PostHog event list shows similar-sounding events with low counts each
+- Building a funnel requires guessing which event name variant is "the right one"
 
-**Phase:** UI update phase (profile screen, any user-facing screens that might show email).
+**How to avoid:**
+1. Define an event naming convention BEFORE writing any tracking code
+2. Recommended format for this app: `snake_case` with `object_action` pattern (e.g., `group_created`, `expense_added`, `invite_accepted`, `settlement_recorded`)
+3. Create a single TypeScript constants file (e.g., `lib/analytics-events.ts`) that exports all event names
+4. Never use string literals for event names -- always import from the constants file
+5. PostHog's taxonomy plugin can enforce naming conventions server-side as a safety net
 
-**Confidence:** MEDIUM -- verified via [Apple Hide My Email docs](https://support.apple.com/en-us/105078) and Supabase docs. This app currently does not send emails, so the impact is limited to UI display.
+**Phase to address:** Event tracking design phase (before any capture calls are written).
+
+**Confidence:** HIGH -- verified via [PostHog best practices](https://posthog.com/docs/product-analytics/best-practices) and [PostHog naming conventions guide](https://posthog.com/questions/best-practices-naming-convention-for-event-names-and-properties).
 
 ---
 
-### Pitfall 8: Nonce Generation Missing or Incorrect Causes 400 Errors
+### Pitfall 6: `useEffect` Re-render Loop Fires Hundreds of Duplicate Events
 
-**What goes wrong:** Apple Sign-In with `signInWithIdToken` requires a cryptographic nonce for security. The flow is: (1) generate a raw nonce, (2) pass it to `AppleAuthentication.signInAsync()`, (3) pass the same nonce to `supabase.auth.signInWithIdToken()`. If the nonce is missing, mismatched, or generated incorrectly, Supabase returns a 400 error with a vague message. Expo's `AppleAuthentication.signInAsync()` has a specific way to handle nonces that differs from web-based Apple JS SDK.
+**What goes wrong:** A `posthog.capture()` call inside a `useEffect` with incorrect or missing dependency management causes the effect to re-run on every render, firing the same event hundreds of times in seconds. One documented case sent 600 identical events in a few seconds because a non-memoized callback was in the dependency array.
 
-**Why it happens:** The nonce needs to be the RAW nonce (not hashed) when passed to Supabase, but Apple expects the SHA256 hash of the nonce in the ID token. Confusion about which value goes where causes mismatches.
+**Why it happens:** React's `useEffect` runs when its dependencies change. If a dependency is a function that is not memoized with `useCallback`, or an object created inline, it changes on every render, causing an infinite loop. With PostHog capture inside, this means infinite events.
 
 **Consequences:**
-- `signInWithIdToken` returns 400 error
-- Authentication completely fails
-- Difficult to debug because the error message doesn't mention nonce
+- Event quota burned through rapidly
+- PostHog dashboard shows meaningless spike of identical events
+- Battery drain on user's device (network requests for each event batch)
+- Difficult to diagnose because the event IS correct -- it's just firing too many times
 
-**Prevention:**
-1. Follow the exact pattern from [Supabase Expo social auth quickstart](https://supabase.com/docs/guides/auth/quickstarts/with-expo-react-native-social-auth):
-   - Generate a random UUID as the raw nonce
-   - Pass it directly to `signInWithIdToken({ provider: 'apple', token: identityToken, nonce: rawNonce })`
-2. Use `crypto.randomUUID()` or a UUID library for nonce generation
-3. Do NOT SHA256-hash the nonce before passing to Supabase (Supabase handles the hashing)
-4. Test on a real device -- simulator Apple Auth returns different/test tokens
+**Warning signs:**
+- PostHog live events view shows rapid-fire identical events
+- Device battery drains faster than expected
+- Event counts are orders of magnitude higher than user counts
 
-**Phase:** Apple Sign-In implementation phase.
+**How to avoid:**
+1. Never put `posthog.capture()` in a `useEffect` without carefully auditing the dependency array
+2. For screen view events, depend only on `pathname` (a string, stable reference)
+3. For action events (button taps), fire on the event handler, not in a useEffect
+4. Use `useRef` to track whether an event has already been fired for a given screen/action
+5. In development, enable PostHog debug mode (`debug: true`) to see every event in the console
 
-**Confidence:** HIGH -- verified via [Supabase signInWithIdToken docs](https://supabase.com/docs/reference/javascript/auth-signinwithidtoken) and multiple GitHub issues ([#26747](https://github.com/supabase/supabase/issues/26747), [#1392](https://github.com/supabase/supabase-js/issues/1392)).
+**Phase to address:** Event tracking implementation phase.
+
+**Confidence:** HIGH -- verified via [first-hand developer account](https://medium.com/@svetlintanyi/implementing-posthog-analytics-in-a-react-native-app-a-first-time-developers-guide-cf4c8ef939f6) documenting 600 duplicate events from this exact mistake.
 
 ---
 
-### Pitfall 9: Supabase Apple Provider Not Enabled in Dashboard
+### Pitfall 7: PostHogProvider Placement Outside NavigationContainer (Layout Order Matters)
 
-**What goes wrong:** Even with correct client-side code, `signInWithIdToken({ provider: 'apple' })` will fail with a 400 or 422 error if the Apple provider is not explicitly enabled in the Supabase dashboard. For the ID token (native) flow, you only need to enable the provider -- you do NOT need to provide a client_id or secret (those are only for the OAuth web flow). However, many developers either forget to enable it or incorrectly try to configure the OAuth fields.
+**What goes wrong:** In the existing `app/_layout.tsx`, the provider hierarchy is: `GestureHandlerRootView > AuthProvider > NetworkProvider > ToastProvider > BottomSheetModalProvider > RootNavigator`. The `PostHogProvider` must be placed carefully. If placed ABOVE the Expo Router's implicit NavigationContainer (i.e., wrapping the `<Stack>` component), certain PostHog hooks may fail. But if placed as a child of the `<Stack>`, it won't wrap all screens.
 
-**Why it happens:** Supabase disables all social providers by default. The dashboard UI can be confusing about which fields are required for native vs. web flows.
+**Why it happens:** Expo Router's `<Stack>` is the NavigationContainer equivalent. PostHog documentation says "PostHogProvider must be a child of NavigationContainer" -- but with Expo Router, there IS no explicit NavigationContainer. This creates confusion about placement.
 
 **Consequences:**
-- `signInWithIdToken` returns error
-- Misleading error messages (doesn't clearly say "provider not enabled")
-- Time wasted configuring OAuth fields (client_id, secret) that aren't needed for native flow
+- Navigation-related PostHog hooks throw errors
+- PostHog initializes but screen tracking fails silently
+- Events are captured but without screen context
 
-**Prevention:**
-1. Go to Supabase Dashboard > Authentication > Providers > Apple and toggle "Enable"
-2. For native Expo flow using `signInWithIdToken`, you can leave Client ID and Secret EMPTY -- they are only needed for OAuth web redirect flow
-3. Test the provider is enabled by making a test `signInWithIdToken` call
-4. If you DO fill in Client ID, use the App ID (bundle identifier, e.g., `com.kkbsplit.app`), NOT the Services ID
+**Warning signs:**
+- `useNavigationState` errors in console (even with captureScreens disabled, some internal hooks may fire)
+- Screen name missing from events in PostHog dashboard
 
-**Phase:** Infrastructure/setup phase (before any code is written).
+**How to avoid:**
+1. Place `PostHogProvider` in `app/_layout.tsx` wrapping the `<Stack>` component but BELOW the `GestureHandlerRootView`
+2. Disable ALL autocapture: `autocapture={false}` -- this prevents PostHog from trying to hook into navigation
+3. Use the non-provider initialization pattern instead: create a PostHog instance in a separate file (`lib/posthog.ts`) and import it directly where needed, using `PostHogProvider` only for the React context (not autocapture)
+4. Pattern for this app's layout:
+   ```
+   GestureHandlerRootView
+     AuthProvider
+       PostHogProvider (autocapture={false})
+         NetworkProvider
+           ... rest of providers ...
+             RootNavigator (Stack)
+   ```
 
-**Confidence:** HIGH -- verified via [Supabase Apple provider docs](https://supabase.com/docs/guides/auth/social-login/auth-apple).
+**Phase to address:** SDK setup phase (PostHogProvider placement in root layout).
+
+**Confidence:** HIGH -- verified via [PostHog issue #2740](https://github.com/PostHog/posthog-js/issues/2740), [PostHog issue #11880](https://github.com/PostHog/posthog/issues/11880), and examination of existing `app/_layout.tsx`.
 
 ---
 
-### Pitfall 10: Sign-Out Message and Flow Assumes Phone OTP
+### Pitfall 8: Events Lost During Offline/Poor Connectivity (Philippine Internet)
 
-**What goes wrong:** Multiple places in the codebase reference phone-based authentication in user-facing text and navigation:
+**What goes wrong:** PostHog's React Native SDK queues events in memory and flushes them to the server periodically. However, if the app is closed (killed) while events are still in the queue and the device is offline, those events are lost. The queue is persisted to file storage, but only configuration and user data are reliably persisted -- the event queue persistence has limitations. For Philippine users on unreliable internet (the project explicitly notes "PH internet can be unreliable"), events captured during connectivity gaps may never reach PostHog.
 
-- `app/(tabs)/profile.tsx` line 76: `"You'll need to verify your phone number again to sign back in."`
-- `app/_layout.tsx` line 39: `router.replace("/(auth)/phone")` -- redirects unauthenticated users to the phone screen
-- `app/join/[code].tsx` line 254: `router.replace("/(auth)/phone")` -- "sign in" CTA routes to phone screen
-
-After switching to Apple Sign-In, these need to point to the Apple Sign-In screen, and the sign-out message needs updating.
-
-**Why it happens:** These were written when phone OTP was the only auth method.
+**Why it happens:** The SDK's queue persistence relies on `expo-file-system` writes completing before the app is terminated. If the OS kills the app (memory pressure, user swipe-to-close), pending writes may not complete. Additionally, the default `maxQueueSize` is 1000 events -- if a user is offline for an extended period, older events are dropped when the queue fills.
 
 **Consequences:**
-- User signs out, sees the old phone number entry screen instead of Apple Sign-In
-- Confusing messaging ("verify your phone number" when they signed in with Apple)
-- Join-by-link flow routes to wrong auth screen
+- Analytics data has gaps during poor connectivity periods
+- Funnel analysis shows artificially lower completion rates
+- Events from power users (who use the app frequently even offline) are disproportionately lost
 
-**Prevention:**
-1. Search all files for `/(auth)/phone` references and update navigation
-2. Update the sign-out confirmation message to be auth-method-agnostic: "You'll need to sign in again."
-3. Create a new auth entry screen (e.g., `/(auth)/apple-signin`) and update all routes
-4. Consider whether to keep phone auth as a fallback or remove it entirely
+**Warning signs:**
+- Event counts are significantly lower than expected given user activity
+- Users in areas with poor connectivity show fewer events than users with good connectivity
+- Funnels show drop-offs at steps that don't correspond to real user behavior
 
-**Phase:** Auth UI rewrite phase.
+**How to avoid:**
+1. Accept that some event loss is inevitable for mobile analytics -- do not over-optimize
+2. Keep `flushAt` at the default (20) -- lowering it to 1 wastes battery without improving reliability
+3. For critical events (sign_up, first_expense_added), consider calling `posthog.flush()` immediately after capture to force a send attempt
+4. Do NOT build a custom offline queue on top of PostHog -- this adds complexity disproportionate to the 5-10 user beta
+5. Monitor event volumes in PostHog dashboard and compare against known user activity to detect systemic data loss
 
-**Confidence:** HIGH -- directly verified by reading `profile.tsx`, `_layout.tsx`, and `join/[code].tsx`.
+**Phase to address:** SDK configuration phase.
+
+**Confidence:** MEDIUM -- verified via [PostHog GitHub issue #1583](https://github.com/PostHog/posthog-js/issues/1583) (offline queue limitation), but exact behavior with `expo-file-system` persistence in v4.36.0 not independently verified.
 
 ---
 
-### Pitfall 11: Apple App Store Requires "Sign in with Apple" Button Guidelines Compliance
+### Pitfall 9: `personProfiles: 'always'` Costs 4x More Than Necessary
 
-**What goes wrong:** Apple has strict Human Interface Guidelines for the Sign in with Apple button. Using a custom-styled button (wrong colors, wrong text, wrong size, custom icons) will cause App Store rejection. The `expo-apple-authentication` library provides an `AppleAuthenticationButton` component that follows guidelines, but developers often skip it in favor of matching their app's design system.
+**What goes wrong:** If `personProfiles` is not explicitly set (or set to `'always'`), every event -- including anonymous events before the user signs in -- creates a full person profile in PostHog. Identified events cost up to 4x more than anonymous events in PostHog's pricing model. For this app, where ALL users must sign in (there is no anonymous usage), using `'always'` means even the brief moments between app launch and identify() completion generate expensive identified events unnecessarily.
 
-**Why it happens:** Developers want visual consistency with their app's existing button styles.
+**Why it happens:** Developers use the default configuration without understanding the pricing implications. The `personProfiles` option is easy to overlook.
 
 **Consequences:**
-- App Store rejection during review
-- Delay in release while redesigning the button
+- Higher PostHog bill (4x on anonymous events that didn't need profiles)
+- For a 5-10 user beta this is negligible, but becomes significant at scale
+- Harder to change later: once set, changing `personProfiles` only applies to users who update their app (mobile SDKs are bundled)
 
-**Prevention:**
-1. Use `AppleAuthentication.AppleAuthenticationButton` from `expo-apple-authentication` -- it renders Apple's official button
-2. Only customize via allowed props: `buttonStyle` (white, black, whiteOutline) and `cornerRadius`
-3. Do NOT set `backgroundColor` or `borderRadius` via React Native styles
-4. Ensure the button is a minimum 44pt tall and full-width or at least 140pt wide
-5. The button text is localized automatically -- do not override it
+**Warning signs:**
+- PostHog billing shows more "identified events" than expected
+- Person profiles exist for anonymous sessions that were never identified
 
-**Phase:** Auth UI implementation phase.
+**How to avoid:**
+1. Set `personProfiles: 'identified_only'` in the PostHog configuration
+2. This means events before `identify()` are captured as anonymous (cheap) and events after `identify()` are identified (creates person profile)
+3. Call `identify()` as soon as the Supabase session is restored -- this maximizes the ratio of identified to anonymous events
+4. For this app (all users authenticate), almost all events will be identified anyway
 
-**Confidence:** HIGH -- verified via [Expo AppleAuthentication docs](https://docs.expo.dev/versions/latest/sdk/apple-authentication/) and [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple).
+**Phase to address:** SDK setup phase (PostHog initialization configuration).
+
+**Confidence:** HIGH -- verified via [PostHog anonymous vs identified events docs](https://posthog.com/docs/data/anonymous-vs-identified-events) and SDK type definitions confirming `personProfiles?: 'always' | 'identified_only' | 'never'`.
 
 ---
 
-### Pitfall 12: Testing Impossibility on iOS Simulator
+### Pitfall 10: Screen Names Expose Dynamic Route Parameters (PII in Analytics)
 
-**What goes wrong:** `AppleAuthentication.signInAsync()` always throws an error on the iOS Simulator. Developers who rely on simulator testing during development cannot test the Apple Sign-In flow at all. This pushes critical testing to real devices only, which slows development iteration.
+**What goes wrong:** When manually tracking screens with Expo Router's `usePathname()`, the pathname includes dynamic segments like `/group/abc123-def456` or `/group/abc123/balance/user-id-here`. If these are sent as-is to PostHog as screen names, every unique group ID and user ID creates a separate "screen" in PostHog. This both fragments screen analytics (100 groups = 100 different "screens") AND may leak user IDs or group IDs into analytics where they become hard to delete.
 
-**Why it happens:** Apple does not support Apple Sign-In on the simulator (the auth sheet never appears or immediately errors).
+**Why it happens:** `usePathname()` returns the full resolved path including dynamic parameters. Developers pass this directly to `posthog.screen()` without normalizing.
 
 **Consequences:**
-- Cannot iterate on the sign-in flow using simulator
-- Bugs only discoverable on real devices
-- Slower development cycle
+- PostHog screen list has thousands of entries instead of ~10 distinct screens
+- Cannot aggregate "how many users viewed a group detail screen" because each group has its own screen name
+- User IDs in screen names create GDPR/DPA compliance risk (Philippine Data Privacy Act requires ability to delete personal data)
+- Screen analytics dashboard is unusable
 
-**Prevention:**
-1. Plan for real-device testing from day one -- ensure a development device is set up with an EAS development build
-2. Build a "dev bypass" for local development: check `__DEV__` and provide a mock sign-in that calls `signInWithIdToken` with test credentials, or skip directly to the authenticated state
-3. Use EAS Build with `"development"` profile and `"distribution": "internal"` (already configured in `eas.json`) to deploy to real devices quickly
-4. Consider using Expo Go for all non-auth testing and a development build only for auth testing
+**Warning signs:**
+- PostHog screen list shows paths like `/group/uuid-here` instead of `/group/[id]`
+- Screen view counts are all 1 or 2 instead of meaningful aggregates
 
-**Phase:** Infrastructure/setup phase (development workflow).
+**How to avoid:**
+1. Normalize pathnames before sending to PostHog: replace dynamic segments with their parameter names
+2. Map actual paths to template paths: `/group/abc123` becomes `/group/[id]`, `/group/abc123/balance/user456` becomes `/group/[id]/balance/[memberId]`
+3. Implementation pattern: use `useSegments()` from Expo Router to get the route segment array (which includes parameter names like `[id]`) instead of `usePathname()` which returns resolved values
+4. If group or user IDs are needed for analysis, pass them as event properties (which can be filtered/deleted), not in the screen name
 
-**Confidence:** HIGH -- verified via [Expo AppleAuthentication docs](https://docs.expo.dev/versions/latest/sdk/apple-authentication/): "This method must be tested on a real device."
+**Phase to address:** Screen tracking implementation phase.
+
+**Confidence:** HIGH -- verified by examining the app's route structure (`app/group/[id].tsx`, `app/group/[id]/balance/[memberId].tsx`) and understanding of `usePathname()` vs `useSegments()` behavior.
 
 ---
 
 ## Minor Pitfalls
 
-Mistakes that cause annoyance but are fixable quickly.
+Mistakes that cause annoyance or minor data quality issues but are quickly fixable.
 
 ---
 
-### Pitfall 13: `user.phone` References in AuthContext and Database Types Need Updating
+### Pitfall 11: Debug Mode Left Enabled in Production Build
 
-**What goes wrong:** The `AuthContext` and `database.types.ts` currently type `phone_number` as `string` (non-nullable in the TypeScript type). After making the column nullable, the TypeScript types will be out of sync with the database schema. This causes type errors when building, or worse, runtime errors when code assumes `phone_number` is always a string.
+**What goes wrong:** Setting `debug: true` in PostHog options causes verbose logging of every captured event, identify call, and flush operation to the console. If left enabled in a production EAS build, it creates console noise, slightly impacts performance (string serialization of every event), and may expose PostHog API keys or user data in device logs that could be read by other apps or crash reporters.
 
-**Prevention:**
-1. Regenerate database types after the migration: `npx supabase gen types typescript --local > lib/database.types.ts`
-2. Update the `UserProfile` interface in `profile.tsx` to have `phone_number: string | null`
-3. Add null checks wherever `phone_number` is accessed
+**How to avoid:**
+1. Use environment-based configuration: `debug: __DEV__`
+2. Alternatively: `debug: process.env.EXPO_PUBLIC_POSTHOG_DEBUG === 'true'`
+3. Verify by checking console output in a production build before distributing
 
-**Phase:** Database migration phase (immediately after altering the column).
+**Phase to address:** SDK setup phase.
 
-**Confidence:** HIGH -- verified by reading `database.types.ts` and `profile.tsx`.
-
----
-
-### Pitfall 14: Apple Developer Account Team Setup for EAS Build
-
-**What goes wrong:** EAS Build needs access to the Apple Developer account to manage provisioning profiles and capabilities. If the Apple Developer account is not properly linked (or the account is on the free tier which does not support capabilities like Sign in with Apple), the build will fail or the capability won't be enabled.
-
-**Prevention:**
-1. Ensure you have a PAID Apple Developer Program membership ($99/year) -- the free tier does NOT support Sign in with Apple capability
-2. Run `eas credentials` to verify Apple account is linked
-3. The account holder must have Admin or App Manager role for capability management
-4. Apple Developer Team ID must match what's configured in EAS
-
-**Phase:** Infrastructure/setup phase (prerequisites check).
-
-**Confidence:** HIGH -- verified via [Expo Apple Developer Program docs](https://docs.expo.dev/app-signing/apple-developer-program-roles-and-permissions/).
+**Confidence:** HIGH -- verified via SDK type definitions and PostHog documentation.
 
 ---
 
-### Pitfall 15: Phone Number Collection UX After Apple Sign-In is Non-Obvious
+### Pitfall 12: `$set` vs `$set_once` Confusion Overwrites First-Touch Properties
 
-**What goes wrong:** After Apple Sign-In, the user needs to provide their phone number for the invite matching system to work. But there's no clear UX pattern for "you signed in, now please also give us your phone number." If this step is skippable, many users will skip it, and invites will never match. If it's mandatory, users may feel frustrated ("I already signed in, why do you need my phone?").
+**What goes wrong:** Using `$set` (or the default behavior of `identify()` with properties) for properties that should only be set once (like `first_sign_in_date`, `signup_method`, or `initial_app_version`) means these values get overwritten every time `identify()` is called. If you track `signup_method: 'apple'` with `$set` and later call identify with `signup_method: undefined`, the property is overwritten.
 
-**Prevention:**
-1. Integrate phone collection into the existing profile setup flow (which already requires display_name)
-2. Explain WHY the phone number is needed: "Your friends add you to groups by phone number. Enter yours so they can find you."
-3. Make it required for the first version (can make optional later if invite-by-link becomes primary)
-4. Use the same Philippine phone number format validation already in `isValidPHPhone()`
-5. After the user enters their phone, immediately run the pending member claim to link any existing invites
+**How to avoid:**
+1. Use `$set_once` for properties that should never change: `posthog.identify(userId, { $set_once: { first_sign_in_date: new Date().toISOString(), signup_method: 'apple' } })`
+2. Use `$set` for properties that update: `posthog.identify(userId, { $set: { display_name: name, group_count: 3 } })`
+3. Rule of thumb: if a property describes when/how the user FIRST did something, use `$set_once`. If it describes the user's CURRENT state, use `$set`.
 
-**Phase:** Post-auth flow design phase.
+**Phase to address:** User identification implementation phase.
 
-**Confidence:** MEDIUM -- this is a UX design decision, not a technical constraint.
+**Confidence:** HIGH -- verified via SDK type definitions showing `identify()` accepts `$set` and `$set_once` in properties.
 
 ---
 
-## Phase-Specific Warnings
+### Pitfall 13: PostHog API Key Hardcoded Instead of Using Environment Variables
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Infrastructure setup | EAS Build disables Sign-in with Apple (#5) | Add config plugin to `app.json` first, test with debug build |
-| Infrastructure setup | Apple Developer account not properly configured (#14) | Verify paid membership, link account via `eas credentials` |
-| Infrastructure setup | Supabase Apple provider not enabled (#9) | Enable in dashboard, leave OAuth fields empty for native flow |
-| Database migration | `phone_number NOT NULL` constraint blocks Apple users (#1) | `ALTER COLUMN phone_number DROP NOT NULL` |
-| Database migration | Empty string vs NULL breaks unique constraint (#2) | Use NULL, never empty string |
-| Database migration | TypeScript types out of sync (#13) | Regenerate types after migration |
-| Trigger rewrite | Auto-link trigger fails silently for Apple users (#6) | New claim function called after phone collection |
-| Auth UI | Profile setup hardcodes `user.phone` (#3) | Pass NULL, add phone input field |
-| Auth UI | Name capture fails on subsequent sign-ins (#4) | Capture from credential response on FIRST sign-in |
-| Auth UI | Sign-out text references phone OTP (#10) | Search and update all phone-specific text |
-| Auth UI | Apple button styling causes rejection (#11) | Use official `AppleAuthenticationButton` component |
-| Auth UI | Nonce generation incorrect (#8) | Follow Supabase quickstart pattern exactly |
-| Testing | Cannot test on simulator (#12) | Plan for real-device testing, consider dev bypass |
-| Post-auth flow | Phone collection UX unclear (#15) | Add to profile setup, explain rationale to user |
-| Post-auth flow | Relay email shown in UI (#7) | Never display email, show display_name + phone |
+**What goes wrong:** The PostHog project API key is hardcoded directly in the source file (e.g., `app/_layout.tsx`). While PostHog project API keys are designed to be public (they can only ingest events, not read data), hardcoding makes it impossible to use different PostHog projects for development vs production without code changes. This leads to development events polluting production analytics.
+
+**How to avoid:**
+1. Use Expo's environment variables: `EXPO_PUBLIC_POSTHOG_KEY` and `EXPO_PUBLIC_POSTHOG_HOST`
+2. Access via `process.env.EXPO_PUBLIC_POSTHOG_KEY` (Expo SDK 54 supports this natively)
+3. Create separate PostHog projects for development and production
+4. For the beta (5-10 users), a single project is fine -- but set up the env var pattern now to avoid migration later
+5. Add `.env` to `.gitignore` and use `.env.example` for documentation
+
+**Phase to address:** SDK setup phase.
+
+**Confidence:** HIGH -- standard practice, verified via Expo environment variables documentation.
 
 ---
 
-## Blast Radius Summary
+### Pitfall 14: Forgetting to Flush on App Background Loses Recent Events
 
-Files and database objects that MUST change for the auth swap:
+**What goes wrong:** The default `flushAt` is 20, meaning PostHog waits until 20 events are queued before sending. If a user performs 5 actions and then backgrounds/closes the app, those 5 events may not have been flushed. The periodic `flushInterval` timer may also not have fired. These events are persisted to file storage but only sent on next app open.
 
-### Database (Supabase Migrations)
-| Object | Change Required | Risk |
-|--------|----------------|------|
-| `public.users.phone_number` | `DROP NOT NULL` | Pitfall #1, #2 |
-| `handle_pending_member_claim()` trigger | Rewrite for NULL phone | Pitfall #1, #6 |
-| `add_pending_member()` RPC | Review phone matching logic | Pitfall #6 |
-| New: `claim_pending_by_phone()` RPC | Create for post-auth claim | Pitfall #6 |
+**How to avoid:**
+1. Enable `captureAppLifecycleEvents: true` -- this captures `Application Backgrounded` events which trigger a flush
+2. Optionally, add an AppState listener that calls `posthog.flush()` when the app transitions to `background` or `inactive`
+3. For the beta, this is low risk -- events will be sent on next app open. Only matters if analyzing real-time behavior.
 
-### Client Code (React Native / Expo)
-| File | Change Required | Risk |
-|------|----------------|------|
-| `app.json` | Add `expo-apple-authentication` plugin, `usesAppleSignIn` | Pitfall #5 |
-| `app/(auth)/phone.tsx` | Replace or remove | Pitfall #10 |
-| `app/(auth)/otp.tsx` | Replace or remove | Pitfall #10 |
-| `app/(auth)/profile-setup.tsx` | Handle NULL phone, add phone input | Pitfall #3, #15 |
-| `app/_layout.tsx` | Update auth redirect routes | Pitfall #10 |
-| `app/join/[code].tsx` | Update "sign in" CTA route | Pitfall #10 |
-| `app/(tabs)/profile.tsx` | Handle NULL phone, update sign-out text | Pitfall #10 |
-| `lib/auth-context.tsx` | Handle Apple session (no phone) | Pitfall #3 |
-| `lib/supabase.ts` | No changes needed (client init is auth-agnostic) | -- |
-| `lib/database.types.ts` | Regenerate after migration | Pitfall #13 |
-| `lib/group-members.ts` | No changes needed (uses phone from pending_members, not auth) | -- |
+**Phase to address:** SDK configuration phase.
 
-### Infrastructure
-| Item | Change Required | Risk |
-|------|----------------|------|
-| Supabase Dashboard | Enable Apple provider | Pitfall #9 |
-| Apple Developer Console | Add Sign in with Apple capability | Pitfall #14 |
-| EAS Build config | Ensure plugin syncs capability | Pitfall #5 |
-| `package.json` | Add `expo-apple-authentication` dependency | -- |
+**Confidence:** MEDIUM -- SDK type definitions confirm `captureAppLifecycleEvents` option exists (default false). Exact flush-on-background behavior not independently verified in v4.36.0.
+
+---
+
+## Technical Debt Patterns
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| String literals for event names | Faster to write | Inconsistent naming, hard to refactor | Never -- always use constants file |
+| Skip `reset()` on sign-out | One less thing to implement | Identity leakage across users | Never -- always implement reset |
+| Use `personProfiles: 'always'` | Simpler config | 4x higher cost on anonymous events | Acceptable for 5-10 user beta |
+| Hardcode API key | No env setup needed | Dev events pollute production | Acceptable for beta if single project |
+| Skip `before_send` filtering | Faster setup | PII in analytics, compliance risk | Acceptable if no sensitive data in event properties |
+| Use `usePathname()` directly | Simple implementation | Fragmented screen analytics | Never -- normalize to route templates from day one |
+| Skip `flush()` on background | No extra code | Some events delayed until next open | Acceptable for beta |
+
+---
+
+## Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Expo Router + PostHog | Enable `autocapture.captureScreens` | Disable autocapture entirely; use manual `posthog.screen()` with `usePathname()`/`useSegments()` |
+| Expo Router + PostHog | Enable `autocapture.captureTouches` | Disable; use explicit `posthog.capture()` on important interactions |
+| Supabase Auth + PostHog identify | Call `identify()` on PostHog init | Wait for auth state to resolve; call `identify()` only when `session?.user?.id` is truthy |
+| Supabase Auth + PostHog reset | Forget to call `reset()` on sign-out | Listen for `SIGNED_OUT` event in `onAuthStateChange` and call `posthog.reset()` |
+| Expo SDK 54 + PostHog | Use outdated PostHog version | Ensure `posthog-react-native >= 4.4.1` for `expo-file-system` v19+ compatibility (this app has v4.36.0, which is fine) |
+| React Native New Architecture + PostHog | Assume incompatibility | PostHog v4.x is pure JS using Expo libraries; works with New Architecture enabled (this app has `newArchEnabled: true`) |
+| PostHog Provider + Auth Provider | Place PostHog above AuthProvider | Place PostHog below AuthProvider so identify/reset hooks have access to auth state |
+| Dynamic routes + screen names | Pass resolved pathnames to `posthog.screen()` | Normalize dynamic segments to template paths (e.g., `/group/[id]`) |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| `flushAt: 1` (immediate send) | Battery drain, excessive network requests | Keep default `flushAt: 20` | Noticeable with frequent events (10+ per minute) |
+| Capturing in useEffect without deps | 600+ duplicate events in seconds | Audit all useEffect dependency arrays; use event handlers instead | Immediately on affected screen |
+| Enabling session replay (not in scope but tempting) | Significant battery/data usage | Don't enable for this milestone | Immediately on poor connections |
+| Large event properties | Slow serialization, large payloads | Keep properties minimal; don't attach full objects, only IDs and counts | At scale (100+ events with large props) |
+| Not disabling in development | Dev events count toward quota | Use `disabled: false` with env check or separate dev project | Only matters if quota is limited |
+
+---
+
+## Security/Privacy Mistakes
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Sending phone numbers in event properties | PII in analytics; DPA compliance violation | Never include phone numbers in capture() properties; use anonymized user IDs only |
+| Sending expense amounts as user properties | Financial data in analytics | Only send aggregate properties (e.g., `total_expenses_count: 5`), not individual amounts |
+| Sending group names or member names in events | PII exposure | Use group IDs and member counts, not names |
+| Not implementing opt-out mechanism | Philippine Data Privacy Act violation | Implement `posthog.optOut()` / `posthog.optIn()` toggle in profile settings; DPA requires consent for analytics |
+| API key in public git repo | Low risk (project keys are ingest-only) but bad practice | Use environment variables; add `.env` to `.gitignore` |
+| Not having a privacy policy | App Store rejection risk; DPA non-compliance | Create a privacy policy disclosing analytics collection before public launch |
+| Logging PostHog events in production console | User data visible in device logs | Set `debug: __DEV__` to disable verbose logging in production |
+
+### Philippine Data Privacy Act (RA 10173) Specific Considerations
+
+The Philippine Data Privacy Act of 2012 (DPA) has requirements relevant to PostHog analytics:
+
+1. **Consent requirement:** Analytics tracking (non-essential data processing) requires informed consent. For a private beta with friends, verbal/implicit consent is pragmatically sufficient, but for public launch, implement an opt-in/opt-out mechanism.
+2. **Purpose limitation:** Data collected for analytics must only be used for analytics. PostHog's data stays within PostHog.
+3. **Right to erasure:** Users can request deletion of their data. PostHog supports person deletion via the dashboard and API.
+4. **Data minimization:** Only collect what you need. Don't track screen content, input values, or financial details in events.
+5. **For the beta:** With 5-10 close friends as testers, DPA compliance is low risk. But set up the patterns (opt-out toggle, minimal data collection) now to avoid retrofitting later.
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+After implementing PostHog analytics, verify all of these:
+
+- [ ] PostHog dashboard shows events from a real device (not just simulator/dev)
+- [ ] Distinct IDs in PostHog match Supabase user IDs (not anonymous UUIDs)
+- [ ] Screen names in PostHog are normalized (e.g., `/group/[id]` not `/group/abc123`)
+- [ ] Sign-out followed by sign-in with different user shows separate persons in PostHog
+- [ ] No phone numbers, names, or financial amounts appear in event properties
+- [ ] Events fire exactly once per user action (no duplicate events from re-renders)
+- [ ] `debug: true` is NOT set in production configuration
+- [ ] PostHog API key is not hardcoded (uses environment variable)
+- [ ] Event names follow consistent `snake_case` `object_action` convention
+- [ ] `captureAppLifecycleEvents` is enabled (for app open/background tracking)
+- [ ] `autocapture` is disabled (both `captureScreens` and `captureTouches` set to false)
+- [ ] `personProfiles` is set to `'identified_only'`
+- [ ] Funnel from sign-in to first expense can be constructed in PostHog dashboard
+- [ ] Profile settings has a future-ready spot for analytics opt-out (even if not exposed in beta)
 
 ---
 
 ## Sources
 
-- [Supabase Apple Sign-In Documentation](https://supabase.com/docs/guides/auth/social-login/auth-apple)
-- [Supabase Expo Social Auth Quickstart](https://supabase.com/docs/guides/auth/quickstarts/with-expo-react-native-social-auth)
-- [Expo AppleAuthentication SDK](https://docs.expo.dev/versions/latest/sdk/apple-authentication/)
-- [Expo iOS Capabilities](https://docs.expo.dev/build-reference/ios-capabilities/)
-- [EAS CLI Sign-in with Apple Issue #804](https://github.com/expo/eas-cli/issues/804)
-- [EAS CLI Sign-in with Apple Issue #2599](https://github.com/expo/eas-cli/issues/2599)
-- [Supabase Auth Identity Linking](https://supabase.com/docs/guides/auth/auth-identity-linking)
-- [Supabase Apple Token Revocation Issue #1308](https://github.com/supabase/auth/issues/1308)
-- [Apple Hide My Email](https://support.apple.com/en-us/105078)
-- [Apple Developer Program Roles (Expo)](https://docs.expo.dev/app-signing/apple-developer-program-roles-and-permissions/)
-- [Supabase signInWithIdToken Reference](https://supabase.com/docs/reference/javascript/auth-signinwithidtoken)
-- Project codebase: all migrations `00001` through `00023`, auth context, profile setup, and layout files
+- [PostHog React Native SDK Documentation](https://posthog.com/docs/libraries/react-native)
+- [PostHog React Native SDK Reference](https://posthog.com/docs/references/posthog-react-native)
+- [PostHog GitHub Issue #2740: Expo Router autocapture crash](https://github.com/PostHog/posthog-js/issues/2740) -- closed as "not planned", official guidance to disable captureScreens
+- [PostHog GitHub Issue #2455: useNavigationState error](https://github.com/PostHog/posthog-js/issues/2455)
+- [PostHog GitHub Issue #171: Expo Router touch events not supported](https://github.com/PostHog/posthog-js-lite/issues/171) -- open, "help wanted"
+- [PostHog GitHub Issue #2229: Expo SDK 54 breaks PostHog](https://github.com/PostHog/posthog-js/issues/2229) -- fixed in v4.4.1+
+- [PostHog GitHub Issue #1583: Offline event queue limitations](https://github.com/PostHog/posthog-js/issues/1583)
+- [PostHog Identifying Users Documentation](https://posthog.com/docs/product-analytics/identify)
+- [PostHog Anonymous vs Identified Events](https://posthog.com/docs/data/anonymous-vs-identified-events)
+- [PostHog Event Naming Best Practices](https://posthog.com/docs/product-analytics/best-practices)
+- [PostHog Naming Conventions Discussion](https://posthog.com/questions/best-practices-naming-convention-for-event-names-and-properties)
+- [PostHog Privacy/Data Collection Controls](https://posthog.com/docs/privacy/data-collection)
+- [PostHog React Native Changelog](https://github.com/PostHog/posthog-js-lite/blob/main/posthog-react-native/CHANGELOG.md)
+- [PostHog Expo Example Repository](https://github.com/PostHog/support-rn-expo)
+- [Philippine Data Privacy Act (RA 10173)](https://privacy.gov.ph/data-privacy-act/)
+- [IAPP Summary: Philippines Data Privacy Act](https://iapp.org/news/a/summary-philippines-data-protection-act-and-implementing-regulations)
+- [Medium: PostHog React Native First-Time Guide](https://medium.com/@svetlintanyi/implementing-posthog-analytics-in-a-react-native-app-a-first-time-developers-guide-cf4c8ef939f6) -- documents the 600-duplicate-events bug
+- Installed SDK: `posthog-react-native@4.36.0` type definitions (direct inspection)
+- Project codebase: `app/_layout.tsx`, `lib/auth-context.tsx`, `app.json`, `package.json`
+
+---
+
+*Pitfalls research for: PostHog analytics in Expo/React Native (HatianApp v1.4)*
+*Researched: 2026-02-24*

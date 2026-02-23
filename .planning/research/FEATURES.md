@@ -1,228 +1,296 @@
-# Feature Research: Apple Sign-In Authentication Flow
+# Feature Research: PostHog Analytics Integration
 
-**Domain:** Mobile authentication (Apple Sign-In replacing Phone OTP) for expense-splitting app
-**Researched:** 2026-02-22
+**Domain:** Mobile analytics for expense-splitting app (React Native / Expo)
+**Researched:** 2026-02-24
 **Confidence:** HIGH
 
 ## Feature Landscape
 
-### Table Stakes (Users Expect These)
+### Table Stakes (Must Have for Analytics Integration)
 
-Features that are non-negotiable for a working Apple Sign-In implementation.
+These are non-negotiable for a functioning analytics setup. Without them, the integration provides no value.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Native Apple Sign-In button | Apple HIG mandates using `AppleAuthenticationButton` -- custom buttons violate App Store guidelines and will cause rejection | LOW | Use `expo-apple-authentication` component with `buttonType` (SIGN_IN, CONTINUE, SIGN_UP) and `buttonStyle` (BLACK, WHITE, WHITE_OUTLINE). Cannot set `backgroundColor` or `borderRadius` via style prop -- use `buttonStyle` and `cornerRadius` props instead. |
-| One-tap authentication flow | Users expect Apple Sign-In to be a single tap (Face ID/Touch ID) then done. No extra steps in the auth itself. | LOW | `AppleAuthentication.signInAsync()` presents native iOS modal. User authenticates with biometrics. Returns credential with `identityToken`. |
-| Supabase session via `signInWithIdToken` | Must exchange Apple's `identityToken` for a Supabase session. This is the standard native flow -- do NOT use OAuth web redirect. | LOW | `supabase.auth.signInWithIdToken({ provider: 'apple', token: credential.identityToken })`. No client secret or 6-month key rotation needed for native flow (that is OAuth-only). |
-| New user detection (profile-gating) | After Apple Sign-In, app must detect whether user has completed profile setup (display_name + phone_number). Existing `isNewUser` pattern in auth-context already does this by checking `users` table for `display_name`. | LOW | Current `checkIsNewUser()` queries `users.display_name`. Extend to also check `phone_number` presence. If either missing, route to profile-setup. |
-| Profile setup: display name (required) | Users need a display name for group interactions. Already exists in current profile-setup screen. | LOW | Already built. Keep existing display name input with 2-character minimum. |
-| Profile setup: phone number (required, unverified) | Phone number is required for the invite/pending_member system. Must be collected before user can access the app. Users who previously used phone OTP had this automatically; Apple Sign-In users do not. | MEDIUM | Add phone number input to profile-setup screen. Use same +63 prefix pattern from current phone.tsx. Validate format (10 digits starting with 9) but do NOT verify via OTP. Store in `users.phone_number`. |
-| Phone number format validation | PH phone numbers must be +63 followed by 10 digits starting with 9. Invalid numbers break the invite system. | LOW | Reuse existing validation logic from `phone.tsx`: strip non-digits, ensure 10 chars, prepend +63 for storage. Normalize to E.164 without leading `+` to match existing `ltrim(phone_number, '+')` patterns in SQL functions. |
-| Phone number uniqueness enforcement | `users.phone_number` has a `UNIQUE NOT NULL` constraint in the database. Two Apple Sign-In users cannot register the same phone number. | MEDIUM | Must handle unique constraint violation gracefully in the UI. Show error like "This phone number is already associated with another account." Consider: what if the same person previously used phone OTP and now signs in with Apple? See migration concerns below. |
-| Capture Apple-provided name on first sign-in | Apple provides `fullName` (givenName, familyName) ONLY on the very first authorization. All subsequent sign-ins return `null`. Must capture it immediately or it is lost forever. | MEDIUM | After `signInAsync`, if `credential.fullName?.givenName` exists, either (a) pre-fill the display name field on profile-setup, or (b) call `supabase.auth.updateUser({ data: { full_name, given_name, family_name } })` to store in user metadata. Recommend pre-filling profile-setup -- user can edit before saving. |
-| Error handling: user cancellation | User can dismiss the Apple Sign-In modal. App must handle `ERR_REQUEST_CANCELED` gracefully without showing an error. | LOW | Catch the specific error code and silently return to login screen. Do not show error toast/alert for cancellations. |
-| Error handling: Apple Sign-In unavailable | Device may not support Apple Sign-In (old iOS, restricted). Must check before showing button. | LOW | Call `AppleAuthentication.isAvailableAsync()` on mount. If false, show fallback message. In practice, all iOS 13+ devices support it, and this app targets iOS via Expo. |
-| Remove phone OTP flow entirely | Old screens (phone.tsx, otp.tsx) must be removed. Auth layout must route to Apple Sign-In screen instead. | LOW | Delete `app/(auth)/phone.tsx` and `app/(auth)/otp.tsx`. Update `_layout.tsx` in auth group. Update root `_layout.tsx` redirect: `router.replace("/(auth)/apple-signin")` instead of `"/(auth)/phone"`. |
-| Account deletion capability | Apple requires apps using Sign in with Apple to offer in-app account deletion. Must revoke Apple tokens and delete Supabase user. | MEDIUM | Add "Delete Account" option in profile screen. Call `supabase.auth.admin.deleteUser()` or use a Supabase Edge Function. Must also revoke Apple credentials via Apple's token revocation endpoint. Required for App Store compliance. |
-| `isAvailableAsync` gate before rendering button | Must programmatically check Apple auth availability before rendering the button | LOW | `AppleAuthentication.isAvailableAsync()` returns Promise<boolean>. Gate the button render on this. |
+| Feature | Why Expected | Complexity | Touches |
+|---------|--------------|------------|---------|
+| PostHogProvider wrapper at app root | Required to make the PostHog client available via Context to all screens. Must wrap the entire app so `usePostHog()` works anywhere. | LOW | `app/_layout.tsx` -- wraps inside existing provider stack (AuthProvider > NetworkProvider > ToastProvider > BottomSheetModalProvider). PostHogProvider should go outside AuthProvider so auth events themselves are captured. |
+| User identification on sign-in | Call `posthog.identify(userId)` when Supabase session is established. Links all anonymous pre-auth events to the identified user. Must call once per session, typically in `auth-context.tsx` when `onAuthStateChange` fires `SIGNED_IN`. | LOW | `lib/auth-context.tsx` -- the `onAuthStateChange` callback. Also `app/(auth)/profile-setup.tsx` for setting initial user properties after profile completion. |
+| Person properties sync | Set `$set` properties on identify: `display_name`, `phone_number`, `group_count`. These enable filtering and breakdown in PostHog dashboards (e.g., "users with 3+ groups"). | LOW | `lib/auth-context.tsx` -- pass properties in `identify()` call. Update `group_count` after group creation/join events. |
+| posthog.reset() on sign-out | Clears the identified user, super properties, and anonymous ID. Without this, the next user on the same device inherits the previous user's identity. | LOW | `app/(tabs)/profile.tsx` -- the sign-out handler. Call `posthog.reset()` before `supabase.auth.signOut()`. |
+| Screen view tracking | Track every screen transition. In PostHog this creates `$screen` events with screen name. Critical for understanding which screens users visit and where they drop off. | MEDIUM | `app/_layout.tsx` -- use `usePathname()` + `useEffect()` pattern from Expo Router (NOT PostHog's built-in `captureScreens` autocapture, which has a known incompatibility with Expo Router that triggers `useNavigationState` errors). |
+| Core action event: sign_in | Track successful Apple Sign-In. Properties: `method` (always "apple"), `is_new_user` (boolean). Measures auth funnel completion. | LOW | `app/(auth)/sign-in.tsx` -- after successful `signInWithIdToken`. |
+| Core action event: profile_completed | Track profile setup completion (first-time users only). Properties: `has_apple_name` (whether Apple provided name). Measures onboarding funnel completion. | LOW | `app/(auth)/profile-setup.tsx` -- after successful profile save. |
+| Core action event: group_created | Track group creation. Properties: `is_offline` (boolean -- queued vs immediate). Measures core engagement. | LOW | `app/(tabs)/index.tsx` -- in `handleCreateGroup` after success. |
+| Core action event: expense_added | Track expense submission. Properties: `amount_centavos`, `split_type` ("equal" or "custom"), `member_count` (number of members in split), `is_offline`. This is the single most important event -- it represents the core value action. | LOW | `app/group/[id]/add-expense.tsx` -- in `handleSubmit` after success. |
+| Core action event: settle_up | Track settlement recording. Properties: `amount_centavos`, `group_id`. Measures payment completion. | LOW | `components/settlements/SettleConfirmSheet.tsx` -- in `handleConfirmSettle` after success. |
+| Core action event: invite_accepted | Track when user accepts a phone invite. Properties: `group_name`. | LOW | `app/(tabs)/index.tsx` -- in `handleAcceptInvite` after success. |
+| Core action event: invite_declined | Track when user declines a phone invite. Properties: `group_name`. | LOW | `app/(tabs)/index.tsx` -- in `handleDeclineInvite` after success. |
+| Core action event: group_joined_via_link | Track join-via-invite-link. Properties: `group_name`, `member_count`. | LOW | `app/join/[code].tsx` -- after successful `join_group_by_invite` RPC. |
+| Core action event: invite_shared | Track when user taps Share to send invite link. Properties: `group_id`. Measures virality/growth behavior. | LOW | `app/group/[id].tsx` -- in `handleShare`. Note: cannot determine if share was actually completed (iOS Share sheet does not report this reliably). |
+| SDK configuration: flushAt and flushInterval | PostHog batches events and sends them periodically (default: 20 events or 30 seconds). For a small beta with 5-10 users, defaults are fine. No tuning needed. | LOW | `app/_layout.tsx` -- PostHogProvider `options` prop. Use defaults. |
+| Debug mode in development | Enable `debug: true` in PostHogProvider options during development (via `__DEV__` flag). Shows verbose SDK logs for verifying events fire correctly. Disable in production. | LOW | `app/_layout.tsx` -- `options={{ debug: __DEV__ }}`. |
 
-### Differentiators (Competitive Advantage)
+### Differentiators (Advanced Analytics -- Competitive Advantage)
 
-Features that improve UX beyond the minimum but are not strictly required.
+Features that provide deeper insight beyond basic event tracking. Not required for v1.4 launch but high-value additions.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Pre-fill display name from Apple credential | Reduces friction by auto-populating the display name from Apple's `fullName` data, so users only need to add phone number | LOW | On first sign-in, `credential.fullName.givenName` is available. Pre-fill the display name input. User can edit. If `fullName` is null (returning user), leave field empty for manual entry. |
-| Credential state monitoring | Detect when user revokes Apple Sign-In from iOS Settings and proactively sign them out | LOW | Use `AppleAuthentication.addRevokeListener()` to subscribe to revocation events. On revoke, call `supabase.auth.signOut()` and redirect to login. |
-| Existing user migration path | Users who previously signed in with phone OTP now need to sign in with Apple. Their phone number already exists in `users` table. Supabase creates a new auth.users row for Apple Sign-In with a different ID -- need a strategy for this. | HIGH | This is the hardest problem. Options: (1) Let users create new Apple accounts and manually enter their old phone number -- the unique constraint will match them to pending invites. (2) Build a manual account linking flow. Recommend option (1) for simplicity -- if unique constraint fails, it means an account with that phone already exists, and user may need to contact support. See PITFALLS.md for detailed analysis. |
-| `realUserStatus` anti-fraud signal | Apple provides a `realUserStatus` field (LIKELY_REAL, UNKNOWN, UNSUPPORTED) that indicates confidence the user is a real person, not a bot | LOW | Available only on native iOS. Log this value for analytics/fraud monitoring. Do not block users based on it -- UNKNOWN does not mean bot. Only available on first sign-in. |
-| Smooth animated transition from sign-in to profile setup | Current phone.tsx has a nice background carousel. Replicate similar visual polish for the Apple Sign-In screen. | LOW | Keep the background carousel from current phone.tsx. Place the Apple Sign-In button prominently below the app name/tagline. One-screen auth: tap button, biometric, done. |
-| Hide My Email awareness | Users can choose to hide their email via Apple's Private Relay. The email address will be an `@privaterelay.appleid.com` address. App should not depend on real email. | LOW | This app does not use email for anything (invites are phone-based). No action needed, but do not display the relay email to users or use it for communication. If email is displayed in profile, note it may be a relay address. |
+| Feature | Value Proposition | Complexity | Touches |
+|---------|-------------------|------------|---------|
+| Funnel definition: onboarding | Define funnel: `sign_in` -> `profile_completed` -> `group_created` -> `expense_added`. Measures how many new users complete the full activation loop. Built entirely in PostHog dashboard -- zero code. | LOW (dashboard only) | No code changes. Configure in PostHog UI after events are flowing. |
+| Funnel definition: core loop | Define funnel: `group_created` -> `invite_shared` -> `expense_added` -> `settle_up`. Measures the complete product loop. Dashboard-only. | LOW (dashboard only) | No code changes. |
+| Super properties for session context | Set super properties that attach to every event: `app_version`, `is_offline`. Avoids repeating these on every `capture()` call. PostHog super properties persist across the session and are additive. | LOW | `app/_layout.tsx` or a dedicated analytics init hook. Call `posthog.register({ app_version, platform })` once on app start. |
+| Offline event queuing awareness | Track `offline_sync_completed` event when the offline queue flushes. Properties: `queued_count`, `sync_duration_ms`. Measures reliability of offline-first architecture. | MEDIUM | `lib/sync-manager.ts` -- fire event after successful queue flush. |
+| Cohort: power users | Define cohort in PostHog: users who added 5+ expenses in the last 7 days. Dashboard-only configuration. | LOW (dashboard only) | No code changes. |
+| User property: last_active_at | Update `$set` property `last_active_at` on each app open. Enables retention analysis without custom events. | LOW | `app/_layout.tsx` -- set in identify or via `posthog.capture('$set', { $set: { last_active_at: new Date().toISOString() } })` on app focus. |
+| Expense wizard step tracking | Track each step of the 3-step expense wizard: `expense_step_amount`, `expense_step_payer`, `expense_step_split`. Identifies where users abandon the expense flow. | MEDIUM | `app/group/[id]/add-expense.tsx` -- in `onPageSelected` callback of PagerView. Fire event with `step` property on each page change. |
+| Error event tracking | Track `error_occurred` when RPC calls fail or network errors happen. Properties: `error_type`, `error_message`, `screen`. Surfaces reliability issues. | MEDIUM | Multiple files -- would need a centralized error tracking utility that wraps PostHog capture. |
+| Group analytics (PostHog Groups) | Associate events with a PostHog "group" (the user's expense group). Enables group-level analytics: "which groups are most active?" This is a paid PostHog feature. | HIGH | Would need `posthog.group('group', groupId)` calls. Paid feature -- not appropriate for private beta on free tier. |
 
 ### Anti-Features (Deliberately NOT Building)
 
-Features that seem useful but create problems for this specific project.
+Things commonly requested or tempting to add that would be problematic for this project at this stage.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Phone number OTP verification during onboarding | Verifying the phone number prevents typos and ensures ownership | Adds massive friction to onboarding (defeats the purpose of replacing OTP). Requires SMS provider costs. Users already authenticated via Apple -- adding another auth step is hostile UX. | Accept unverified phone number. Format validation catches typos. If wrong number entered, user can update in profile. The invite system tolerates wrong numbers (invite just won't match). |
-| Multiple auth providers (Apple + Google + Email) | Broader user coverage | Scope creep. Apple Sign-In is sufficient for iOS-only app distributed via TestFlight. Adding more providers means more edge cases, more testing, more maintenance. Solo developer constraint. | Apple Sign-In only. If Android support needed later, add Google Sign-In then. |
-| OAuth web redirect flow for Apple | Some tutorials show this approach | Requires generating a client secret from Apple's .p8 key every 6 months. Secret rotation is an operational burden. Native `signInWithIdToken` does NOT require this -- it uses Apple's native Authentication Services directly. | Use native flow: `expo-apple-authentication` + `signInWithIdToken`. Zero key rotation needed. |
-| Automatic account linking (phone OTP account to Apple account) | Seamless migration for existing users | Supabase does not natively support linking two different auth identities to the same user row when they use different providers. Building this requires custom server-side logic, is error-prone, and risks data integrity. | Treat Apple Sign-In users as new accounts. Existing pending_member invites still match by phone number (entered during profile setup). Old phone OTP accounts become orphaned -- acceptable for a 5-10 person test group. |
-| Custom Apple Sign-In button | Match the app's design language with a custom-styled button | Violates Apple HIG and App Store Review Guidelines. Apps must use the official `AppleAuthenticationButton` component. Custom buttons will cause App Store rejection. | Use `AppleAuthenticationButton` with `buttonStyle: BLACK` (matches dark-first theme) and `cornerRadius` to match app's radius tokens. |
-| Email-based features (notifications, password reset) | Email from Apple could enable notifications | Apple's Private Relay means email may be a disposable relay address. This app has no email infrastructure. Phone-based invites are the core interaction model. | Continue using phone numbers for invites. If notifications needed later, use push notifications (already in out-of-scope for v1). |
-| Phone number change flow | Users might want to update their phone number | Changing phone number after initial setup has cascading effects on pending_members, invite matching, and phone uniqueness. Complex to build safely. | Defer to later. For v1.3 testing with 5-10 friends, phone numbers are stable. If truly needed, add as a profile edit feature in a future milestone. |
+| Session replay | Visual recording of user sessions. Tempting for debugging. | PostHog RN session replay requires additional native dependencies, increases bundle size, has performance overhead on mobile. The app has 5-10 testers -- just ask them directly. Also has privacy implications with financial data visible on screen. | Use `debug: true` in dev mode. Ask testers for direct feedback via Messenger/Viber. |
+| Feature flags | Control feature rollout remotely. | Only 5-10 testers in private beta. No need for gradual rollout. Adds SDK complexity (feature flag polling, caching in AsyncStorage, request timeouts). Build this when preparing for public launch. | Ship features directly in builds. Use EAS Update for hotfixes if needed. |
+| A/B experiments | Test UI variations. | Same as feature flags -- requires feature flag infrastructure. Statistically meaningless with 5-10 users. | Iterate based on direct qualitative feedback from testers. |
+| Touch autocapture (`captureTouches: true`) | Tracks every tap/touch on the screen. "Free" data. | Generates enormous event volume. With financial UIs, most taps are on numpad digits -- noise, not signal. Makes PostHog dashboards cluttered. Hard to extract meaning. Also captures sensitive areas (amount inputs). Free tier has event limits. | Use targeted custom events on meaningful actions only. |
+| Screen autocapture via PostHog SDK | The SDK's built-in `captureScreens: true` option. | Known incompatibility with Expo Router. PostHog's autocapture uses `useNavigationState` from `@react-navigation/native` which throws errors in Expo Router's file-based routing. See GitHub issue #2740 on posthog-js. | Manual screen tracking via `usePathname()` + `useEffect()` in root layout. More reliable, gives you control over screen names. |
+| Revenue/monetary analytics | Track total money split, average expense amount as key metrics. | Amount data is available in event properties. No need for a dedicated revenue tracking feature. PostHog is not a financial analytics tool. Computing aggregates from event properties in PostHog is sufficient. | Include `amount_centavos` as a property on `expense_added` and `settle_up` events. Use PostHog's property aggregation in dashboards. |
+| Anonymous event mode | Avoid creating person profiles to save on PostHog billing (anonymous events are up to 4x cheaper). | This app requires authentication. Every user who reaches the main app is identified. Anonymous-only mode would lose the ability to track user journeys, funnels, and retention per user -- the entire point of adding analytics. | Use the default `IDENTIFIED_ONLY` person profile mode. All events after `identify()` create person profiles. Pre-auth events stay anonymous automatically. |
+| Custom dashboards in-app | Show analytics to the user inside the app (spending trends, usage stats). | This is a product feature, not an analytics integration task. Requires significant UI work, new Supabase queries, and data visualization components. Conflates analytics (for the developer) with features (for the user). | Keep analytics in PostHog dashboard (for developer). If user-facing analytics is wanted later, build it as a separate milestone using Supabase data directly. |
+| Tracking every Supabase RPC call | Instrument every database interaction as an event. | Creates massive event volume for minimal insight. Most RPC calls (fetch groups, fetch balances) happen on every screen focus. Would dominate event counts and obscure meaningful actions. | Track only write operations that represent user intent: create, settle, join, accept, decline. Reads are covered by screen views. |
 
 ## Feature Dependencies
 
 ```
-[Apple Sign-In Button]
-    |
-    v
-[signInWithIdToken -> Supabase Session]
-    |
-    v
-[New User Detection (check users table)]
-    |
-    +---(new user)---> [Profile Setup Screen]
-    |                       |
-    |                       +---> [Display Name Input] (pre-filled from Apple fullName if available)
-    |                       |
-    |                       +---> [Phone Number Input] (required, unverified, +63 format)
-    |                       |
-    |                       +---> [Avatar Picker] (existing feature, keep as-is)
-    |                       |
-    |                       v
-    |                  [Upsert to users table]
-    |                       |
-    |                       v
-    |                  [Auto-link trigger fires: links phone to pending_members]
-    |                       |
-    +---(returning user)--->+
-                            |
-                            v
-                       [App (tabs)]
+PostHogProvider setup
+  |
+  +-- SDK initialization (API key, host)
+  |
+  +-- Screen tracking (usePathname in root layout)
+  |     |
+  |     +-- Requires PostHogProvider to be ancestor
+  |
+  +-- User identification
+  |     |
+  |     +-- Depends on: AuthProvider session state
+  |     +-- Triggers: Person properties sync
+  |     +-- Triggers: Super properties registration
+  |
+  +-- Core action events (all independent, can be added in any order)
+  |     |
+  |     +-- sign_in (sign-in.tsx)
+  |     +-- profile_completed (profile-setup.tsx)
+  |     +-- group_created (index.tsx)
+  |     +-- expense_added (add-expense.tsx)
+  |     +-- settle_up (SettleConfirmSheet.tsx)
+  |     +-- invite_accepted (index.tsx)
+  |     +-- invite_declined (index.tsx)
+  |     +-- group_joined_via_link (join/[code].tsx)
+  |     +-- invite_shared (group/[id].tsx)
+  |
+  +-- posthog.reset() on sign-out (profile.tsx)
+        |
+        +-- Depends on: User identification working first
 
-[Remove Phone OTP Screens] --conflicts--> [Apple Sign-In] (must be done atomically)
-
-[Account Deletion] --requires--> [Apple Token Revocation] --requires--> [Supabase User Deletion]
+Dashboard configuration (funnels, cohorts) -- AFTER events are flowing
 ```
-
-### Dependency Notes
-
-- **Apple Sign-In requires Supabase session:** The `signInWithIdToken` call must succeed to create a session. Requires Apple provider to be enabled in Supabase dashboard.
-- **Profile setup requires new user detection:** The `isNewUser` check must now verify both `display_name` AND `phone_number` exist. Currently only checks `display_name`.
-- **Auto-link trigger depends on phone number in users table:** When user saves phone number during profile setup, the existing `handle_pending_member_claim` trigger on `auth.users` will NOT fire (it fires on INSERT, not UPDATE). A separate mechanism is needed to link pending_members when phone number is added during profile setup. This is a critical dependency -- see PITFALLS.md.
-- **Phone OTP removal conflicts with Apple Sign-In addition:** Must be done in the same deployment. Cannot have a state where neither auth method works.
-- **Account deletion requires token revocation:** Apple mandates that when users delete their account, the app must also revoke the Apple credential. This requires calling Apple's revocation endpoint.
 
 ## MVP Definition
 
-### Launch With (v1.3)
+### Launch With (v1.4)
 
-Minimum viable for the Apple Sign-In migration:
+- [x] PostHogProvider wrapping app root with API key and host configuration
+- [x] Manual screen view tracking via `usePathname()` + `useEffect()` pattern (NOT SDK autocapture)
+- [x] User identification in auth-context `onAuthStateChange` with person properties (`display_name`, `phone_number`)
+- [x] `posthog.reset()` on sign-out in profile screen
+- [x] Debug mode gated on `__DEV__`
+- [x] 9 core action events: `sign_in`, `profile_completed`, `group_created`, `expense_added`, `settle_up`, `invite_accepted`, `invite_declined`, `group_joined_via_link`, `invite_shared`
+- [x] Each event with relevant properties (see Recommended Events table below)
 
-- [x] Apple Sign-In button screen (replacing phone.tsx)
-- [x] `signInWithIdToken` integration with Supabase
-- [x] Profile setup with display name + required phone number
-- [x] Pre-fill display name from Apple credential (first sign-in only)
-- [x] New user detection extended to check phone_number
-- [x] Phone format validation (+63, 10 digits starting with 9)
-- [x] Phone uniqueness error handling
-- [x] Remove phone.tsx and otp.tsx screens
-- [x] Update auth routing in root layout
-- [x] Credential revocation listener
-- [x] app.json: add `usesAppleSignIn: true` and `expo-apple-authentication` plugin
+**Rationale:** This gives full visibility into the onboarding funnel, core engagement loop, and growth mechanics. Zero features are blocked; no paid PostHog features required. All events use the free tier.
 
-### Add After Validation (v1.3.x)
+### Add After Validation (v1.5+)
 
-Features to add once core Apple Sign-In is working:
+- [ ] Super properties (`app_version`, `platform`) -- add once event naming is validated
+- [ ] Expense wizard step tracking -- add if expense completion rate appears low in funnels
+- [ ] Offline sync event tracking -- add if users report data loss or sync issues
+- [ ] Error event tracking -- add if reliability problems surface
+- [ ] Dashboard funnels and cohorts -- configure in PostHog UI once 1-2 weeks of data is collected
 
-- [ ] Account deletion flow -- needed for App Store submission, not for TestFlight
-- [ ] Phone number edit in profile screen -- if testers report typos
-- [ ] Existing user migration documentation -- if testers had phone OTP accounts
+**Trigger:** After 1-2 weeks of data collection, review PostHog dashboards. If funnels show unexpected drop-offs, add more granular tracking at those points.
 
 ### Future Consideration (v2+)
 
-Features to defer until product-market fit is established:
-
-- [ ] Google Sign-In for Android support
-- [ ] Account linking (merge Apple + phone OTP identities)
-- [ ] Phone number verification (OTP for phone field)
+- [ ] Session replay -- when preparing for public App Store launch and larger user base
+- [ ] Feature flags -- when user base exceeds ~50 users and gradual rollout becomes valuable
+- [ ] A/B experiments -- when user base is large enough for statistical significance (100+ users)
+- [ ] PostHog Group analytics -- when paying for PostHog and need group-level insights
+- [ ] User-facing spending analytics -- separate product milestone, not analytics infrastructure
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Apple Sign-In button + Supabase integration | HIGH | LOW | P1 |
-| Profile setup with phone number field | HIGH | MEDIUM | P1 |
-| Remove phone OTP screens | HIGH | LOW | P1 |
-| Pre-fill display name from Apple credential | MEDIUM | LOW | P1 |
-| New user detection (extended) | HIGH | LOW | P1 |
-| Phone format validation | HIGH | LOW | P1 |
-| Phone uniqueness error handling | HIGH | LOW | P1 |
-| Auth routing updates | HIGH | LOW | P1 |
-| Credential revocation listener | MEDIUM | LOW | P1 |
-| app.json config updates | HIGH | LOW | P1 |
-| Auto-link pending_members on phone save | HIGH | MEDIUM | P1 |
-| Account deletion flow | MEDIUM | MEDIUM | P2 |
-| Phone number edit in profile | LOW | LOW | P3 |
-| `realUserStatus` logging | LOW | LOW | P3 |
+| PostHogProvider + SDK init | None (infra) | Very Low (30 min) | P0 -- Enables everything else |
+| Screen tracking (manual) | None (infra) | Low (1 hour) | P0 -- Core navigation visibility |
+| User identification | None (infra) | Low (30 min) | P0 -- Links events to people |
+| posthog.reset() on sign-out | None (infra) | Very Low (5 min) | P0 -- Data integrity |
+| sign_in event | HIGH (funnel top) | Very Low (10 min) | P0 |
+| profile_completed event | HIGH (onboarding) | Very Low (10 min) | P0 |
+| group_created event | HIGH (activation) | Very Low (10 min) | P0 |
+| expense_added event | HIGHEST (core value) | Very Low (10 min) | P0 |
+| settle_up event | HIGH (completion) | Very Low (10 min) | P0 |
+| invite_accepted event | HIGH (growth) | Very Low (10 min) | P0 |
+| invite_declined event | MEDIUM (churn signal) | Very Low (10 min) | P0 |
+| group_joined_via_link event | HIGH (growth) | Very Low (10 min) | P0 |
+| invite_shared event | HIGH (virality) | Very Low (10 min) | P0 |
+| Debug mode toggle | None (DX) | Very Low (5 min) | P0 |
+| Super properties | LOW (convenience) | Low (15 min) | P1 |
+| Expense wizard steps | MEDIUM (funnel detail) | Medium (1 hour) | P2 |
+| Offline sync tracking | LOW (reliability) | Medium (1 hour) | P2 |
+| Error tracking | MEDIUM (reliability) | Medium (2 hours) | P2 |
 
-**Priority key:**
-- P1: Must have for launch (v1.3)
-- P2: Should have, add when possible (before App Store submission)
-- P3: Nice to have, future consideration
+## Recommended Events for Expense-Splitting App
 
-## Competitor Feature Analysis
+### Event Naming Convention
 
-| Feature | Splitwise | Settle Up | Our Approach (KKB) |
-|---------|-----------|-----------|---------------------|
-| Auth methods | Email, Google, Apple, Facebook | Google, Email | Apple Sign-In only (iOS-focused) |
-| Phone collection | Not required for core features | Not used | Required for invite system (unverified) |
-| Onboarding steps | Sign in -> immediate app access | Sign in -> immediate app access | Sign in -> profile setup (name + phone) -> app |
-| Account deletion | Available in settings | Available in settings | Must add (P2 for App Store compliance) |
-| Auth migration | N/A (always had multiple providers) | N/A | Phone OTP -> Apple Sign-In (one-time migration) |
+Following PostHog best practices, use **snake_case** with **present-tense verbs**:
 
-**Note:** KKB's onboarding has one extra step (phone number collection) compared to competitors. This is a conscious tradeoff: the invite system requires phone numbers, but Apple Sign-In doesn't provide them. Keep the profile setup screen fast and focused to minimize friction.
+- All lowercase
+- Snake case separators
+- `[object]_[verb]` pattern (e.g., `expense_added`, `group_created`)
+- Present tense for actions (not past tense -- PostHog convention is actually flexible here, but consistency matters)
+- Properties use `snake_case` with `is_` prefix for booleans
 
-## Critical Implementation Details
+**Allowed verbs:** `created`, `added`, `completed`, `accepted`, `declined`, `joined`, `shared`, `viewed`, `opened`, `failed`
 
-### Apple Credential Behavior
+### Authentication Events
 
-1. **First sign-in:** Apple provides `fullName` (givenName, familyName), `email`, `identityToken`, `authorizationCode`, `realUserStatus`
-2. **Subsequent sign-ins:** Apple provides ONLY `identityToken`, `authorizationCode`, `user` (stable identifier). `fullName` and `email` are `null`.
-3. **After revoke + re-authorize:** Apple treats it as first sign-in again and provides `fullName` and `email`.
+| Event Name | Properties | When Fired | Screen |
+|------------|------------|------------|--------|
+| `sign_in` | `method: "apple"`, `is_new_user: boolean` | After successful `signInWithIdToken` (before navigation) | `app/(auth)/sign-in.tsx` |
+| `sign_in_failed` | `method: "apple"`, `error: string` | After `signInWithIdToken` returns error (NOT user cancellation) | `app/(auth)/sign-in.tsx` |
+| `profile_completed` | `has_apple_name: boolean`, `has_avatar: boolean` | After successful profile save in setup screen | `app/(auth)/profile-setup.tsx` |
+| `sign_out` | (none) | Before `posthog.reset()` and `supabase.auth.signOut()` | `app/(tabs)/profile.tsx` |
 
-**Implication:** Capture `fullName` immediately on first sign-in. If the app crashes or user force-quits before saving, the name is lost until they revoke and re-authorize in iOS Settings.
+### Core Flow Events
 
-### Database Schema Impact
+| Event Name | Properties | When Fired | Screen |
+|------------|------------|------------|--------|
+| `expense_added` | `amount_centavos: number`, `split_type: "equal" \| "custom"`, `member_count: number`, `is_offline: boolean`, `group_id: string` | After successful expense creation (RPC success or offline enqueue) | `app/group/[id]/add-expense.tsx` |
+| `settle_up` | `amount_centavos: number`, `group_id: string` | After successful `record_settlement` RPC | `components/settlements/SettleConfirmSheet.tsx` |
+| `settlement_deleted` | `amount_centavos: number`, `group_id: string` | After successful `delete_settlement` RPC | `app/group/[id].tsx` |
 
-The `users` table currently has `phone_number text unique not null`. With Apple Sign-In:
-- The auto-link trigger (`handle_pending_member_claim`) fires on `auth.users` INSERT, which happens during `signInWithIdToken`. At that point, `new.phone` is `null` (Apple doesn't provide phone). The trigger inserts a `users` row with empty phone_number, which will violate the `NOT NULL` constraint.
-- **Schema change needed:** Either (a) make `phone_number` nullable (and enforce non-null at app level after profile setup), or (b) modify the trigger to skip the users row insert when phone is null, letting profile-setup handle it.
-- **Recommendation:** Make `phone_number` nullable. The `isNewUser` check gates app access until phone is provided. This is the least disruptive change.
+### Group Events
 
-### Pending Member Auto-Linking
+| Event Name | Properties | When Fired | Screen |
+|------------|------------|------------|--------|
+| `group_created` | `is_offline: boolean` | After successful group creation (RPC success or offline enqueue) | `app/(tabs)/index.tsx` |
+| `invite_shared` | `group_id: string` | When user taps Share button (cannot confirm delivery) | `app/group/[id].tsx` |
+| `group_joined_via_link` | `group_id: string`, `member_count: number` | After successful `join_group_by_invite` RPC | `app/join/[code].tsx` |
+| `invite_accepted` | `group_id: string` | After successful `accept_invite` RPC | `app/(tabs)/index.tsx` |
+| `invite_declined` | `group_id: string` | After user confirms decline in Alert dialog and RPC succeeds | `app/(tabs)/index.tsx` |
+| `member_added` | `group_id: string`, `is_phone_invite: boolean` | After successfully adding a member via the AddMemberSheet | `app/group/[id].tsx` via `AddMemberSheet` |
+| `member_removed` | `group_id: string` | After successful `remove_group_member` RPC | `app/group/[id].tsx` |
 
-Current auto-link trigger fires on `auth.users INSERT`. With Apple Sign-In, phone number is not available at INSERT time -- it comes later during profile setup (UPDATE to `users` table). Need a new mechanism:
-- Option A: Add an UPDATE trigger on `users` table that links pending_members when `phone_number` changes from null to a value.
-- Option B: Call a server function from profile-setup after saving phone number that explicitly links pending_members.
-- **Recommendation:** Option A (UPDATE trigger). More reliable, works automatically, follows existing pattern.
+### Screen View Events
 
-### Expo Configuration Required
+Screen views are tracked automatically via the `usePathname()` hook in the root layout. PostHog captures these as `$screen` events. The screen names map to Expo Router paths:
 
-```json
-{
-  "expo": {
-    "ios": {
-      "usesAppleSignIn": true
-    },
-    "plugins": [
-      "expo-apple-authentication"
-    ]
-  }
-}
+| Screen Path | Readable Name | Notes |
+|-------------|---------------|-------|
+| `/(auth)/sign-in` | Sign In | Pre-auth |
+| `/(auth)/profile-setup` | Profile Setup | First-time only |
+| `/(tabs)` or `/(tabs)/index` | Home | Main dashboard |
+| `/(tabs)/add` | Add (tab) | Quick-add tab |
+| `/(tabs)/profile` | Profile | Settings/sign-out |
+| `/group/[id]` | Group Detail | Core engagement screen |
+| `/group/[id]/add-expense` | Add Expense | 3-step wizard |
+| `/group/[id]/expense/[expenseId]` | Expense Detail | View specific expense |
+| `/group/[id]/balance/[memberId]` | Balance Detail | Drill-down on a balance |
+| `/join/[code]` | Join Group | Deep link landing |
+| `/activity` | Activity Feed | Recent activity |
+
+### User Identification and Properties
+
+| Method | When | Data |
+|--------|------|------|
+| `posthog.identify(userId)` | On `SIGNED_IN` auth state change | `userId` = Supabase `session.user.id` |
+| `$set` properties on identify | Same time as identify | `display_name`, `phone_number`, `created_at` |
+| `$set` property update | After group create/join | `group_count: number` (update incrementally or re-query) |
+| `posthog.reset()` | On sign-out button press | Clears all stored identity and super properties |
+
+## PostHog SDK Integration Pattern
+
+### Expo Router Screen Tracking (Critical Detail)
+
+Do NOT use PostHog's built-in `captureScreens: true` autocapture option. It relies on `useNavigationState` from `@react-navigation/native`, which is incompatible with Expo Router and throws the error: `"Couldn't get the navigation state. Is your component inside a navigator?"` (GitHub issue posthog-js #2740).
+
+Instead, use the Expo Router-native pattern:
+
+```
+Root layout:
+  1. usePathname() from expo-router
+  2. useEffect() watching pathname changes
+  3. posthog.screen(pathname) on each change
 ```
 
-Must also enable "Sign in with Apple" capability in Apple Developer portal for the bundle ID `com.kkbsplit.app`.
+This is the pattern documented in Expo Router's official screen tracking guide and is the standard approach for integrating any analytics provider with Expo Router.
 
-### Supabase Dashboard Configuration
+### Provider Placement
 
-Enable Apple provider in Supabase Auth settings. For native iOS flow, only the "Apple" toggle needs to be enabled -- no client secret or service ID required (those are only for OAuth web flow).
+```
+GestureHandlerRootView
+  PostHogProvider          <-- NEW: outermost data provider
+    AuthProvider
+      NetworkProvider
+        ToastProvider
+          BottomSheetModalProvider
+            ...app content
+```
+
+PostHogProvider goes outside AuthProvider so that auth-related events (sign-in attempts) are captured even before the user is identified.
+
+### Event Capture Pattern
+
+All events should follow the same capture pattern:
+
+```
+1. User action triggers handler
+2. Async operation (RPC/enqueue) succeeds
+3. posthog.capture('event_name', { properties })
+4. UI feedback (toast, navigation, haptics)
+```
+
+Fire the event AFTER success, not before. This ensures we only track completed actions, not attempts. Exception: `sign_in_failed` fires on failure specifically to measure auth failure rates.
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| PostHogProvider setup | HIGH | Official SDK docs, `posthog-react-native` already in package.json at v4.36.0 |
+| Expo Router screen tracking workaround | HIGH | Documented in Expo Router official docs, confirmed by PostHog GitHub issue #2740 |
+| Event naming convention | HIGH | PostHog official best practices docs, multiple sources agree |
+| Specific events to track | HIGH | Derived directly from existing app screens and flows (all source files reviewed) |
+| User identification pattern | HIGH | PostHog official docs, standard React Native pattern |
+| Anti-features (session replay, feature flags) | HIGH | Scope explicitly limited by user; 5-10 tester base makes these pointless |
+| PostHog free tier limits | MEDIUM | Free tier offers 1M events/month -- more than sufficient for 5-10 testers. Exact current limits should be verified on PostHog pricing page. |
 
 ## Sources
 
-- [Expo AppleAuthentication Documentation](https://docs.expo.dev/versions/latest/sdk/apple-authentication/) -- HIGH confidence (official docs)
-- [Supabase: Login with Apple](https://supabase.com/docs/guides/auth/social-login/auth-apple) -- HIGH confidence (official docs)
-- [Supabase: Build a Social Auth App with Expo React Native](https://supabase.com/docs/guides/auth/quickstarts/with-expo-react-native-social-auth) -- HIGH confidence (official docs)
-- [Supabase: Native Mobile Auth Support](https://supabase.com/blog/native-mobile-auth) -- HIGH confidence (official blog)
-- [Apple App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) -- HIGH confidence (official)
-- [Apple: Offering Account Deletion](https://developer.apple.com/support/offering-account-deletion-in-your-app/) -- HIGH confidence (official)
-- [Apple: Handling Account Deletions and Revoking Tokens (TN3194)](https://developer.apple.com/documentation/technotes/tn3194-handling-account-deletions-and-revoking-tokens-for-sign-in-with-apple) -- HIGH confidence (official)
-- [Apple: Communicating Using the Private Email Relay Service](https://developer.apple.com/documentation/signinwithapple/communicating-using-the-private-email-relay-service) -- HIGH confidence (official)
+- [PostHog React Native SDK Documentation](https://posthog.com/docs/libraries/react-native) -- SDK setup, configuration, methods
+- [PostHog React Native SDK Reference](https://posthog.com/docs/references/posthog-react-native) -- API reference for all methods
+- [PostHog Event Tracking Guide](https://posthog.com/tutorials/event-tracking-guide) -- Naming conventions (`category:object_action`, snake_case)
+- [PostHog Product Analytics Best Practices](https://posthog.com/docs/product-analytics/best-practices) -- What to track, naming, funnels
+- [PostHog Capturing Events Docs](https://posthog.com/docs/product-analytics/capture-events) -- capture(), properties, frontend vs backend
+- [PostHog Anonymous vs Identified Events](https://posthog.com/docs/data/anonymous-vs-identified-events) -- IDENTIFIED_ONLY mode, cost implications
+- [Expo Router Screen Tracking Reference](https://docs.expo.dev/router/reference/screen-tracking/) -- usePathname() + useEffect() pattern
+- [PostHog Expo Router Issue #2740](https://github.com/PostHog/posthog-js/issues/2740) -- Known autocapture incompatibility with Expo Router
+- [PostHog React Native Expo Reference App](https://github.com/PostHog/support-rn-expo) -- Official example implementation
+- [PostHog React Native Tutorial](https://posthog.com/tutorials/react-native-analytics) -- Step-by-step Expo setup guide
 
 ---
-*Feature research for: Apple Sign-In authentication flow (KKB v1.3)*
-*Researched: 2026-02-22*
+*Feature research for: PostHog Analytics Integration (v1.4 milestone)*
+*Researched: 2026-02-24*
