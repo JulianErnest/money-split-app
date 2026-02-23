@@ -28,6 +28,7 @@ import {
 import { AddMemberSheet } from "@/components/groups/AddMemberModal";
 import { SettleConfirmSheet } from "@/components/settlements/SettleConfirmSheet";
 import { useToast } from "@/components/ui/Toast";
+import { trackInviteShared } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
@@ -292,6 +293,7 @@ export default function GroupDetailScreen() {
       await Share.share({
         message: `Join "${group.name}" on KKB! ${url}`,
       });
+      trackInviteShared(group!.id);
     } catch {
       // User cancelled or share failed -- no action needed
     }

@@ -26,6 +26,7 @@ import {
   formatPeso,
   MAX_AMOUNT_CENTAVOS,
 } from "@/lib/expense-utils";
+import { trackExpenseAdded } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useNetwork } from "@/lib/network-context";
@@ -227,6 +228,13 @@ export default function AddExpenseScreen() {
         setSubmitting(false);
         return;
       }
+
+      trackExpenseAdded({
+        groupId: groupId!,
+        amount: centavos / 100,
+        splitType: splitType,
+        memberCount: selectedMemberIds.length,
+      });
 
       router.back();
     } catch {

@@ -2,6 +2,7 @@ import { Avatar, EMOJI_LIST } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
+import { trackGroupJoinedViaLink } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { colors, spacing } from "@/theme";
@@ -130,6 +131,7 @@ export default function JoinGroupScreen() {
           name: groupData?.name ?? "Group",
           memberCount: count ?? 1,
         });
+        trackGroupJoinedViaLink(data as string);
         setState("success");
       } else {
         setErrorMessage("Something went wrong. Please try again.");

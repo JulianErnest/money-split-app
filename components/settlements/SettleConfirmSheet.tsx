@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { AppBottomSheet } from "@/components/ui/BottomSheet";
 import { useToast } from "@/components/ui/Toast";
+import { trackSettleUp } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 import { formatPeso } from "@/lib/expense-utils";
 import { colors, spacing } from "@/theme";
@@ -64,6 +65,7 @@ const SettleConfirmSheet = forwardRef<BottomSheetModal, SettleConfirmSheetProps>
           return;
         }
 
+        trackSettleUp({ groupId, amount: amountCentavos / 100 });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showToast({ message: "Settled!", type: "success" });
         onSettled();
