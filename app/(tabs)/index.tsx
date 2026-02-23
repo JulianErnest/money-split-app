@@ -21,11 +21,16 @@ import {
   fetchRecentActivity,
   formatRelativeTime,
 } from "@/lib/activity";
+import { trackGroupCreated, trackInviteAccepted, trackInviteDeclined } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth-context";
 import { formatBalanceColor, formatBalanceSummary } from "@/lib/balance-utils";
 import { getCachedData, setCachedData } from "@/lib/cached-data";
 import { formatPeso } from "@/lib/expense-utils";
-import { fetchGroupCardData, GroupCardData } from "@/lib/group-card-data";
+import {
+  fetchGroupCardData,
+  GroupCardData,
+  GroupCardMember,
+} from "@/lib/group-card-data";
 import { fetchPendingInvites, InviteRow } from "@/lib/group-members";
 import { useNetwork } from "@/lib/network-context";
 import { enqueue } from "@/lib/offline-queue";
@@ -35,8 +40,8 @@ import { colors, radius, spacing } from "@/theme";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { MotiPressable } from "moti/interactions";
 import { MotiView } from "moti";
+import { MotiPressable } from "moti/interactions";
 import React, {
   useCallback,
   useEffect,
@@ -59,6 +64,30 @@ function getGroupEmoji(groupName: string): string {
   const index = Math.abs(hash) % EMOJI_LIST.length;
   return EMOJI_LIST[index];
 }
+
+// TODO: Remove – simulated members for avatar stack testing
+const TEST_MEMBERS: GroupCardMember[][] = [
+  [
+    { id: "t1", display_name: "Alice", avatar_url: "🐱" },
+    { id: "t2", display_name: "Bob", avatar_url: "🦊" },
+    { id: "t3", display_name: "Carol", avatar_url: "🐸" },
+    { id: "t4", display_name: "Dan", avatar_url: "🐼" },
+    { id: "t5", display_name: "Eve", avatar_url: "🦄" },
+  ],
+  [
+    { id: "t6", display_name: "Frank", avatar_url: "🐶" },
+    { id: "t7", display_name: "Grace", avatar_url: "🐧" },
+    { id: "t8", display_name: "Heidi", avatar_url: "🦋" },
+  ],
+  [
+    { id: "t9", display_name: "Ivan", avatar_url: "🐻" },
+    { id: "t10", display_name: "Judy", avatar_url: "🐰" },
+    { id: "t11", display_name: "Karl", avatar_url: "🦁" },
+    { id: "t12", display_name: "Lily", avatar_url: "🐨" },
+    { id: "t13", display_name: "Mike", avatar_url: "🐯" },
+    { id: "t14", display_name: "Nina", avatar_url: "🦈" },
+  ],
+];
 
 // ---------------------------------------------------------------------------
 // Balance Summary Header
@@ -369,6 +398,7 @@ export default function GroupsScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           return;
         }
+        trackInviteAccepted(groupId as string);
         // Remove from local state immediately
         setPendingInvites((prev) =>
           prev.filter((i) => i.pending_member_id !== invite.pending_member_id),
@@ -416,6 +446,7 @@ export default function GroupsScreen() {
                   );
                   return;
                 }
+                trackInviteDeclined(invite.group_id);
                 // Silently remove (no toast per user decision)
                 setPendingInvites((prev) =>
                   prev.filter(
@@ -473,7 +504,7 @@ export default function GroupsScreen() {
 
     setCreating(true);
     try {
-      const { error } = await supabase.rpc("create_group", {
+      const { data, error } = await supabase.rpc("create_group", {
         group_name: trimmed,
       });
 
@@ -483,6 +514,7 @@ export default function GroupsScreen() {
         return;
       }
 
+      trackGroupCreated(data as string);
       setNewGroupName("");
       closeCreateSheet();
       await fetchGroups();
@@ -567,11 +599,12 @@ export default function GroupsScreen() {
   );
 
   const renderGroupCard = useCallback(
-    (item: GroupRow) => {
+    (item: GroupRow, index: number) => {
       const group = item.groups;
       const isPending = item.pending === true;
       const cardInfo = groupCardData.get(group.id);
       const netCentavos = groupBalances.get(group.id);
+      const testMembers = TEST_MEMBERS[index % TEST_MEMBERS.length];
 
       // Pending (offline) groups: simple rendering without MotiPressable
       if (isPending) {
@@ -636,11 +669,9 @@ export default function GroupsScreen() {
                 </View>
               )}
             </View>
-            {cardInfo && cardInfo.members.length > 0 && (
-              <View style={styles.cardAvatarRow}>
-                <AvatarStack members={cardInfo.members} max={4} />
-              </View>
-            )}
+            <View style={styles.cardAvatarRow}>
+              <AvatarStack members={testMembers} max={4} />
+            </View>
           </GlassCard>
         </MotiPressable>
       );
@@ -700,11 +731,19 @@ export default function GroupsScreen() {
   );
 
   const renderItem = useCallback(
-    ({ item, section }: { item: any; section: HomeSection }) => {
+    ({
+      item,
+      index,
+      section,
+    }: {
+      item: any;
+      index: number;
+      section: HomeSection;
+    }) => {
       if (section.type === "invite") {
         return renderInviteCard(item as InviteRow);
       }
-      return renderGroupCard(item as GroupRow);
+      return renderGroupCard(item as GroupRow, index);
     },
     [renderInviteCard, renderGroupCard],
   );
@@ -727,7 +766,7 @@ export default function GroupsScreen() {
           <EmptyState
             emoji="👥"
             headline="No groups yet"
-            subtext="Make groups na sa imong mga friends diri bro"
+            subtext="Create a group to start splitting expenses"
           />
         );
       }
