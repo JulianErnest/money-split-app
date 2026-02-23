@@ -59,28 +59,28 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | TBD | Pending |
-| SETUP-02 | TBD | Pending |
-| SETUP-03 | TBD | Pending |
-| SCREEN-01 | TBD | Pending |
-| SCREEN-02 | TBD | Pending |
-| IDENT-01 | TBD | Pending |
-| IDENT-02 | TBD | Pending |
-| IDENT-03 | TBD | Pending |
-| EVENT-01 | TBD | Pending |
-| EVENT-02 | TBD | Pending |
-| EVENT-03 | TBD | Pending |
-| EVENT-04 | TBD | Pending |
-| EVENT-05 | TBD | Pending |
-| EVENT-06 | TBD | Pending |
-| EVENT-07 | TBD | Pending |
-| EVENT-08 | TBD | Pending |
-| EVENT-09 | TBD | Pending |
+| SETUP-01 | Phase 16 | Pending |
+| SETUP-02 | Phase 16 | Pending |
+| SETUP-03 | Phase 16 | Pending |
+| SCREEN-01 | Phase 16 | Pending |
+| SCREEN-02 | Phase 16 | Pending |
+| IDENT-01 | Phase 16 | Pending |
+| IDENT-02 | Phase 16 | Pending |
+| IDENT-03 | Phase 16 | Pending |
+| EVENT-01 | Phase 16 | Pending |
+| EVENT-02 | Phase 16 | Pending |
+| EVENT-03 | Phase 16 | Pending |
+| EVENT-04 | Phase 16 | Pending |
+| EVENT-05 | Phase 16 | Pending |
+| EVENT-06 | Phase 16 | Pending |
+| EVENT-07 | Phase 16 | Pending |
+| EVENT-08 | Phase 16 | Pending |
+| EVENT-09 | Phase 16 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 17 total
-- Mapped to phases: 0/17 (awaiting roadmap)
-- Unmapped: 17
+- Mapped to phases: 17/17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-24*

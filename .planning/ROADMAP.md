@@ -6,6 +6,7 @@
 - v1.1 Invites & Settle Up - Phases 7-9 (shipped 2026-02-20)
 - v1.2 Home Screen Dashboard - Phases 10-12 (shipped 2026-02-21)
 - v1.3 Apple Sign-In - Phases 13-15 (shipped 2026-02-22)
+- v1.4 PostHog Analytics - Phase 16 (in progress)
 
 ## Phases
 
@@ -130,64 +131,40 @@ Plans:
 
 </details>
 
-### v1.3 Apple Sign-In - SHIPPED 2026-02-22
+<details>
+<summary>v1.3 Apple Sign-In (Phases 13-15) - SHIPPED 2026-02-22</summary>
 
-**Milestone Goal:** Replace phone number OTP authentication with Apple Sign-In while still requiring phone number collection for the invite system.
+- [x] Phase 13: Database & Infrastructure Prep (2/2 plans) — completed 2026-02-22
+- [x] Phase 14: Core Auth Replacement (2/2 plans) — completed 2026-02-22
+- [x] Phase 15: Profile Setup & Invite Linking (1/1 plans) — completed 2026-02-22
 
-#### Phase 13: Database & Infrastructure Prep
+</details>
 
-**Goal**: The database and Supabase configuration can safely handle Apple Sign-In users without breaking existing phone OTP users
-**Depends on**: Phase 12 (existing auth system, users table, pending_members trigger)
-**Requirements**: DB-01, DB-02, DB-03, DB-04, DB-05
+### v1.4 PostHog Analytics (In Progress)
+
+**Milestone Goal:** Add product analytics to understand how testers use the app, track key funnels, and build the analytics infrastructure for growth.
+
+#### Phase 16: PostHog Analytics Integration
+
+**Goal**: Every user action in the app is tracked in PostHog -- screen views, user identity, and core product events -- giving full visibility into onboarding funnels, engagement loops, and growth mechanics
+**Depends on**: Phase 15 (existing auth system, profile setup, all core flows)
+**Requirements**: SETUP-01, SETUP-02, SETUP-03, SCREEN-01, SCREEN-02, IDENT-01, IDENT-02, IDENT-03, EVENT-01, EVENT-02, EVENT-03, EVENT-04, EVENT-05, EVENT-06, EVENT-07, EVENT-08, EVENT-09
 **Success Criteria** (what must be TRUE):
-  1. A user row can exist with NULL phone_number (column is nullable, existing rows with values are unaffected)
-  2. The auth trigger creates a users row for Apple Sign-In users without crashing on NULL phone
-  3. An RPC exists that links pending member invites when a phone number is provided after authentication
-  4. Apple Sign-In provider is enabled in Supabase dashboard with the correct bundle ID
-  5. app.json is configured with expo-apple-authentication plugin and usesAppleSignIn capability flag
-**Plans**: 2 plans
+  1. App launches with PostHog initialized and events appear in PostHog Live Events dashboard when navigating the app in development mode
+  2. Navigating between screens produces `$screen` events with normalized route names (e.g., `/group/[id]` not `/group/abc123`) visible in PostHog
+  3. After completing profile setup, the user appears as an identified person in PostHog with their display name, signup method, and first sign-in date as person properties
+  4. Signing out and signing in as a different user produces separate person records in PostHog (no identity leakage between sessions)
+  5. Walking through the complete product loop (sign in, create group, add expense, settle up, share invite, accept invite) produces all 9 named events in PostHog with correct properties attached to each
+**Plans**: TBD
 
 Plans:
-- [x] 13-01-PLAN.md — Database migration: nullable phone_number, trigger rewrite with NULLIF guard, link_phone_to_pending_invites RPC, type regeneration
-- [x] 13-02-PLAN.md — Install expo-apple-authentication, configure app.json, enable Supabase Apple provider
-
-#### Phase 14: Core Auth Replacement
-
-**Goal**: Users can sign in with Apple and the phone OTP flow is completely removed
-**Depends on**: Phase 13 (database handles NULL phone, Apple provider enabled)
-**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06
-**Success Criteria** (what must be TRUE):
-  1. User sees an Apple Sign-In button and can authenticate via native iOS dialog (Face ID / Touch ID)
-  2. Successful Apple authentication creates a valid Supabase session that persists across app restarts
-  3. User cancelling the Apple dialog returns to the sign-in screen without any error shown
-  4. Phone OTP screens (phone.tsx, otp.tsx) no longer exist in the app
-  5. All navigation routes point to the Apple Sign-In screen with no dead references to phone auth
-**Plans**: 2 plans
-
-Plans:
-- [x] 14-01-PLAN.md — Install expo-crypto, create Apple Sign-In screen with nonce-based signInWithIdToken flow
-- [x] 14-02-PLAN.md — Delete phone OTP screens, update all routing references, fix profile-setup phone bug, update sign-out message
-
-#### Phase 15: Profile Setup & Invite Linking
-
-**Goal**: New users complete profile setup with phone number and the invite system works end-to-end with Apple Sign-In
-**Depends on**: Phase 14 (Apple Sign-In working, users can authenticate)
-**Requirements**: PROF-01, PROF-02, PROF-03, PROF-04, PROF-05, PROF-06, CLEAN-01, CLEAN-02
-**Success Criteria** (what must be TRUE):
-  1. Profile setup requires phone number input and validates PH format (+63 9XX) before allowing save
-  2. Apple-provided display name is pre-filled on first sign-in so user does not have to retype their name
-  3. After saving phone in profile setup, any pending invites for that phone number are automatically linked
-  4. User cannot complete onboarding without both display name and phone number being present
-  5. No phone OTP language appears anywhere in the UI (sign-out message shows auth-agnostic text, Apple relay email is never displayed)
-**Plans**: 1 plan
-
-Plans:
-- [x] 15-01-PLAN.md — Phone input with validation, Apple name pre-fill, invite linking RPC, isNewUser dual-field gate, profile cleanup
+- [ ] 16-01: TBD
+- [ ] 16-02: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 13 -> 14 -> 15
+Phases execute in numeric order: 16
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -207,3 +184,4 @@ Phases execute in numeric order: 13 -> 14 -> 15
 | 13. Database & Infrastructure Prep | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 15. Profile Setup & Invite Linking | v1.3 | 1/1 | Complete | 2026-02-22 |
+| 16. PostHog Analytics Integration | v1.4 | 0/TBD | Not started | - |

@@ -5,14 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.4 PostHog Analytics — Not started (defining requirements)
+**Current focus:** v1.4 PostHog Analytics — Phase 16: PostHog Analytics Integration
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-24 — Milestone v1.4 started
+Phase: 16 of 16 (PostHog Analytics Integration)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-24 — Roadmap created for v1.4
+
+Progress: [##################################] 100% (phases 1-15) | Phase 16: Not started
 
 ## Performance Metrics
 
@@ -39,6 +41,12 @@ Last activity: 2026-02-24 — Milestone v1.4 started
 
 Full decision log in PROJECT.md Key Decisions table.
 
+Recent for v1.4:
+- Single phase for all 17 analytics requirements (small scope, high interdependence, ~200 LOC)
+- Autocapture disabled (crashes with Expo Router -- known PostHog issue #2740)
+- Manual screen tracking via usePathname() hook
+- Standalone PostHog client instance pattern (allows non-React access)
+
 ### Known Issues
 
 - Pre-existing TypeScript error in app/(tabs)/index.tsx (SectionList type mismatch from phase 08-02) -- cosmetic
@@ -55,5 +63,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Milestone v1.4 started, defining requirements
+Stopped at: Roadmap created for v1.4 milestone, ready to plan Phase 16
 Resume file: None
