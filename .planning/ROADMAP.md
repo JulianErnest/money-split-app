@@ -155,11 +155,11 @@ Plans:
   3. After completing profile setup, the user appears as an identified person in PostHog with their display name, signup method, and first sign-in date as person properties
   4. Signing out and signing in as a different user produces separate person records in PostHog (no identity leakage between sessions)
   5. Walking through the complete product loop (sign in, create group, add expense, settle up, share invite, accept invite) produces all 9 named events in PostHog with correct properties attached to each
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: TBD
-- [ ] 16-02: TBD
+- [ ] 16-01-PLAN.md — PostHog client, provider wrapper, screen tracking, identity management, sign-out reset
+- [ ] 16-02-PLAN.md — Wire all 9 core product events into existing screen handlers
 
 ## Progress
 
@@ -184,4 +184,4 @@ Phases execute in numeric order: 16
 | 13. Database & Infrastructure Prep | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 15. Profile Setup & Invite Linking | v1.3 | 1/1 | Complete | 2026-02-22 |
-| 16. PostHog Analytics Integration | v1.4 | 0/TBD | Not started | - |
+| 16. PostHog Analytics Integration | v1.4 | 0/2 | Not started | - |
