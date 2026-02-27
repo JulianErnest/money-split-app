@@ -11,7 +11,7 @@ import {
 import { Text } from "@/components/ui/Text";
 import { trackSignIn } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
-import { colors, spacing } from "@/theme";
+import { colors, fontFamily, fontSize, radius, spacing } from "@/theme";
 
 const CAROUSEL_IMAGES = [
   require("@/assets/images/auth/friends-1.jpg"),
@@ -19,6 +19,12 @@ const CAROUSEL_IMAGES = [
   require("@/assets/images/auth/friends-3.jpg"),
 ];
 const INTERVAL = 5000;
+
+const CAROUSEL_TAGLINES = [
+  "Split bills, not friendships",
+  "Track expenses with your barkada",
+  "Settle up in seconds",
+];
 
 export default function SignInScreen() {
   const [isAvailable, setIsAvailable] = useState(false);
@@ -134,16 +140,37 @@ export default function SignInScreen() {
         />
       </Animated.View>
 
-      {/* Dark overlay */}
-      <View style={styles.overlay} />
+      {/* Gradient overlay -- lighter top, darker bottom */}
+      <View style={styles.overlayTop} />
+      <View style={styles.overlayBottom} />
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
+          {/* Page indicator dots */}
+          <View style={styles.dotsRow}>
+            {CAROUSEL_IMAGES.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  index === currentIndex ? styles.dotActive : styles.dotInactive,
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Rotating tagline -- fades with carousel */}
+          <Animated.View style={{ opacity: fadeAnim, marginBottom: spacing[6] }}>
+            <Text variant="h2" color="textPrimary" style={styles.tagline}>
+              {CAROUSEL_TAGLINES[currentIndex]}
+            </Text>
+          </Animated.View>
+
           <View style={styles.header}>
-            <Text variant="h1" color="accent" style={styles.appName}>
+            <Text color="accent" style={styles.appName}>
               KKB
             </Text>
-            <Text variant="body" color="textSecondary">
+            <Text variant="body" color="textSecondary" style={styles.subtitle}>
               Split expenses with your barkada
             </Text>
           </View>
@@ -182,23 +209,63 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(13, 13, 13, 0.75)",
+  overlayTop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "50%",
+    backgroundColor: "rgba(13, 13, 13, 0.3)",
+  },
+  overlayBottom: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "50%",
+    backgroundColor: "rgba(13, 13, 13, 0.85)",
   },
   safeArea: {
     flex: 1,
   },
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-end",
     paddingHorizontal: spacing[6],
+    paddingBottom: spacing[12],
+  },
+  dotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: spacing[2],
+    marginBottom: spacing[8],
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.full,
+  },
+  dotActive: {
+    backgroundColor: colors.accent,
+  },
+  dotInactive: {
+    backgroundColor: colors.textTertiary,
+  },
+  tagline: {
+    textAlign: "center",
   },
   header: {
-    marginBottom: spacing[10],
+    marginBottom: spacing[6],
   },
   appName: {
+    fontSize: fontSize.hero,
+    fontFamily: fontFamily.extraBold,
+    lineHeight: fontSize.hero * 1.2,
+    textAlign: "center",
     marginBottom: spacing[2],
+  },
+  subtitle: {
+    textAlign: "center",
   },
   error: {
     marginBottom: spacing[4],
