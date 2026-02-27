@@ -5,14 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.5 Partial Settlements
+**Current focus:** Phase 17 — Partial Settlement Amount Entry (v1.5)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-27 — Milestone v1.5 started
+Phase: 17 of 17 (Partial Settlement Amount Entry)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-27 — Roadmap created for v1.5
+
+Progress: [=================>..] 94% (40/42 plans complete — phase 17 TBD)
 
 ## Performance Metrics
 
@@ -43,13 +45,11 @@ Last activity: 2026-02-27 — Milestone v1.5 started
 
 Full decision log in PROJECT.md Key Decisions table.
 
-Recent for v1.4:
-- Single phase for all 17 analytics requirements (small scope, high interdependence, ~200 LOC)
-- Autocapture disabled (crashes with Expo Router -- known PostHog issue #2740)
-- Manual screen tracking via usePathname() hook
-- Standalone PostHog client instance pattern (allows non-React access)
-- Events fire only after RPC success, never on error paths
-- trackInviteShared fires on intent (Share.share()), not delivery
+Recent for v1.5:
+- Single phase for all 6 settlement UX requirements (all modify one component, no backend changes)
+- No backend/database changes needed -- purely UI work on SettleConfirmSheet
+- NumPad component and useAmountInput hook already exist and are reusable
+- record_settlement RPC already accepts any positive amount (no API changes)
 
 ### Known Issues
 
@@ -66,5 +66,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Starting milestone v1.5 Partial Settlements — defining requirements
+Stopped at: Roadmap created for v1.5 Partial Settlements — ready to plan Phase 17
 Resume file: None

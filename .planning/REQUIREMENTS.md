@@ -32,17 +32,17 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETL-01 | — | Pending |
-| SETL-02 | — | Pending |
-| SETL-03 | — | Pending |
-| SETL-04 | — | Pending |
-| SETL-05 | — | Pending |
-| SETL-06 | — | Pending |
+| SETL-01 | Phase 17 | Pending |
+| SETL-02 | Phase 17 | Pending |
+| SETL-03 | Phase 17 | Pending |
+| SETL-04 | Phase 17 | Pending |
+| SETL-05 | Phase 17 | Pending |
+| SETL-06 | Phase 17 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 6 total
-- Mapped to phases: 0
-- Unmapped: 6 ⚠️
+- Mapped to phases: 6
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-27*
