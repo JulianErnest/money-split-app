@@ -2,19 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-24)
+See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.4 PostHog Analytics — Phase 16: PostHog Analytics Integration
+**Current focus:** v1.5 Partial Settlements
 
 ## Current Position
 
-Phase: 16 of 16 (PostHog Analytics Integration)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-24 — Completed 16-02-PLAN.md
-
-Progress: [████████████████████████████████████] 100% (all phases complete)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-27 — Milestone v1.5 started
 
 ## Performance Metrics
 
@@ -50,14 +48,12 @@ Recent for v1.4:
 - Autocapture disabled (crashes with Expo Router -- known PostHog issue #2740)
 - Manual screen tracking via usePathname() hook
 - Standalone PostHog client instance pattern (allows non-React access)
-- posthog.debug() is a method call, not a constructor option (v4.36.0)
-- PostHogProvider placed outside AuthProvider for auth event capture
 - Events fire only after RPC success, never on error paths
 - trackInviteShared fires on intent (Share.share()), not delivery
 
 ### Known Issues
 
-None (pre-existing TypeScript errors resolved).
+None.
 
 ### Pending Todos
 
@@ -69,6 +65,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Completed 16-02-PLAN.md (PostHog event instrumentation) -- Phase 16 complete
+Last session: 2026-02-27
+Stopped at: Starting milestone v1.5 Partial Settlements — defining requirements
 Resume file: None

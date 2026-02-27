@@ -8,16 +8,16 @@ A mobile expense-splitting app built for Filipino users — peso-first, designed
 
 A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
 
-## Current Milestone: v1.4 PostHog Analytics
+## Current Milestone: v1.5 Partial Settlements
 
-**Goal:** Add product analytics to understand how testers use the app, track key funnels, and build the analytics infrastructure for growth.
+**Goal:** Allow users to record partial payments instead of requiring whole-balance settlements, so friends who pay back in installments can track progress accurately.
 
 **Target features:**
-- PostHog React Native SDK integration with provider wrapper
-- User identification tied to Supabase auth (user ID, display name)
-- Automatic screen view tracking via Expo Router navigation events
-- Key action event tracking (sign-in, create group, add expense, settle up, accept/decline invite, join via link)
-- User properties synced to PostHog (name, group count)
+- Editable settlement amount via numpad (pre-filled with full balance)
+- Amount capped at current balance (no overpayment)
+- Balance decreases by partial settlement amount
+- Settlement history shows partial amounts
+- Full settlement still works (don't change pre-filled amount)
 
 ## Requirements
 
@@ -48,14 +48,19 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 - ✓ Link invites continue to auto-join — v1.1
 - ✓ Settle up: mark whole balance as settled — v1.1
 - ✓ Settlement recorded with amount, payer, payee, timestamp — v1.1
+- ✓ PostHog SDK integrated with provider wrapper — v1.4
+- ✓ User identification synced with Supabase auth — v1.4
+- ✓ Automatic screen view tracking — v1.4
+- ✓ Key action event tracking across all core flows — v1.4
+- ✓ User properties synced to PostHog — v1.4
 
 ### Active
 
-- [ ] PostHog SDK integrated with provider wrapper
-- [ ] User identification synced with Supabase auth
-- [ ] Automatic screen view tracking
-- [ ] Key action event tracking across all core flows
-- [ ] User properties synced to PostHog
+- [ ] Editable settlement amount via numpad pre-filled with full balance
+- [ ] Settlement amount capped at current balance (no overpayment)
+- [ ] Partial settlement decreases balance by settled amount
+- [ ] Settlement history displays partial amounts correctly
+- [ ] Full settlement still works when user doesn't change the pre-filled amount
 
 ### Out of Scope
 
@@ -73,7 +78,7 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 - Leaving groups — simplifies balance integrity
 - Realtime subscriptions — pull-to-refresh is acceptable
 - Admin/role system for groups — creator-only permission is sufficient
-- Partial settlements — settle whole balance only for simplicity
+- Overpayment beyond current balance — cap at balance amount for simplicity
 
 ## Context
 
@@ -118,10 +123,10 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 | Debt simplification algorithm | Core differentiator | ✓ Good |
 | Invite inbox (not push notifications) | Simpler to build, no notification infra needed | ✓ Good |
 | Creator-only phone invites | Security: prevents random members adding strangers | ✓ Good |
-| Whole-balance settlement only | Partial settlements add complexity, defer to later | ✓ Good |
+| Whole-balance settlement only | Partial settlements add complexity, defer to later | ⚠️ Revisit — v1.5 adds partial settlements |
 | Decline removes splits (hard delete) | Clean separation; allows re-invite by creator | ✓ Good |
 | No server-side settlement amount validation | Race condition tolerance; UI enforces whole-balance | ✓ Good |
 | Separate settlements table (not expense type) | Clean separation of concerns, no expense query pollution | ✓ Good |
 
 ---
-*Last updated: 2026-02-22 after v1.3 milestone started*
+*Last updated: 2026-02-27 after v1.5 milestone started*
