@@ -179,7 +179,10 @@ Plans:
   3. After confirming a partial settlement, the balance view refreshes and shows the remaining debt (original balance minus settled amount)
   4. User cannot enter an amount greater than the current balance or an amount of zero -- the confirm button is disabled for invalid amounts
   5. When the user does not change the pre-filled amount and confirms, a full settlement is recorded (identical behavior to pre-v1.5)
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 17-01-PLAN.md — Rewrite SettleConfirmSheet with NumPad integration, partial amount validation, dynamic snap points, and differentiated toast messages
 
 ## Progress
 
@@ -205,4 +208,4 @@ Phases execute in numeric order: 17
 | 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 15. Profile Setup & Invite Linking | v1.3 | 1/1 | Complete | 2026-02-22 |
 | 16. PostHog Analytics Integration | v1.4 | 2/2 | Complete | 2026-02-24 |
-| 17. Partial Settlement Amount Entry | v1.5 | 0/0 | Not started | - |
+| 17. Partial Settlement Amount Entry | v1.5 | 0/1 | Not started | - |
