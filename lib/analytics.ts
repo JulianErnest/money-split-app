@@ -50,10 +50,15 @@ export function trackExpenseAdded(data: {
   });
 }
 
-export function trackSettleUp(data: { groupId: string; amount: number }) {
+export function trackSettleUp(data: {
+  groupId: string;
+  amount: number;
+  isPartial: boolean;
+}) {
   posthogClient.capture("settle_up", {
     group_id: data.groupId,
     amount: data.amount,
+    is_partial: data.isPartial,
   });
 }
 
