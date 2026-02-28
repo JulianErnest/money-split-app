@@ -7,12 +7,12 @@
 
 ### Settlement UX
 
-- [ ] **SETL-01**: Settle-up sheet displays an editable amount field with the NumPad component instead of a fixed amount display
-- [ ] **SETL-02**: Amount field pre-filled with the full simplified balance between the two users
-- [ ] **SETL-03**: Amount cannot exceed the current balance between the two users (UI-enforced cap)
-- [ ] **SETL-04**: Minimum settlement amount is ₱0.01 (confirm button disabled when amount is zero or empty)
-- [ ] **SETL-05**: After confirming a partial settlement, the group balances refresh and show the remaining debt
-- [ ] **SETL-06**: Confirming without changing the pre-filled amount records a full settlement (backwards-compatible behavior)
+- [x] **SETL-01**: Settle-up sheet displays an editable amount field with the NumPad component instead of a fixed amount display
+- [x] **SETL-02**: Amount field pre-filled with the full simplified balance between the two users
+- [x] **SETL-03**: Amount cannot exceed the current balance between the two users (UI-enforced cap)
+- [x] **SETL-04**: Minimum settlement amount is ₱0.01 (confirm button disabled when amount is zero or empty)
+- [x] **SETL-05**: After confirming a partial settlement, the group balances refresh and show the remaining debt
+- [x] **SETL-06**: Confirming without changing the pre-filled amount records a full settlement (backwards-compatible behavior)
 
 ## Future Requirements (v1.6+)
 
@@ -32,12 +32,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETL-01 | Phase 17 | Pending |
-| SETL-02 | Phase 17 | Pending |
-| SETL-03 | Phase 17 | Pending |
-| SETL-04 | Phase 17 | Pending |
-| SETL-05 | Phase 17 | Pending |
-| SETL-06 | Phase 17 | Pending |
+| SETL-01 | Phase 17 | Complete |
+| SETL-02 | Phase 17 | Complete |
+| SETL-03 | Phase 17 | Complete |
+| SETL-04 | Phase 17 | Complete |
+| SETL-05 | Phase 17 | Complete |
+| SETL-06 | Phase 17 | Complete |
 
 **Coverage:**
 - v1.5 requirements: 6 total

@@ -7,7 +7,7 @@
 - v1.2 Home Screen Dashboard - Phases 10-12 (shipped 2026-02-21)
 - v1.3 Apple Sign-In - Phases 13-15 (shipped 2026-02-22)
 - v1.4 PostHog Analytics - Phase 16 (shipped 2026-02-24)
-- v1.5 Partial Settlements - Phase 17
+- v1.5 Partial Settlements - Phase 17 (shipped 2026-02-28)
 
 
 ## Phases
@@ -164,25 +164,20 @@ Plans:
 
 </details>
 
-### v1.5 Partial Settlements
-
-**Milestone Goal:** Allow users to record partial payments instead of requiring whole-balance settlements, so friends who pay back in installments can track progress accurately.
+<details>
+<summary>v1.5 Partial Settlements (Phase 17) - SHIPPED 2026-02-28</summary>
 
 #### Phase 17: Partial Settlement Amount Entry
 
 **Goal**: Users can choose how much to settle when recording a payment -- from the minimum amount up to the full balance -- enabling installment-style paybacks that update balances correctly
 **Depends on**: Phase 16 (existing settle-up flow in SettleConfirmSheet, NumPad component, useAmountInput hook)
 **Requirements**: SETL-01, SETL-02, SETL-03, SETL-04, SETL-05, SETL-06
-**Success Criteria** (what must be TRUE):
-  1. When a user taps "Settle Up" on a balance, the confirmation sheet shows a NumPad with the full balance amount pre-filled and editable
-  2. User can type a smaller amount and confirm to record only that partial payment
-  3. After confirming a partial settlement, the balance view refreshes and shows the remaining debt (original balance minus settled amount)
-  4. User cannot enter an amount greater than the current balance or an amount of zero -- the confirm button is disabled for invalid amounts
-  5. When the user does not change the pre-filled amount and confirms, a full settlement is recorded (identical behavior to pre-v1.5)
 **Plans**: 1 plan
 
 Plans:
-- [ ] 17-01-PLAN.md — Rewrite SettleConfirmSheet with NumPad integration, partial amount validation, dynamic snap points, and differentiated toast messages
+- [x] 17-01-PLAN.md — Rewrite SettleConfirmSheet with NumPad integration, partial amount validation, dynamic snap points, and differentiated toast messages
+
+</details>
 
 ## Progress
 
@@ -208,4 +203,4 @@ Phases execute in numeric order: 17
 | 14. Core Auth Replacement | v1.3 | 2/2 | Complete | 2026-02-22 |
 | 15. Profile Setup & Invite Linking | v1.3 | 1/1 | Complete | 2026-02-22 |
 | 16. PostHog Analytics Integration | v1.4 | 2/2 | Complete | 2026-02-24 |
-| 17. Partial Settlement Amount Entry | v1.5 | 0/1 | Not started | - |
+| 17. Partial Settlement Amount Entry | v1.5 | 1/1 | Complete | 2026-02-28 |
