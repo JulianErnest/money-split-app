@@ -2,6 +2,31 @@
 
 ## Completed
 
+### v1.5 — Partial Settlements (2026-02-27 → 2026-02-28)
+
+**Goal:** Allow users to record partial payments instead of requiring whole-balance settlements, enabling installment-style paybacks.
+
+**Phases:** 1 (Phase 17)
+**Plans:** 1 total
+**Requirements:** 6/6 complete
+
+**What shipped:**
+- Two-state SettleConfirmSheet with display mode and NumPad edit mode
+- Balance-capped amount input with dust rule (remainder < P1.00 forces full settle)
+- Differentiated toast messages for partial vs full settlements
+- PostHog analytics tracking with `is_partial` flag
+- Backwards-compatible full settlement behavior
+
+**Key decisions:**
+- Inline hook in SettleConfirmSheet (single consumer)
+- Dust rule threshold at P1.00 (100 centavos)
+- Display mode 35% snap, edit mode 75% snap
+- No backend/database changes needed (purely UI)
+
+**Last phase number:** 17
+
+---
+
 ### v1.1 — Invites & Settle Up (2026-02-19 → 2026-02-20)
 
 **Goal:** Fix the broken invite/pending member system with proper consent-based invites, and add manual settle-up so users can record payments.

@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-27)
+See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
-**Current focus:** v1.5 Milestone complete -- Partial Settlement Amount Entry shipped
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 17 of 17 (Partial Settlement Amount Entry)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-28 — Completed 17-01-PLAN.md
+Phase: Next milestone not yet started
+Plan: N/A
+Status: Ready to plan
+Last activity: 2026-03-01 — v1.5 milestone archived
 
-Progress: [====================] 100% (42/42 plans complete)
+Progress: [====================] 100% (42/42 plans complete through v1.5)
 
 ## Performance Metrics
 
@@ -49,15 +49,6 @@ Progress: [====================] 100% (42/42 plans complete)
 
 Full decision log in PROJECT.md Key Decisions table.
 
-Recent for v1.5:
-- Single phase for all 6 settlement UX requirements (all modify one component, no backend changes)
-- No backend/database changes needed -- purely UI work on SettleConfirmSheet
-- NumPad component and useAmountInput hook already exist and are reusable
-- record_settlement RPC already accepts any positive amount (no API changes)
-- useSettlementAmountInput hook kept inline in SettleConfirmSheet (single consumer)
-- Dust rule threshold: P1.00 (remainder below this forces full settlement)
-- Display mode 35% snap, edit mode 75% snap for NumPad space
-
 ### Known Issues
 
 None.
@@ -72,6 +63,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 17-01-PLAN.md — v1.5 milestone complete
+Last session: 2026-03-01
+Stopped at: v1.5 milestone archived
 Resume file: None

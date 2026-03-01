@@ -8,16 +8,12 @@ A mobile expense-splitting app built for Filipino users — peso-first, designed
 
 A group of friends can add shared expenses and instantly see who owes who, with simplified balances that minimize the number of transactions needed.
 
-## Current Milestone: v1.5 Partial Settlements
+## Current State
 
-**Goal:** Allow users to record partial payments instead of requiring whole-balance settlements, so friends who pay back in installments can track progress accurately.
-
-**Target features:**
-- Editable settlement amount via numpad (pre-filled with full balance)
-- Amount capped at current balance (no overpayment)
-- Balance decreases by partial settlement amount
-- Settlement history shows partial amounts
-- Full settlement still works (don't change pre-filled amount)
+**Latest shipped:** v1.5 Partial Settlements (2026-02-28)
+**Total milestones:** 6 (v1.0 through v1.5)
+**Total phases:** 17
+**Total plans:** 42
 
 ## Requirements
 
@@ -53,14 +49,15 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 - ✓ Automatic screen view tracking — v1.4
 - ✓ Key action event tracking across all core flows — v1.4
 - ✓ User properties synced to PostHog — v1.4
+- ✓ Editable settlement amount via numpad pre-filled with full balance — v1.5
+- ✓ Settlement amount capped at current balance (no overpayment) — v1.5
+- ✓ Partial settlement decreases balance by settled amount — v1.5
+- ✓ Settlement history displays partial amounts correctly — v1.5
+- ✓ Full settlement still works when user doesn't change the pre-filled amount — v1.5
 
 ### Active
 
-- [ ] Editable settlement amount via numpad pre-filled with full balance
-- [ ] Settlement amount capped at current balance (no overpayment)
-- [ ] Partial settlement decreases balance by settled amount
-- [ ] Settlement history displays partial amounts correctly
-- [ ] Full settlement still works when user doesn't change the pre-filled amount
+(None — define requirements for next milestone with `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -87,8 +84,8 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 - Distribution via Messenger / Viber invite links
 - Philippine internet can be unreliable — optimistic offline UI needed
 - Supabase RLS policies required from day one
-- Shipped v1.0 (Feb 18-19) and v1.1 (Feb 19-20) — total ~11,000 LOC TypeScript/SQL
-- 28 plans executed across 9 phases + 1 inserted phase
+- Shipped v1.0 through v1.5 (Feb 18 → Feb 28) — ~10,400 LOC TypeScript
+- 42 plans executed across 17 phases (including 1 inserted phase)
 
 **Data Model (Supabase / PostgreSQL):**
 - `users` — id, phone_number (unique), display_name, avatar_url, created_at
@@ -123,10 +120,10 @@ A group of friends can add shared expenses and instantly see who owes who, with 
 | Debt simplification algorithm | Core differentiator | ✓ Good |
 | Invite inbox (not push notifications) | Simpler to build, no notification infra needed | ✓ Good |
 | Creator-only phone invites | Security: prevents random members adding strangers | ✓ Good |
-| Whole-balance settlement only | Partial settlements add complexity, defer to later | ⚠️ Revisit — v1.5 adds partial settlements |
+| Whole-balance settlement only | Partial settlements add complexity, defer to later | ✓ Resolved — v1.5 added partial settlements |
 | Decline removes splits (hard delete) | Clean separation; allows re-invite by creator | ✓ Good |
 | No server-side settlement amount validation | Race condition tolerance; UI enforces whole-balance | ✓ Good |
 | Separate settlements table (not expense type) | Clean separation of concerns, no expense query pollution | ✓ Good |
 
 ---
-*Last updated: 2026-02-27 after v1.5 milestone started*
+*Last updated: 2026-03-01 after v1.5 milestone*
