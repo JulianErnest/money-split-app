@@ -29,7 +29,6 @@ import { formatPeso } from "@/lib/expense-utils";
 import {
   fetchGroupCardData,
   GroupCardData,
-  GroupCardMember,
 } from "@/lib/group-card-data";
 import { fetchPendingInvites, InviteRow } from "@/lib/group-members";
 import { useNetwork } from "@/lib/network-context";
@@ -64,30 +63,6 @@ function getGroupEmoji(groupName: string): string {
   const index = Math.abs(hash) % EMOJI_LIST.length;
   return EMOJI_LIST[index];
 }
-
-// TODO: Remove – simulated members for avatar stack testing
-const TEST_MEMBERS: GroupCardMember[][] = [
-  [
-    { id: "t1", display_name: "Alice", avatar_url: "🐱" },
-    { id: "t2", display_name: "Bob", avatar_url: "🦊" },
-    { id: "t3", display_name: "Carol", avatar_url: "🐸" },
-    { id: "t4", display_name: "Dan", avatar_url: "🐼" },
-    { id: "t5", display_name: "Eve", avatar_url: "🦄" },
-  ],
-  [
-    { id: "t6", display_name: "Frank", avatar_url: "🐶" },
-    { id: "t7", display_name: "Grace", avatar_url: "🐧" },
-    { id: "t8", display_name: "Heidi", avatar_url: "🦋" },
-  ],
-  [
-    { id: "t9", display_name: "Ivan", avatar_url: "🐻" },
-    { id: "t10", display_name: "Judy", avatar_url: "🐰" },
-    { id: "t11", display_name: "Karl", avatar_url: "🦁" },
-    { id: "t12", display_name: "Lily", avatar_url: "🐨" },
-    { id: "t13", display_name: "Mike", avatar_url: "🐯" },
-    { id: "t14", display_name: "Nina", avatar_url: "🦈" },
-  ],
-];
 
 // ---------------------------------------------------------------------------
 // Balance Summary Header
@@ -604,7 +579,6 @@ export default function GroupsScreen() {
       const isPending = item.pending === true;
       const cardInfo = groupCardData.get(group.id);
       const netCentavos = groupBalances.get(group.id);
-      const testMembers = TEST_MEMBERS[index % TEST_MEMBERS.length];
 
       // Pending (offline) groups: simple rendering without MotiPressable
       if (isPending) {
@@ -670,7 +644,7 @@ export default function GroupsScreen() {
               )}
             </View>
             <View style={styles.cardAvatarRow}>
-              <AvatarStack members={testMembers} max={4} />
+              <AvatarStack members={cardInfo?.members ?? []} max={4} />
             </View>
           </GlassCard>
         </MotiPressable>
